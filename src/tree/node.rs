@@ -54,24 +54,6 @@ impl Node {
             self.push(2);
         }
     }
-
-    // pub fn iter_elements(&self, buffer: &mut Buffer<StdoutLock<'_>>, branch: &mut Branch) {
-    //     for (idx, item) in self.enumerate_node() {
-    //         if self.next_ref(idx).is_some() {
-    //             if item == &1 {
-    //                 buffer.write_branch(branch.structural).unwrap();
-    //             } else {
-    //                 buffer.write_branch(branch.space).unwrap();
-    //             }
-    //         } else {
-    //             if item == &1 {
-    //                 buffer.write_branch(branch.middle).unwrap();
-    //             } else {
-    //                 buffer.write_branch(branch.end).unwrap();
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 pub struct NodeIterator<'a> {

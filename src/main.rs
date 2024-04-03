@@ -1,9 +1,11 @@
 mod canva;
 mod cli;
 mod config;
+mod error;
 mod report;
 mod sort;
 mod tree;
+mod util;
 mod walk;
 
 use std::path::PathBuf;
