@@ -1,32 +1,33 @@
 use std::env;
-use std::error::Error;
+// use std::error::Error;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 use std::path::PathBuf;
 
-use crate::sort::dent::sort_vector_by_name;
-use crate::walk::WalkDir;
+use crate::{
+    error::simple::{UResult, USimpleError},
+    walk::WalkDir,
+};
 
-// let my_method: DirPath<DirEntry> = Directory::read_visible_entries;
-pub type DirPath = fn(&Directory) -> Result<Vec<DirEntry>, Box<dyn Error>>;
+pub type WhichReader = fn(&Directory) -> UResult<Vec<DirEntry>>;
 
 pub struct Directory {
     pub path: PathBuf,
 }
 
 impl<'pt, 'wd, 'cv, 'cr> Directory {
-    pub fn new(path: impl Into<PathBuf>) -> Self {
-        Directory { path: path.into() }
+    pub fn new(path: impl Into<PathBuf>) -> UResult<Self> {
+        Ok(Directory { path: path.into() })
     }
 
-    pub fn read_all_entries(&self) -> Result<Vec<DirEntry>, Box<dyn Error>> {
+    pub fn read_all_entries(&self) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .map(|entry_result| entry_result.map(|entry| entry))
             .collect::<Result<Vec<DirEntry>, std::io::Error>>()?;
         Ok(entries)
     }
 
-    pub fn read_visible_entries(&self) -> Result<Vec<DirEntry>, Box<dyn Error>> {
+    pub fn read_visible_entries(&self) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -41,7 +42,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    pub fn read_visible_folders(&self) -> Result<Vec<DirEntry>, Box<dyn Error>> {
+    pub fn read_visible_folders(&self) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -57,7 +58,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    pub fn read_all_folders(&self) -> Result<Vec<DirEntry>, Box<dyn Error>> {
+    pub fn read_all_folders(&self) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -73,7 +74,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    fn inspect_entries(&self, f: DirPath) -> Result<Vec<DirEntry>, Box<dyn Error>> {
+    fn inspect_entries(&self, f: WhichReader) -> UResult<Vec<DirEntry>> {
         f(self)
     }
 
@@ -84,11 +85,13 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
     pub fn iterate_entries(
         &self,
         walk: &'pt mut WalkDir<'wd, 'cv, 'cr>,
-    ) -> Result<Vec<(usize, DirEntry)>, Box<dyn Error>> {
+    ) -> UResult<Vec<(usize, DirEntry)>> {
         // Read
-        let mut entries = self.inspect_entries(walk.cr.dp)?;
+        let mut entries = self.inspect_entries(walk.cr.wr).map_err(|err| {
+            USimpleError::new(1, format!("Failed to inspect directory entries: {}", err))
+        })?;
         // Sort
-        (walk.cr.sd.func1)(&mut entries);
+        (walk.cr.ws)(&mut entries);
         // Enumerate
         let enumerated_entries = entries.into_iter().enumerate().collect();
         Ok(enumerated_entries)
@@ -115,12 +118,12 @@ pub fn get_relative_path(entry: &DirEntry, current_dir: &PathBuf) -> Option<Path
 }
 
 /// If no path where given, retrieve current path where shell executed
-pub fn get_absolute_current_shell() -> String {
-    env::current_dir()
+pub fn get_absolute_current_shell() -> UResult<String> {
+    Ok(env::current_dir()
         .expect("Failed to get current directory")
         .to_str()
         .expect("Failed to convert path to str")
-        .to_string()
+        .to_string())
 }
 
 fn extract_paths(args: Vec<String>) -> (Vec<String>, Vec<String>) {
@@ -148,7 +151,7 @@ mod tests {
     fn test_read_entries() {
         let temp_dir = tempdir().expect("Failed to create temporary directory");
         // println!("{:?}", temp_dir);
-        let directory = Directory::new(temp_dir.path());
+        let directory = Directory::new(temp_dir.path()).unwrap();
 
         // Create some dummy files in the test directory
         fs::File::create(directory.path.join("file1.txt")).unwrap();
@@ -181,7 +184,7 @@ mod tests {
     #[test]
     fn test_is_hidden_file() {
         let temp_dir = tempdir().expect("Failed to create temporary directory");
-        let directory = Directory::new(temp_dir.path());
+        let directory = Directory::new(temp_dir.path()).unwrap();
 
         // Create a dummy hidden file in the test directory
         fs::File::create(directory.path.join(".hidden_file")).unwrap();

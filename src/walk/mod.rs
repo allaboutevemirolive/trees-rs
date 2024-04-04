@@ -1,15 +1,12 @@
-use crate::config::path::Directory;
-use crate::config::registry::CallbackRegistry;
-use crate::report::*;
-use crate::tree::{node, Tree};
+use crate::{
+    canva::*, config::path::Directory, config::registry::CallbackRegistry, error::simple::UResult,
+    report::*, tree::Tree,
+};
+
 use std::path::PathBuf;
 
 pub mod metada;
 use self::metada::*;
-
-use crate::canva::*;
-
-// pub type Result<T> = ::std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub struct WalkDir<'wd, 'cv, 'cr> {
@@ -27,12 +24,12 @@ pub struct WalkDirConfig<'cv> {
 }
 
 impl<'cv> WalkDirConfig<'cv> {
-    pub fn new(tree: Tree, canva: Canva<'cv>, report: Report) -> Self {
-        Self {
+    pub fn new(tree: Tree, canva: Canva<'cv>, report: Report) -> UResult<Self> {
+        Ok(Self {
             tree,
             canva,
             report,
-        }
+        })
     }
 }
 
@@ -47,40 +44,42 @@ impl<'wd, 'cv: 'cr, 'cr: 'cv> WalkDir<'wd, 'cv, 'cr> {
         config: &'wd mut WalkDirConfig<'cv>,
         root: &'wd PathBuf,
         cr: CallbackRegistry<'cr>,
-    ) -> Self {
-        Self {
+    ) -> UResult<Self> {
+        Ok(Self {
             opts,
             config,
             root,
             cr,
-        }
+        })
     }
 
-    pub fn walk_dir(&mut self, path: Directory) {
-        let entries = path.iterate_entries(self).unwrap();
+    pub fn walk_dir(&mut self, path: Directory) -> UResult<()> {
+        let entries = path.iterate_entries(self)?;
         let entries_len = entries.len();
 
         for (idx, entry) in entries {
-            self.config.tree.nod.add_entry_marker(idx, entries_len);
+            self.config.tree.nod.mark_entry(idx, entries_len);
 
             for (value, has_next) in self.config.tree.nod.into_iter() {
                 self.config.tree.branch.paint_branch(
                     value,
                     has_next,
                     &mut self.config.canva.buffer,
-                );
+                )?;
             }
 
-            FileMetadata::new(entry, &self.root, &self.config.tree.level).which_file_type(self);
+            FileMetadata::new(entry, &self.root, &self.config.tree.level)?.which_file_type(self)?;
 
             self.config.tree.nod.pop();
         }
+        Ok(())
     }
 
-    pub fn report(&mut self) {
-        self.config.canva.buffer.write_newline().unwrap();
+    pub fn report(&mut self) -> UResult<()> {
+        self.config.canva.buffer.write_newline()?;
         let report = self.config.report.get_tail();
-        self.config.canva.buffer.write_report(report).unwrap();
-        self.config.canva.buffer.write_newline().unwrap();
+        self.config.canva.buffer.write_report(report)?;
+        self.config.canva.buffer.write_newline()?;
+        Ok(())
     }
 }

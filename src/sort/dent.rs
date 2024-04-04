@@ -3,22 +3,24 @@ use std::io;
 use tempfile::tempdir;
 use tempfile::TempDir;
 
-pub type SortDent = fn(&mut Vec<fs::DirEntry>);
+use crate::error::simple::UResult;
+
+pub type WhichSort = fn(&mut Vec<fs::DirEntry>);
 
 #[derive(Debug, Clone, Copy)]
 pub struct SortReg {
-    pub func1: SortDent,
+    pub func1: WhichSort,
 }
 
 impl SortReg {
     // let sorter = SortReg::new();
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> UResult<Self> {
+        Ok(Self {
             func1: SortReg::sort_vector_by_name,
-        }
+        })
     }
 
-    pub fn set(func1: SortDent) -> Self {
+    pub fn set(func1: WhichSort) -> Self {
         Self { func1 }
     }
 
@@ -65,7 +67,7 @@ pub fn sort_vector_by_name_test(vector: &mut Vec<(usize, fs::DirEntry)>) {
 
 // =====================================================
 
-fn sort_entries(vector: &mut Vec<fs::DirEntry>, f: SortDent) {
+fn sort_entries(vector: &mut Vec<fs::DirEntry>, f: WhichSort) {
     f(vector)
 }
 

@@ -1,3 +1,5 @@
+use crate::error::simple::{UResult, USimpleError};
+
 use self::{branch::Branch, level::Level, node::Node};
 
 pub mod branch;
@@ -12,11 +14,42 @@ pub struct Tree {
 }
 
 impl Tree {
-    /// We only need to provide Level struct and node capacity:=.
-    pub fn new(level: Level, node_cap: i32) -> Self {
-        let branch = Branch::initialize("└── ", "├── ", "    ", "│   ");
-        let nod = Node::with_capacity(node_cap);
+    pub fn new(level: Level, node_cap: i32) -> UResult<Self> {
+        let branch = Branch::initialize("└── ", "├── ", "    ", "│   ")
+            .map_err(|err| USimpleError::new(1, format!("Failed to initialize branch: {}", err)))?;
 
-        Self { nod, branch, level }
+        let nod = Node::with_capacity(node_cap)
+            .map_err(|err| USimpleError::new(1, format!("Failed to initialize node: {}", err)))?;
+
+        Ok(Self { nod, branch, level })
+    }
+}
+
+impl PartialEq for Branch {
+    fn eq(&self, other: &Self) -> bool {
+        self.end == other.end
+            && self.middle == other.middle
+            && self.space == other.space
+            && self.structural == other.structural
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // cargo test test_branch_initialize -- --nocapture
+    #[test]
+    fn test_branch_initialize() {
+        let expected_branch = Branch {
+            end: "└── ",
+            middle: "├── ",
+            space: "    ",
+            structural: "│   ",
+        };
+
+        let branch = Branch::initialize("└── ", "├── ", "    ", "│   ").unwrap();
+
+        assert_eq!(branch, expected_branch);
     }
 }

@@ -1,7 +1,7 @@
 use std::fs;
 
 use crate::config::path::WhichPath;
-use crate::sort::dent::{reverse_sort_vector_by_name, sort_vector_by_name, SortDent, SortTy};
+use crate::sort::dent::{reverse_sort_vector_by_name, sort_vector_by_name, SortTy, WhichSort};
 
 pub struct OptionArgs {
     pub current_dir: WhichPath,
@@ -14,7 +14,7 @@ impl OptionArgs {
         let w = WhichPath::CurrentDir;
         let sort = SortTy::ByFilename;
 
-        let mut sort_dent: SortDent;
+        let mut sort_dent: WhichSort;
 
         sort_dent = reverse_sort_vector_by_name;
 

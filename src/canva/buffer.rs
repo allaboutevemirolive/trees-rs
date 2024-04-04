@@ -3,15 +3,17 @@ use std::{
     path::PathBuf,
 };
 
+use crate::error::simple::UResult;
+
 #[derive(Debug)]
 pub struct Buffer<W: Write> {
     pub buf_writer: io::BufWriter<W>,
 }
 
 impl<W: Write> Buffer<W> {
-    pub fn new(writer: W) -> Self {
+    pub fn new(writer: W) -> UResult<Self> {
         let buf_writer = io::BufWriter::new(writer);
-        Buffer { buf_writer }
+        Ok(Buffer { buf_writer })
     }
 
     pub fn write_message(&mut self, message: &str) -> io::Result<()> {
@@ -126,10 +128,10 @@ mod test {
 
         // Write a message to the buffer
         let message = "Hello, world!";
-        buffer.write_message(message).unwrap();
+        buffer.as_mut().unwrap().write_message(message).unwrap();
 
         // Get the contents of the buffer
-        let buffer_contents = buffer.buf_writer.into_inner().unwrap();
+        let buffer_contents = buffer.unwrap().buf_writer.into_inner().unwrap();
 
         let output_string = String::from_utf8(buffer_contents).unwrap();
 
@@ -139,9 +141,9 @@ mod test {
     #[test]
     fn test_buffer_with_stdout() {
         let stdout = io::stdout();
-        let mut buffer = Buffer::new(stdout.lock());
+        let buffer = Buffer::new(stdout.lock());
 
-        buffer.write_message("Hello, world!").unwrap();
+        buffer.unwrap().write_message("Hello, world!").unwrap();
     }
 
     // use std::io::{Cursor, StdoutLock};

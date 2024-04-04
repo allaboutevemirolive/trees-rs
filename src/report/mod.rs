@@ -1,3 +1,5 @@
+use crate::error::simple::UResult;
+
 use self::{head::Head, tail::Tail};
 
 mod head;
@@ -11,8 +13,8 @@ pub struct Report {
 
 impl Report {
     /// We set directories to 1 to include the current directory
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> UResult<Self> {
+        Ok(Self {
             head: Head::CurrentDir,
             tail: Tail {
                 directories: 1,
@@ -20,7 +22,7 @@ impl Report {
                 size: 0,
                 hidden_files: 0,
             },
-        }
+        })
     }
 
     pub fn get_tail(&self) -> (String, String, String, String) {

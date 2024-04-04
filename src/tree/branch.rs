@@ -2,7 +2,7 @@
 
 use std::io::StdoutLock;
 
-use crate::canva::buffer::Buffer;
+use crate::{canva::buffer::Buffer, error::simple::UResult};
 
 #[derive(Debug, Clone)]
 pub struct Branch {
@@ -22,13 +22,13 @@ impl Branch {
         middle: &'static str,
         space: &'static str,
         structural: &'static str,
-    ) -> Self {
-        Branch {
+    ) -> UResult<Self> {
+        Ok(Branch {
             end,
             middle,
             space,
             structural,
-        }
+        })
     }
 
     /// Returns the end of a branch, e.g., `"└── "`
@@ -51,20 +51,26 @@ impl Branch {
         self.structural
     }
 
-    pub fn paint_branch(&self, value: i32, has_next: bool, buffer: &mut Buffer<StdoutLock>) {
+    pub fn paint_branch(
+        &self,
+        value: i32,
+        has_next: bool,
+        buffer: &mut Buffer<StdoutLock>,
+    ) -> UResult<()> {
         if has_next {
             if value == 1 {
-                buffer.write_branch(self.structural).unwrap();
+                buffer.write_branch(self.structural)?;
             } else {
-                buffer.write_branch(self.space).unwrap();
+                buffer.write_branch(self.space)?;
             }
         } else {
             if value == 1 {
-                buffer.write_branch(self.middle).unwrap();
+                buffer.write_branch(self.middle)?;
             } else {
-                buffer.write_branch(self.end).unwrap();
+                buffer.write_branch(self.end)?;
             }
         }
+        Ok(())
     }
 }
 
@@ -74,14 +80,7 @@ mod tests {
 
     #[test]
     fn test_branch() {
-        // let branch = Branch {
-        //     end: "└── ",
-        //     middle: "├── ",
-        //     space: "    ",
-        //     structural: "│   ",
-        // };
-
-        let branch = Branch::initialize("└── ", "├── ", "    ", "│   ");
+        let branch = Branch::initialize("└── ", "├── ", "    ", "│   ").unwrap();
 
         assert_eq!(branch.end(), "└── ");
         assert_eq!(branch.middle(), "├── ");

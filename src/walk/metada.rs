@@ -1,15 +1,17 @@
-use crate::config::path::{get_relative_path, Directory};
-use crate::tree::level::Level;
+use crate::{
+    config::path::{get_relative_path, Directory},
+    error::simple::{UResult, USimpleError},
+    tree::level::Level,
+};
+
+use super::{WalkDir, WalkDirOption};
+
 use std::collections::HashMap;
 use std::fs::{self, DirEntry, FileType};
-use std::io::Write;
-use std::io::{self, StdoutLock};
+use std::io::{self};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-// use std::io::{self, Write};
-use super::buffer::{self, Buffer, WhichPaint};
-use super::{WalkDir, WalkDirOption};
 
 #[derive(Debug)]
 pub struct FileMetadata {
@@ -33,10 +35,10 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
     // entry.file_type().unwrap() => file_type
     // entry.path() => full_path
     /// `current_dir` is the original shell session where this program is executed.
-    pub fn new(dir_entry: DirEntry, current_dir: &PathBuf, level: &Level) -> Self {
-        let file_type = dir_entry.file_type().unwrap();
+    pub fn new(dir_entry: DirEntry, current_dir: &PathBuf, level: &Level) -> UResult<Self> {
+        let file_type = dir_entry.file_type()?;
         let absolute_path = dir_entry.path();
-        let relative_path = get_relative_path(&dir_entry, current_dir).unwrap();
+        let relative_path = get_relative_path(&dir_entry, current_dir).unwrap_or(PathBuf::new());
         let file_name = dir_entry
             .path()
             .file_name()
@@ -45,9 +47,9 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             .expect("Error convert OsStr to &str")
             .to_string();
 
-        let metadata = fs::symlink_metadata(dir_entry.path()).unwrap();
+        let metadata = fs::symlink_metadata(dir_entry.path())?;
 
-        Self {
+        Ok(Self {
             dir_entry,
             file_name,
             file_size: metadata.len(),
@@ -62,7 +64,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             absolute_path,
             relative_path,
             file_attributes: HashMap::new(),
-        }
+        })
     }
 
     fn with_file_path(mut self, file_path: DirEntry) -> Self {
@@ -104,32 +106,28 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
         self
     }
 
-    pub fn which_file_type(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) {
+    pub fn which_file_type(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
         if self.file_type.is_dir() {
             walk.config
                 .canva
                 .buffer
-                .paint(&self.file_name, walk.cr.wp)
-                .unwrap();
-            walk.config.canva.buffer.write_newline().unwrap();
+                .paint(&self.file_name, walk.cr.wp)?;
+            walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.dir_plus_one();
             walk.config.tree.level.plus_one();
 
             let walk_opts = WalkDirOption { flag: 1 };
-            let mut walk = crate::walk::WalkDir::new(walk_opts, walk.config, walk.root, walk.cr);
-            let path = Directory::new(&self.absolute_path);
+            let mut walk = WalkDir::new(walk_opts, walk.config, walk.root, walk.cr)?;
+            let path = Directory::new(&self.absolute_path)?;
 
-            walk.walk_dir(path);
+            walk.walk_dir(path)?;
             walk.config.tree.level.minus_one();
         } else {
-            walk.config
-                .canva
-                .buffer
-                .write_file_name(&self.file_name)
-                .unwrap();
-            walk.config.canva.buffer.write_newline().unwrap();
+            walk.config.canva.buffer.write_file_name(&self.file_name)?;
+            walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.file_plus_one();
         }
+        Ok(())
     }
 }
 

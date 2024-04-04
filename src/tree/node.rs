@@ -1,4 +1,5 @@
 use crate::canva::buffer::*;
+use crate::error::simple::UResult;
 use crate::tree::branch::*;
 use std::io::StdoutLock;
 
@@ -14,10 +15,10 @@ impl Node {
         Node { nod }
     }
 
-    pub fn with_capacity(cap: i32) -> Self {
-        Node {
+    pub fn with_capacity(cap: i32) -> UResult<Self> {
+        Ok(Node {
             nod: Vec::with_capacity(cap as usize),
-        }
+        })
     }
 
     pub fn pop(&mut self) -> Option<i32> {
@@ -47,7 +48,7 @@ impl Node {
     }
 
     /// If there is remaining folder needs to traverse
-    pub fn add_entry_marker(&mut self, curr_index: usize, num_entries: usize) {
+    pub fn mark_entry(&mut self, curr_index: usize, num_entries: usize) {
         if curr_index < num_entries - 1 {
             self.push(1);
         } else {
@@ -95,14 +96,14 @@ mod tests {
     // cargo test test_node_new -- --nocapture
     #[test]
     fn test_node_new() {
-        let node = Node::with_capacity(5);
+        let node = Node::with_capacity(5).unwrap();
         assert_eq!(node.nod.len(), 0);
         assert_eq!(node.nod.capacity(), 5);
     }
 
     #[test]
     fn test_push_and_pop() {
-        let mut node = Node::with_capacity(5);
+        let mut node = Node::with_capacity(5).unwrap();
         node.push(1);
         node.push(2);
         assert_eq!(node.nod.len(), 2);
@@ -122,7 +123,7 @@ mod tests {
     // cargo test test_iterate_node -- --nocapture
     #[test]
     fn test_iterate_node() {
-        let mut node = Node::with_capacity(5);
+        let mut node = Node::with_capacity(5).unwrap();
         node.push(1);
         node.push(2);
         node.push(3);
@@ -136,7 +137,7 @@ mod tests {
 
     #[test]
     fn test_iterate_node_for_loop() {
-        let mut node = Node::with_capacity(5);
+        let mut node = Node::with_capacity(5).unwrap();
         node.push(1);
         node.push(2);
         node.push(3);
@@ -152,7 +153,7 @@ mod tests {
 
     #[test]
     fn test_next_iter() {
-        let mut node = Node::with_capacity(5);
+        let mut node = Node::with_capacity(5).unwrap();
         node.push(1);
         node.push(2);
         node.push(3);
@@ -167,12 +168,12 @@ mod tests {
 
     #[test]
     fn test_add_entry_marker() {
-        let mut node = Node::with_capacity(5);
+        let mut node = Node::with_capacity(5).unwrap();
         let num_entries = 5;
 
         // Add markers for each entry except the last one
         for i in 0..num_entries {
-            node.add_entry_marker(i, num_entries);
+            node.mark_entry(i, num_entries);
         }
 
         // Check the contents of the node
@@ -187,7 +188,7 @@ mod tests {
 
     #[test]
     fn test_get_next_item() {
-        let mut node = Node::with_capacity(5);
+        let mut node = Node::with_capacity(5).unwrap();
         node.push(1);
         node.push(2);
         node.push(3);
@@ -211,7 +212,7 @@ mod tests {
 
     #[test]
     fn test_get_next_item_and_check_iterator_movement() {
-        let mut node = Node::with_capacity(5);
+        let mut node = Node::with_capacity(5).unwrap();
         node.push(1);
         node.push(2);
         node.push(3);
