@@ -79,7 +79,6 @@ pub fn sort_by_name(vector: &mut Vec<fs::DirEntry>) {
 //
 pub fn reverse_sort_by_name(vector: &mut Vec<fs::DirEntry>) {
     vector.sort_unstable_by(|a, b| b.file_name().cmp(&a.file_name()));
-    vector.reverse();
 }
 
 // =====================================================

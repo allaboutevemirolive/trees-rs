@@ -26,63 +26,35 @@ impl<'a> CallbackRegistry<'a> {
 }
 
 impl<'a> CallbackRegistry<'a> {
-    pub fn read_all_entries(&self) -> UResult<Self> {
-        Ok(Self {
-            wr: Directory::read_all_entries,
-            ws: self.ws,
-            wp: self.wp,
-        })
+    pub fn read_all_entries(&mut self) -> UResult<()> {
+        Ok(self.wr = Directory::read_all_entries)
     }
 
-    pub fn read_visible_entries(&self) -> UResult<Self> {
-        Ok(Self {
-            wr: Directory::read_visible_entries,
-            ws: self.ws,
-            wp: self.wp,
-        })
+    pub fn read_visible_entries(&mut self) -> UResult<()> {
+        Ok(self.wr = Directory::read_visible_entries)
     }
 
-    pub fn read_visible_folders(&self) -> UResult<Self> {
-        Ok(Self {
-            wr: Directory::read_visible_folders,
-            ws: self.ws,
-            wp: self.wp,
-        })
+    pub fn read_visible_folders(&mut self) -> UResult<()> {
+        Ok(self.wr = Directory::read_visible_folders)
     }
 }
 
 impl<'a> CallbackRegistry<'a> {
-    pub fn with_sort_entries(&self) -> UResult<Self> {
-        Ok(Self {
-            wr: self.wr,
-            ws: sort_by_name,
-            wp: self.wp,
-        })
+    pub fn with_sort_entries(&mut self) -> UResult<()> {
+        Ok(self.ws = sort_by_name)
     }
 
-    pub fn with_reverse_sort_entries(&self) -> UResult<Self> {
-        Ok(Self {
-            wr: self.wr,
-            ws: reverse_sort_by_name,
-            wp: self.wp,
-        })
+    pub fn with_reverse_sort_entries(&mut self) -> UResult<()> {
+        Ok(self.ws = reverse_sort_by_name)
     }
 }
 
 impl<'a> CallbackRegistry<'a> {
-    pub fn with_color_entry(&self) -> UResult<Self> {
-        Ok(Self {
-            wr: self.wr,
-            ws: self.ws,
-            wp: Buffer::write_dir_name_color,
-        })
+    pub fn with_color_entry(&mut self) -> UResult<()> {
+        Ok(self.wp = Buffer::write_dir_name_color)
     }
 
-    pub fn with_colorless_entry(&self) -> UResult<Self> {
-        Ok(Self {
-            wr: self.wr,
-            ws: self.ws,
-            wp: Buffer::write_dir_name,
-        })
+    pub fn with_colorless_entry(&mut self) -> UResult<()> {
+        Ok(self.wp = Buffer::write_dir_name)
     }
 }

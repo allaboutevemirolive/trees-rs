@@ -1,17 +1,9 @@
 use std::path::PathBuf;
-// use crate::cli::app::options::sort;
 use std::{env, ffi::OsString, path::Path};
-
-// mod option;
 
 use super::app::*;
 use crate::cli::opt::Setting;
-
-use crate::config::path::Directory;
-// use crate::config::registry::CallbackRegistry;
-use crate::error::simple::{UResult, USimpleError};
-
-// use crate::cli::app::options::;
+use crate::error::simple::UResult;
 
 #[derive(Clone)]
 pub struct TreeArgs {
@@ -49,22 +41,12 @@ impl<'a> TreeArgs {
     }
 
     pub fn match_app(&mut self, setting: &mut Setting<'a>) -> UResult<PathBuf> {
-        // let path = self
-        //     .assert_single_path()
-        //     .ok_or_else(|| setting.path.clone())
-        //     .unwrap();
-
         check_target_path(&mut self.args, setting);
 
-        // dbg!(&setting.path);
-        // dbg!(&setting.path.clone());
-
-        let path = &setting.path; // osstring_to_pathbuf(path.clone());
-
-        let (remaining, _) = self.extract_paths();
+        let path = &setting.path;
 
         let matches = tree_app()
-            .try_get_matches_from(remaining)
+            .try_get_matches_from(self.args.clone())
             .unwrap_or_else(|e| e.exit());
 
         if matches.get_flag(options::sort::REVERSE) {
@@ -120,10 +102,6 @@ fn valid_path(arg: &OsString) -> Option<PathBuf> {
     }
 }
 
-fn osstring_to_pathbuf(os_string: OsString) -> PathBuf {
-    PathBuf::from(os_string)
-}
-
 #[cfg(test)]
 mod tests {
     use tempfile::TempDir;
@@ -159,27 +137,6 @@ mod tests {
         let tree_args = TreeArgs::new();
         assert!(tree_args.args.len() >= 1);
     }
-
-    // #[test]
-    // fn test_assert_single_path() {
-    //     let temp_dir = TempDir::new().expect("Failed to create temporary directory");
-    //     let temp_dir_path = temp_dir.path();
-
-    //     let file1_path = temp_dir_path.join("existing.txt");
-    //     let mut file1 = File::create(&file1_path).expect("Failed to create file1");
-    //     writeln!(file1, "Some content").expect("Failed to write to file1");
-
-    //     let args = vec![OsString::from(file1_path.clone())];
-    //     let tree_args = TreeArgs { args };
-    //     assert!(tree_args.assert_single_path().is_ok());
-
-    //     let args = vec![
-    //         OsString::from(file1_path.clone()),
-    //         OsString::from(file1_path),
-    //     ];
-    //     let tree_args = TreeArgs { args };
-    //     assert!(tree_args.assert_single_path().is_err());
-    // }
 
     #[test]
     fn test_assert_single_path() {

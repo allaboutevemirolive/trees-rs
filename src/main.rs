@@ -50,9 +50,6 @@ fn main() -> UResult<()> {
 
     let path = args.match_app(&mut setting)?;
 
-    // dbg!(&path);
-    // -----------------
-
     // walk_opts
     let walk_opts = WalkDirOption { flag: 1 };
     let mut walk = WalkDir::new(walk_opts, &mut config, &path, setting)?;
