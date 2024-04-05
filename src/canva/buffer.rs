@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use std::{
     io::{self, BufWriter, Write},
     path::PathBuf,
@@ -88,30 +89,30 @@ impl<W: Write> Buffer<W> {
     }
 }
 
-pub type WhichPaint<W> = fn(&mut Buffer<W>, &str) -> io::Result<()>;
+pub type WhichPaint<W> = fn(&mut Buffer<W>, &OsString) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
-    pub fn write_dir_name(&mut self, dir: &str) -> io::Result<()> {
-        self.buf_writer.write_all(dir.as_bytes())
+    pub fn write_dir_name(&mut self, dir: &OsString) -> io::Result<()> {
+        self.buf_writer.write_all(dir.as_encoded_bytes())
     }
 
-    pub fn write_dir_name_color(&mut self, dir: &str) -> io::Result<()> {
+    pub fn write_dir_name_color(&mut self, dir: &OsString) -> io::Result<()> {
         self.buf_writer.write_all("\x1b[0;34m".as_bytes())?; // blue
-        self.buf_writer.write_all(dir.as_bytes())?;
+        self.buf_writer.write_all(dir.as_encoded_bytes())?;
         self.buf_writer.write_all("\x1b[0m".as_bytes())
     }
 
-    pub fn write_file_name(&mut self, file: &str) -> io::Result<()> {
-        self.buf_writer.write_all(file.as_bytes())
+    pub fn write_file_name(&mut self, file: &OsString) -> io::Result<()> {
+        self.buf_writer.write_all(file.as_encoded_bytes())
     }
 
-    fn write_no_file_ext(&mut self, file: &str) -> io::Result<()> {
+    fn write_no_file_ext(&mut self, file: &OsString) -> io::Result<()> {
         self.buf_writer.write_all("\x1b[0;32m".as_bytes())?; // green
-        self.buf_writer.write_all(file.as_bytes())?;
+        self.buf_writer.write_all(file.as_encoded_bytes())?;
         self.buf_writer.write_all("\x1b[0m".as_bytes())
     }
 
-    pub fn paint(&mut self, dir: &str, f: WhichPaint<W>) -> io::Result<()> {
+    pub fn paint(&mut self, dir: &OsString, f: WhichPaint<W>) -> io::Result<()> {
         f(self, dir)
     }
 }
@@ -128,14 +129,14 @@ mod test {
 
         // Write a message to the buffer
         let message = "Hello, world!";
-        buffer.as_mut().unwrap().write_message(message).unwrap();
+        buffer.as_mut().unwrap().write_message(&message).unwrap();
 
         // Get the contents of the buffer
         let buffer_contents = buffer.unwrap().buf_writer.into_inner().unwrap();
 
         let output_string = String::from_utf8(buffer_contents).unwrap();
 
-        assert_eq!(output_string, message);
+        assert_eq!(OsString::from(output_string), message);
     }
 
     #[test]
@@ -183,7 +184,10 @@ mod test {
         // let color = Buffer::write_dir_name_color;
         // let color: PaintText<S> = Buffer::<StdoutLock>::write_dir_name_color;
         buffer
-            .paint("Hello World!", Buffer::write_dir_name_color)
+            .paint(
+                &OsString::from("Hello World!"),
+                Buffer::write_dir_name_color,
+            )
             .unwrap();
     }
 }

@@ -72,12 +72,12 @@ fn sort_entries(vector: &mut Vec<fs::DirEntry>, f: WhichSort) {
 }
 
 //
-pub fn sort_vector_by_name(vector: &mut Vec<fs::DirEntry>) {
+pub fn sort_by_name(vector: &mut Vec<fs::DirEntry>) {
     vector.sort_unstable_by(|a, b| a.file_name().cmp(&b.file_name()));
 }
 
 //
-pub fn reverse_sort_vector_by_name(vector: &mut Vec<fs::DirEntry>) {
+pub fn reverse_sort_by_name(vector: &mut Vec<fs::DirEntry>) {
     vector.sort_unstable_by(|a, b| b.file_name().cmp(&a.file_name()));
     vector.reverse();
 }

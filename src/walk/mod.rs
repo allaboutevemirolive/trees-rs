@@ -1,6 +1,10 @@
 use crate::{
-    canva::*, config::path::Directory, config::registry::CallbackRegistry, error::simple::UResult,
-    report::*, tree::Tree,
+    canva::*,
+    cli::opt::Setting,
+    config::{path::Directory, registry::CallbackRegistry},
+    error::simple::UResult,
+    report::*,
+    tree::Tree,
 };
 
 use std::path::PathBuf;
@@ -9,11 +13,11 @@ pub mod metada;
 use self::metada::*;
 
 #[derive(Debug)]
-pub struct WalkDir<'wd, 'cv, 'cr> {
+pub struct WalkDir<'wd, 'cv, 'st> {
     pub opts: WalkDirOption,
     pub config: &'wd mut WalkDirConfig<'cv>,
     pub root: &'wd PathBuf,
-    pub cr: CallbackRegistry<'cr>,
+    pub setting: Setting<'st>,
 }
 
 #[derive(Debug)]
@@ -33,23 +37,23 @@ impl<'cv> WalkDirConfig<'cv> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WalkDirOption {
     pub flag: i32,
 }
 
-impl<'wd, 'cv: 'cr, 'cr: 'cv> WalkDir<'wd, 'cv, 'cr> {
+impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
     pub fn new(
         opts: WalkDirOption,
         config: &'wd mut WalkDirConfig<'cv>,
         root: &'wd PathBuf,
-        cr: CallbackRegistry<'cr>,
+        setting: Setting<'st>,
     ) -> UResult<Self> {
         Ok(Self {
             opts,
             config,
             root,
-            cr,
+            setting,
         })
     }
 

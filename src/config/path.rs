@@ -1,5 +1,5 @@
 use std::env;
-// use std::error::Error;
+use std::ffi::OsString;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 use std::path::PathBuf;
@@ -33,6 +33,53 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
                 entry_result.ok().and_then(|entry| {
                     if !entry.file_name().to_string_lossy().starts_with(".") {
                         Some(entry)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect();
+        Ok(entries)
+    }
+
+    /// Read visible entries (directories and files) but exclude entry (directory and file) that match the given path.
+    pub fn read_visible_excl_path(&self) -> UResult<Vec<DirEntry>> {
+        let entries = fs::read_dir(&self.path)?
+            .filter_map(|entry_result| {
+                entry_result.ok().and_then(|entry| {
+                    let entry_path = entry.path();
+                    // TODO: Implement this feature
+                    let excluded_path = PathBuf::new();
+                    if !entry.file_name().to_string_lossy().starts_with(".")
+                        || !(entry_path == excluded_path)
+                    {
+                        Some(entry)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect();
+        Ok(entries)
+    }
+
+    /// Read visible entries(files) that match the given specific file extension.
+    pub fn read_visible_ext_files_and_folders(&self) -> UResult<Vec<DirEntry>> {
+        let entries = fs::read_dir(&self.path)?
+            .filter_map(|entry_result| {
+                entry_result.ok().and_then(|entry| {
+                    let file_name = entry.file_name();
+                    let file_name_str = file_name.to_string_lossy().to_string();
+                    if file_name_str.starts_with(".") {
+                        None
+                    } else if entry.path().is_dir() {
+                        Some(entry)
+                    } else if let Some(extension) = Path::new(&file_name_str).extension() {
+                        if extension == "rs" {
+                            Some(entry)
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }
@@ -87,11 +134,11 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         walk: &'pt mut WalkDir<'wd, 'cv, 'cr>,
     ) -> UResult<Vec<(usize, DirEntry)>> {
         // Read
-        let mut entries = self.inspect_entries(walk.cr.wr).map_err(|err| {
+        let mut entries = self.inspect_entries(walk.setting.cr.wr).map_err(|err| {
             USimpleError::new(1, format!("Failed to inspect directory entries: {}", err))
         })?;
         // Sort
-        (walk.cr.ws)(&mut entries);
+        (walk.setting.cr.ws)(&mut entries);
         // Enumerate
         let enumerated_entries = entries.into_iter().enumerate().collect();
         Ok(enumerated_entries)
@@ -118,12 +165,10 @@ pub fn get_relative_path(entry: &DirEntry, current_dir: &PathBuf) -> Option<Path
 }
 
 /// If no path where given, retrieve current path where shell executed
-pub fn get_absolute_current_shell() -> UResult<String> {
+pub fn get_absolute_current_shell() -> UResult<OsString> {
     Ok(env::current_dir()
         .expect("Failed to get current directory")
-        .to_str()
-        .expect("Failed to convert path to str")
-        .to_string())
+        .into_os_string())
 }
 
 fn extract_paths(args: Vec<String>) -> (Vec<String>, Vec<String>) {

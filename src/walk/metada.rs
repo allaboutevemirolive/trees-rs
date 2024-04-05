@@ -7,6 +7,7 @@ use crate::{
 use super::{WalkDir, WalkDirOption};
 
 use std::collections::HashMap;
+use std::ffi::OsString;
 use std::fs::{self, DirEntry, FileType};
 use std::io::{self};
 use std::os::unix::fs::PermissionsExt;
@@ -16,18 +17,18 @@ use std::time::SystemTime;
 #[derive(Debug)]
 pub struct FileMetadata {
     pub absolute_path: PathBuf,
-    pub checksum: String,
+    pub checksum: OsString,
     pub creation_date: SystemTime,
     pub dir_entry: DirEntry,
     pub file_attributes: HashMap<String, bool>,
-    pub file_name: String,
+    pub file_name: OsString,
     pub file_size: u64,
     pub file_type: FileType,
     pub last_modified_date: SystemTime,
     pub level: Level,
     pub metadata_tags: HashMap<String, String>,
-    pub owner: String,
-    pub permissions: String,
+    pub owner: OsString,
+    pub permissions: OsString,
     pub relative_path: PathBuf,
 }
 
@@ -42,10 +43,8 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
         let file_name = dir_entry
             .path()
             .file_name()
-            .expect("Error retrive filename")
-            .to_str()
-            .expect("Error convert OsStr to &str")
-            .to_string();
+            .map(|os_str| os_str.to_os_string())
+            .unwrap();
 
         let metadata = fs::symlink_metadata(dir_entry.path())?;
 
@@ -57,10 +56,10 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             level: *level,
             creation_date: SystemTime::now(),
             last_modified_date: SystemTime::now(),
-            owner: String::new(),
-            permissions: String::new(),
+            owner: OsString::new(),
+            permissions: OsString::new(),
             metadata_tags: HashMap::new(),
-            checksum: String::new(),
+            checksum: OsString::new(),
             absolute_path,
             relative_path,
             file_attributes: HashMap::new(),
@@ -80,7 +79,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
 
     fn with_file_name(mut self, file_path: PathBuf) -> Self {
         if let Some(file_name) = file_path.file_name() {
-            self.file_name = file_name.to_string_lossy().to_string();
+            self.file_name = file_name.to_os_string();
         }
         self
     }
@@ -102,7 +101,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
         let permissions = metadata.permissions();
         let mode = permissions.mode();
         let octal_perms = format!("{:03o}", mode & 0o777);
-        self.permissions = octal_perms;
+        self.permissions = OsString::from(octal_perms);
         self
     }
 
@@ -111,13 +110,13 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             walk.config
                 .canva
                 .buffer
-                .paint(&self.file_name, walk.cr.wp)?;
+                .paint(&self.file_name, walk.setting.cr.wp)?;
             walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.dir_plus_one();
             walk.config.tree.level.plus_one();
 
             let walk_opts = WalkDirOption { flag: 1 };
-            let mut walk = WalkDir::new(walk_opts, walk.config, walk.root, walk.cr)?;
+            let mut walk = WalkDir::new(walk_opts, walk.config, walk.root, walk.setting.clone())?;
             let path = Directory::new(&self.absolute_path)?;
 
             walk.walk_dir(path)?;
