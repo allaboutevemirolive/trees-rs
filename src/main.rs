@@ -8,16 +8,11 @@ mod tree;
 mod util;
 mod walk;
 
-use std::path::PathBuf;
-
 use crate::{
     canva::Canva,
     cli::{arg::TreeArgs, opt::Setting},
-    config::{
-        path::{get_absolute_current_shell, Directory},
-        registry::CallbackRegistry,
-    },
-    error::simple::{UResult, USimpleError},
+    config::path::Directory,
+    error::simple::UResult,
     report::Report,
     tree::{level::Level, Tree},
     walk::{WalkDir, WalkDirConfig, WalkDirOption},
@@ -30,20 +25,8 @@ fn main() -> UResult<()> {
     let canva = Canva::new()?;
     let report = Report::new()?;
 
-    // let cr = CallbackRegistry::new()?;
-
-    // // config
+    // config
     let mut config = WalkDirConfig::new(tree, canva, report)?;
-
-    // // root
-    // let curr = get_absolute_current_shell().map_err(|err| {
-    //     USimpleError::new(1, format!("Failed to get absolute current shell: {}", err))
-    // })?;
-    // let mut root = PathBuf::new();
-    // root.push(curr);
-
-    // -----------------
-
     let mut setting = Setting::new()?;
 
     let mut args = TreeArgs::new();

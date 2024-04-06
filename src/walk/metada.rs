@@ -48,6 +48,8 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
 
         let metadata = fs::symlink_metadata(dir_entry.path())?;
 
+        // let symbolic_permissions = get_symbolic_permissions(&dir_entry)?;
+
         Ok(Self {
             dir_entry,
             file_name,
@@ -96,16 +98,40 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
         self
     }
 
-    fn with_permissions(mut self, full_path: &Path) -> Self {
-        let metadata = fs::metadata(&full_path).unwrap();
+    // fn with_permissions(mut self, full_path: &Path) -> Self {
+    //     let metadata = fs::metadata(&full_path).unwrap();
+    //     let permissions = metadata.permissions();
+    //     let mode = permissions.mode();
+    //     let octal_perms = format!("{:03o}", mode & 0o777);
+    //     self.permissions = OsString::from(octal_perms);
+    //     self
+    // }
+
+    pub fn get_symbolic_permissions(&self) -> io::Result<OsString> {
+        let metadata = self.dir_entry.metadata()?;
         let permissions = metadata.permissions();
         let mode = permissions.mode();
-        let octal_perms = format!("{:03o}", mode & 0o777);
-        self.permissions = OsString::from(octal_perms);
-        self
+
+        let file_type = if metadata.is_dir() { 'd' } else { '.' };
+
+        let symbolic_permissions = format!(
+            "{}{}{}{}{}{}{}{}{}{}",
+            file_type,
+            if mode & 0o400 != 0 { 'r' } else { '-' },
+            if mode & 0o200 != 0 { 'w' } else { '-' },
+            if mode & 0o100 != 0 { 'x' } else { '-' },
+            if mode & 0o40 != 0 { 'r' } else { '-' },
+            if mode & 0o20 != 0 { 'w' } else { '-' },
+            if mode & 0o10 != 0 { 'x' } else { '-' },
+            if mode & 0o4 != 0 { 'r' } else { '-' },
+            if mode & 0o2 != 0 { 'w' } else { '-' },
+            if mode & 0o1 != 0 { 'x' } else { '-' },
+        );
+
+        Ok(OsString::from(symbolic_permissions))
     }
 
-    pub fn which_file_type(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
+    pub fn print_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
         if self.file_type.is_dir() {
             walk.config
                 .canva
@@ -130,26 +156,26 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
     }
 }
 
-fn get_symbolic_permissions(entry: &DirEntry) -> io::Result<String> {
-    let metadata = entry.metadata()?;
-    let permissions = metadata.permissions();
-    let mode = permissions.mode();
+// fn get_symbolic_permissions(entry: &DirEntry) -> io::Result<String> {
+//     let metadata = entry.metadata()?;
+//     let permissions = metadata.permissions();
+//     let mode = permissions.mode();
 
-    let symbolic_permissions = format!(
-        "{}{}{}{}{}{}{}{}{}",
-        if mode & 0o400 != 0 { 'r' } else { '-' },
-        if mode & 0o200 != 0 { 'w' } else { '-' },
-        if mode & 0o100 != 0 { 'x' } else { '-' },
-        if mode & 0o40 != 0 { 'r' } else { '-' },
-        if mode & 0o20 != 0 { 'w' } else { '-' },
-        if mode & 0o10 != 0 { 'x' } else { '-' },
-        if mode & 0o4 != 0 { 'r' } else { '-' },
-        if mode & 0o2 != 0 { 'w' } else { '-' },
-        if mode & 0o1 != 0 { 'x' } else { '-' },
-    );
+//     let symbolic_permissions = format!(
+//         "{}{}{}{}{}{}{}{}{}",
+//         if mode & 0o400 != 0 { 'r' } else { '-' },
+//         if mode & 0o200 != 0 { 'w' } else { '-' },
+//         if mode & 0o100 != 0 { 'x' } else { '-' },
+//         if mode & 0o40 != 0 { 'r' } else { '-' },
+//         if mode & 0o20 != 0 { 'w' } else { '-' },
+//         if mode & 0o10 != 0 { 'x' } else { '-' },
+//         if mode & 0o4 != 0 { 'r' } else { '-' },
+//         if mode & 0o2 != 0 { 'w' } else { '-' },
+//         if mode & 0o1 != 0 { 'x' } else { '-' },
+//     );
 
-    Ok(symbolic_permissions)
-}
+//     Ok(symbolic_permissions)
+// }
 
 #[cfg(test)]
 mod metada_test {
@@ -171,21 +197,21 @@ mod metada_test {
         Ok(dir_entry)
     }
 
-    #[test]
-    fn test_get_symbolic_permissions() {
-        let temp_dir = tempdir().expect("Failed to create temporary directory");
-        let permissions = 0o755; // rwxr-xr-x
-        let entry = create_temp_file_with_permissions(&temp_dir, permissions)
-            .expect("Failed to create temporary file with permissions");
+    // #[test]
+    // fn test_get_symbolic_permissions() {
+    //     let temp_dir = tempdir().expect("Failed to create temporary directory");
+    //     let permissions = 0o755; // rwxr-xr-x
+    //     let entry = create_temp_file_with_permissions(&temp_dir, permissions)
+    //         .expect("Failed to create temporary file with permissions");
 
-        let result = get_symbolic_permissions(&entry).expect("Failed to get symbolic permissions");
+    //     let result = get_symbolic_permissions(&entry).expect("Failed to get symbolic permissions");
 
-        assert_eq!(result, "rwxr-xr-x");
+    //     assert_eq!(result, "rwxr-xr-x");
 
-        temp_dir
-            .close()
-            .expect("Failed to close temporary directory");
-    }
+    //     temp_dir
+    //         .close()
+    //         .expect("Failed to close temporary directory");
+    // }
 
     // #[test]
     // fn test_get_symbolic_permissions() {

@@ -62,6 +62,19 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
         let entries_len = entries.len();
 
         for (idx, entry) in entries {
+            let meta = FileMetadata::new(entry, &self.root, &self.config.tree.level)?;
+
+            // Print file attributes
+            self.config
+                .canva
+                .buffer
+                .paint_attribute(&meta, self.setting.cr.wa)?;
+
+            self.config
+                .canva
+                .buffer
+                .paint_date(&meta, self.setting.cr.wd)?;
+
             self.config.tree.nod.mark_entry(idx, entries_len);
 
             for (value, has_next) in self.config.tree.nod.into_iter() {
@@ -72,7 +85,8 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
                 )?;
             }
 
-            FileMetadata::new(entry, &self.root, &self.config.tree.level)?.which_file_type(self)?;
+            // Print filename
+            meta.print_entry(self)?;
 
             self.config.tree.nod.pop();
         }

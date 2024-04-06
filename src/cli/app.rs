@@ -1,4 +1,4 @@
-use clap::{arg, command, value_parser, Arg, ArgAction, Command};
+use clap::{Arg, ArgAction, Command};
 
 pub mod options {
     pub mod miscellaneous {
@@ -27,6 +27,11 @@ pub mod options {
         pub static ALL: &str = "read-all-entries";
         pub static VISIBLE: &str = "read-visible-entries";
         pub static FOLDER: &str = "read-folders";
+    }
+
+    pub mod meta {
+        pub static ATTRIBUTE: &str = "show-entries-attribute";
+        pub static DATE: &str = "show-entries-date-creation";
     }
 }
 
@@ -109,6 +114,20 @@ pub fn tree_app() -> Command {
                 .long("folder")
                 // .short('A')
                 .help("Print directoris only.")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new(options::meta::ATTRIBUTE)
+                .long("attribute")
+                .short('a')
+                .help("Print entires attribute.")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new(options::meta::DATE)
+                .long("date")
+                .short('D')
+                .help("Print entires date-creation.")
                 .action(ArgAction::SetTrue),
         )
         .arg(

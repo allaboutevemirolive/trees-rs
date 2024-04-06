@@ -73,6 +73,14 @@ impl<'a> TreeArgs {
             setting.cr.read_visible_folders()?;
         }
 
+        if matches.get_flag(options::meta::ATTRIBUTE) {
+            setting.cr.with_attributes()?;
+        }
+
+        if matches.get_flag(options::meta::DATE) {
+            setting.cr.with_date()?;
+        }
+
         Ok(path.to_path_buf())
     }
 }

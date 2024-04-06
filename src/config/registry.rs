@@ -1,7 +1,8 @@
+// use crate::canva::buffer::WhichDate;
 use std::io::StdoutLock;
 
 use crate::{
-    canva::buffer::{Buffer, WhichPaint},
+    canva::buffer::{Buffer, WhichAttribute, WhichDate, WhichPaint},
     config::path::WhichReader,
     error::simple::UResult,
     sort::dent::{reverse_sort_by_name, sort_by_name, WhichSort},
@@ -14,6 +15,8 @@ pub struct CallbackRegistry<'a> {
     pub wr: WhichReader,
     pub ws: WhichSort,
     pub wp: WhichPaint<StdoutLock<'a>>,
+    pub wa: WhichAttribute<StdoutLock<'a>>,
+    pub wd: WhichDate<StdoutLock<'a>>,
 }
 
 impl<'a> CallbackRegistry<'a> {
@@ -21,7 +24,9 @@ impl<'a> CallbackRegistry<'a> {
         let wr: WhichReader = Directory::read_visible_entries;
         let ws: WhichSort = sort_by_name;
         let wp: WhichPaint<StdoutLock> = Buffer::write_dir_name_color;
-        Ok(Self { wr, ws, wp })
+        let wa: WhichAttribute<StdoutLock> = Buffer::write_no_attribute;
+        let wd: WhichDate<StdoutLock> = Buffer::write_no_date;
+        Ok(Self { wr, ws, wp, wa, wd })
     }
 }
 
@@ -46,6 +51,26 @@ impl<'a> CallbackRegistry<'a> {
 
     pub fn with_reverse_sort_entries(&mut self) -> UResult<()> {
         Ok(self.ws = reverse_sort_by_name)
+    }
+}
+
+impl<'a> CallbackRegistry<'a> {
+    pub fn with_attributes(&mut self) -> UResult<()> {
+        Ok(self.wa = Buffer::write_attribute)
+    }
+
+    pub fn with_no_attributes(&mut self) -> UResult<()> {
+        Ok(self.wa = Buffer::write_no_attribute)
+    }
+}
+
+impl<'a> CallbackRegistry<'a> {
+    pub fn with_date(&mut self) -> UResult<()> {
+        Ok(self.wd = Buffer::write_date)
+    }
+
+    pub fn with_no_date(&mut self) -> UResult<()> {
+        Ok(self.wd = Buffer::write_no_date)
     }
 }
 

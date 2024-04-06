@@ -1,3 +1,4 @@
+use chrono::{DateTime, Local};
 use std::ffi::OsString;
 use std::{
     io::{self, BufWriter, Write},
@@ -5,6 +6,7 @@ use std::{
 };
 
 use crate::error::simple::UResult;
+use crate::walk::metada::FileMetadata;
 
 #[derive(Debug)]
 pub struct Buffer<W: Write> {
@@ -57,6 +59,10 @@ impl<W: Write> Buffer<W> {
     pub fn write_space(&mut self) -> io::Result<()> {
         self.buf_writer.write_all(" ".as_bytes())
     }
+
+    // pub fn write_nothing(&mut self) -> io::Result<()> {
+    //     self.buf_writer.write_all("".as_bytes())
+    // }
 }
 
 impl<W: Write> Buffer<W> {
@@ -115,6 +121,52 @@ impl<W: Write> Buffer<W> {
     pub fn paint(&mut self, dir: &OsString, f: WhichPaint<W>) -> io::Result<()> {
         f(self, dir)
     }
+}
+
+pub type WhichAttribute<W> = fn(&mut Buffer<W>, &FileMetadata) -> io::Result<()>;
+
+impl<W: Write> Buffer<W> {
+    pub fn write_attribute(&mut self, meta: &FileMetadata) -> io::Result<()> {
+        let symbolic_permissions = meta.get_symbolic_permissions()?;
+        self.buf_writer.write_all("│ ".as_bytes())?;
+        self.buf_writer
+            .write_all(symbolic_permissions.as_encoded_bytes())?;
+        self.buf_writer.write_all(" │".as_bytes())?;
+        self.write_space()
+    }
+
+    pub fn write_no_attribute(&mut self, _meta: &FileMetadata) -> io::Result<()> {
+        self.buf_writer.write_all("".as_bytes())
+    }
+
+    pub fn paint_attribute(&mut self, meta: &FileMetadata, f: WhichAttribute<W>) -> io::Result<()> {
+        f(self, meta)
+    }
+}
+
+pub type WhichDate<W> = fn(&mut Buffer<W>, &FileMetadata) -> io::Result<()>;
+
+impl<W: Write> Buffer<W> {
+    pub fn write_date(&mut self, meta: &FileMetadata) -> io::Result<()> {
+        let created = meta.dir_entry.metadata()?.created()?;
+        let time = format_system_time(created);
+        self.buf_writer.write_all(time.as_bytes())?;
+        self.buf_writer.write_all(" │".as_bytes())?;
+        self.write_space()
+    }
+
+    pub fn write_no_date(&mut self, _meta: &FileMetadata) -> io::Result<()> {
+        self.buf_writer.write_all("".as_bytes())
+    }
+
+    pub fn paint_date(&mut self, meta: &FileMetadata, f: WhichDate<W>) -> io::Result<()> {
+        f(self, meta)
+    }
+}
+
+fn format_system_time(time: std::time::SystemTime) -> String {
+    let datetime: DateTime<Local> = time.into();
+    datetime.format("%e %b %H:%M").to_string()
 }
 
 #[cfg(test)]
