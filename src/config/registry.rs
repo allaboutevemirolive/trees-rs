@@ -13,7 +13,6 @@ use super::path::Directory;
 pub struct CallbackRegistry<'a> {
     pub wr: WhichReader,
     pub ws: WhichSort,
-    // pub wp: WhichPaint<StdoutLock<'a>>,
     pub wa: WhichAttribute<StdoutLock<'a>>,
     pub wd: WhichDate<StdoutLock<'a>>,
     pub we: WhichEntry<StdoutLock<'a>>,
@@ -23,19 +22,11 @@ impl<'a> CallbackRegistry<'a> {
     pub fn new() -> UResult<Self> {
         let wr: WhichReader = Directory::read_visible_entries;
         let ws: WhichSort = sort_by_name;
-        // let wp: WhichPaint<StdoutLock> = Buffer::write_dir_name_color;
         let wa: WhichAttribute<StdoutLock> = Buffer::write_no_attribute;
         let wd: WhichDate<StdoutLock> = Buffer::write_no_date;
         let we: WhichEntry<StdoutLock> = Buffer::write_dirname_color;
 
-        Ok(Self {
-            wr,
-            ws,
-            // wp,
-            wa,
-            wd,
-            we,
-        })
+        Ok(Self { wr, ws, wa, wd, we })
     }
 }
 

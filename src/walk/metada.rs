@@ -140,11 +140,6 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
 
     pub fn paint_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
         if self.file_type.is_dir() {
-            // walk.config
-            //     .canva
-            //     .buffer
-            //     .paint(&self.file_name, walk.setting.cr.wp)?;
-
             walk.config.canva.buffer.paint_entry(
                 &self,
                 &walk.root,
@@ -169,7 +164,6 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             walk.walk_dir(path)?;
             walk.config.tree.level.minus_one();
         } else {
-            // walk.config.canva.buffer.write_filename(&self.file_name)?;
             walk.config.canva.buffer.paint_entry(
                 &self,
                 &walk.root,
@@ -183,27 +177,6 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
         Ok(())
     }
 }
-
-// fn get_symbolic_permissions(entry: &DirEntry) -> io::Result<String> {
-//     let metadata = entry.metadata()?;
-//     let permissions = metadata.permissions();
-//     let mode = permissions.mode();
-
-//     let symbolic_permissions = format!(
-//         "{}{}{}{}{}{}{}{}{}",
-//         if mode & 0o400 != 0 { 'r' } else { '-' },
-//         if mode & 0o200 != 0 { 'w' } else { '-' },
-//         if mode & 0o100 != 0 { 'x' } else { '-' },
-//         if mode & 0o40 != 0 { 'r' } else { '-' },
-//         if mode & 0o20 != 0 { 'w' } else { '-' },
-//         if mode & 0o10 != 0 { 'x' } else { '-' },
-//         if mode & 0o4 != 0 { 'r' } else { '-' },
-//         if mode & 0o2 != 0 { 'w' } else { '-' },
-//         if mode & 0o1 != 0 { 'x' } else { '-' },
-//     );
-
-//     Ok(symbolic_permissions)
-// }
 
 #[cfg(test)]
 mod metada_test {

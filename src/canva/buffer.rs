@@ -5,7 +5,6 @@ use std::{
     path::PathBuf,
 };
 
-// use crate::config::path::get_relative_path;
 use crate::error::simple::UResult;
 use crate::walk::metada::FileMetadata;
 
@@ -38,13 +37,14 @@ impl<W: Write> Buffer<W> {
         self.write_space()?;
         self.write_message("files,")?;
         self.write_space()?;
+        self.write_message(&message.3)?;
+        self.write_space()?;
+        self.write_message("hidden")?;
+        self.write_space()?;
         self.write_message(&message.2)?;
         self.write_space()?;
         self.write_message("size,")?;
-        self.write_space()?;
-        self.write_message(&message.3)?;
-        self.write_space()?;
-        self.write_message("hidden")
+        Ok(())
     }
 }
 
@@ -196,10 +196,11 @@ pub type WhichAttribute<W> = fn(&mut Buffer<W>, &FileMetadata) -> io::Result<()>
 impl<W: Write> Buffer<W> {
     pub fn write_attribute(&mut self, meta: &FileMetadata) -> io::Result<()> {
         let symbolic_permissions = meta.get_symbolic_permissions()?;
-        self.buf_writer.write_all("│ ".as_bytes())?;
+        // self.buf_writer.write_all("│ ".as_bytes())?;
+        self.write_space()?;
         self.buf_writer
             .write_all(symbolic_permissions.as_encoded_bytes())?;
-        self.buf_writer.write_all(" │".as_bytes())?;
+        // self.buf_writer.write_all(" │".as_bytes())?;
         self.write_space()
     }
 
@@ -218,8 +219,9 @@ impl<W: Write> Buffer<W> {
     pub fn write_date(&mut self, meta: &FileMetadata) -> io::Result<()> {
         let created = meta.dir_entry.metadata()?.created()?;
         let time = format_system_time(created);
+        self.write_space()?;
         self.buf_writer.write_all(time.as_bytes())?;
-        self.buf_writer.write_all(" │".as_bytes())?;
+        // self.buf_writer.write_all(" │".as_bytes())?;
         self.write_space()
     }
 
