@@ -6,30 +6,30 @@ use crate::{
 
 use super::{WalkDir, WalkDirOption};
 
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use std::ffi::OsString;
 use std::fs::{self, DirEntry, FileType};
 use std::io::{self};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
+// use std::time::SystemTime;
 
 #[derive(Debug)]
 pub struct FileMetadata {
     pub absolute_path: PathBuf,
-    pub checksum: OsString,
-    pub creation_date: SystemTime,
+    // pub checksum: OsString,
+    // pub creation_date: SystemTime,
     pub dir_entry: DirEntry,
-    pub file_attributes: HashMap<String, bool>,
+    // pub file_attributes: HashMap<String, bool>,
     pub file_name: OsString,
-    pub file_size: u64,
+    // pub file_size: u64,
     pub file_type: FileType,
-    pub last_modified_date: SystemTime,
+    // pub last_modified_date: SystemTime,
     pub level: Level,
-    pub metadata_tags: HashMap<String, String>,
-    pub owner: OsString,
-    pub permissions: OsString,
-    pub relative_path: PathBuf,
+    // pub metadata_tags: HashMap<String, String>,
+    // pub owner: OsString,
+    // pub permissions: OsString,
+    // pub relative_path: PathBuf,
 }
 
 impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
@@ -39,64 +39,71 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
     pub fn new(dir_entry: DirEntry, current_dir: &PathBuf, level: &Level) -> UResult<Self> {
         let file_type = dir_entry.file_type()?;
         let absolute_path = dir_entry.path();
-        let relative_path = get_relative_path(&dir_entry, current_dir).unwrap_or(PathBuf::new());
+        // let relative_path = get_relative_path(&dir_entry, current_dir).unwrap_or(PathBuf::new());
         let file_name = dir_entry
             .path()
             .file_name()
             .map(|os_str| os_str.to_os_string())
             .unwrap();
 
-        let metadata = fs::symlink_metadata(dir_entry.path())?;
-
-        // let symbolic_permissions = get_symbolic_permissions(&dir_entry)?;
+        // let metadata = fs::symlink_metadata(dir_entry.path())?;
 
         Ok(Self {
             dir_entry,
             file_name,
-            file_size: metadata.len(),
+            // file_size: metadata.len(),
             file_type,
             level: *level,
-            creation_date: SystemTime::now(),
-            last_modified_date: SystemTime::now(),
-            owner: OsString::new(),
-            permissions: OsString::new(),
-            metadata_tags: HashMap::new(),
-            checksum: OsString::new(),
+            // creation_date: SystemTime::now(),
+            // last_modified_date: SystemTime::now(),
+            // owner: OsString::new(),
+            // permissions: OsString::new(),
+            // metadata_tags: HashMap::new(),
+            // checksum: OsString::new(),
             absolute_path,
-            relative_path,
-            file_attributes: HashMap::new(),
+            // relative_path,
+            // file_attributes: HashMap::new(),
         })
     }
 
-    fn with_file_path(mut self, file_path: DirEntry) -> Self {
-        let full_path = file_path
-            .path()
-            .file_name()
-            .expect("Error retrive filename")
-            .to_str()
-            .expect("Error convert OsStr to &str")
-            .to_string();
-        self
-    }
-
-    fn with_file_name(mut self, file_path: PathBuf) -> Self {
-        if let Some(file_name) = file_path.file_name() {
-            self.file_name = file_name.to_os_string();
+    pub fn get_relative_path(&self, current_dir: &PathBuf) -> Option<PathBuf> {
+        let path = self.dir_entry.path();
+        if let Ok(relative_path) = path.strip_prefix(current_dir) {
+            Some(relative_path.to_path_buf())
+        } else {
+            None
         }
-        self
     }
 
-    fn with_file_type(mut self, entry: DirEntry) -> Self {
-        let file_type = entry.file_type().unwrap();
-        self.file_type = file_type;
-        self
-    }
+    // fn with_file_path(mut self, file_path: DirEntry) -> Self {
+    //     let full_path = file_path
+    //         .path()
+    //         .file_name()
+    //         .expect("Error retrive filename")
+    //         .to_str()
+    //         .expect("Error convert OsStr to &str")
+    //         .to_string();
+    //     self
+    // }
 
-    fn with_size(mut self, full_path: PathBuf) -> Self {
-        let metadata = fs::symlink_metadata(&full_path).unwrap();
-        self.file_size = metadata.len();
-        self
-    }
+    // fn with_file_name(mut self, file_path: PathBuf) -> Self {
+    //     if let Some(file_name) = file_path.file_name() {
+    //         self.file_name = file_name.to_os_string();
+    //     }
+    //     self
+    // }
+
+    // fn with_file_type(mut self, entry: DirEntry) -> Self {
+    //     let file_type = entry.file_type().unwrap();
+    //     self.file_type = file_type;
+    //     self
+    // }
+
+    // fn with_size(mut self, full_path: PathBuf) -> Self {
+    //     let metadata = fs::symlink_metadata(&full_path).unwrap();
+    //     self.file_size = metadata.len();
+    //     self
+    // }
 
     // fn with_permissions(mut self, full_path: &Path) -> Self {
     //     let metadata = fs::metadata(&full_path).unwrap();
@@ -131,24 +138,45 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
         Ok(OsString::from(symbolic_permissions))
     }
 
-    pub fn print_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
+    pub fn paint_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
         if self.file_type.is_dir() {
-            walk.config
-                .canva
-                .buffer
-                .paint(&self.file_name, walk.setting.cr.wp)?;
+            // walk.config
+            //     .canva
+            //     .buffer
+            //     .paint(&self.file_name, walk.setting.cr.wp)?;
+
+            walk.config.canva.buffer.paint_entry(
+                &self,
+                &walk.root,
+                &walk.parent,
+                walk.setting.cr.we,
+            )?;
+
             walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.dir_plus_one();
             walk.config.tree.level.plus_one();
 
             let walk_opts = WalkDirOption { flag: 1 };
-            let mut walk = WalkDir::new(walk_opts, walk.config, walk.root, walk.setting.clone())?;
+            let mut walk = WalkDir::new(
+                walk_opts,
+                walk.config,
+                walk.root,
+                walk.parent,
+                walk.setting.clone(),
+            )?;
             let path = Directory::new(&self.absolute_path)?;
 
             walk.walk_dir(path)?;
             walk.config.tree.level.minus_one();
         } else {
-            walk.config.canva.buffer.write_file_name(&self.file_name)?;
+            // walk.config.canva.buffer.write_filename(&self.file_name)?;
+            walk.config.canva.buffer.paint_entry(
+                &self,
+                &walk.root,
+                &walk.parent,
+                walk.setting.cr.we,
+            )?;
+
             walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.file_plus_one();
         }

@@ -5,6 +5,7 @@ use std::{
     path::PathBuf,
 };
 
+// use crate::config::path::get_relative_path;
 use crate::error::simple::UResult;
 use crate::walk::metada::FileMetadata;
 
@@ -59,19 +60,15 @@ impl<W: Write> Buffer<W> {
     pub fn write_space(&mut self) -> io::Result<()> {
         self.buf_writer.write_all(" ".as_bytes())
     }
-
-    // pub fn write_nothing(&mut self) -> io::Result<()> {
-    //     self.buf_writer.write_all("".as_bytes())
-    // }
 }
 
 impl<W: Write> Buffer<W> {
-    pub fn write_relative_path(&mut self, relative_path: PathBuf) -> io::Result<()> {
-        // ToDO:
-        self.buf_writer.write_all("./".as_bytes())?;
-        self.buf_writer
-            .write_all(relative_path.to_str().unwrap().as_bytes())
-    }
+    // pub fn write_relative_path(&mut self, relative_path: PathBuf) -> io::Result<()> {
+    //     // ToDO:
+    //     self.buf_writer.write_all("./".as_bytes())?;
+    //     self.buf_writer
+    //         .write_all(relative_path.to_str().unwrap().as_bytes())
+    // }
 
     pub fn write_absolute_path(&mut self, absolute_path: PathBuf) -> io::Result<()> {
         self.buf_writer
@@ -95,28 +92,99 @@ impl<W: Write> Buffer<W> {
     }
 }
 
+pub type WhichEntry<W> = fn(&mut Buffer<W>, &FileMetadata, &PathBuf, &OsString) -> io::Result<()>;
+
+impl<W: Write> Buffer<W> {
+    pub fn write_relative_path(
+        &mut self,
+        meta: &FileMetadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
+        let relative_path = meta.get_relative_path(root).unwrap();
+
+        let mut path = PathBuf::new();
+        path.push(parent);
+        path.push(relative_path);
+
+        let path = path.to_owned().into_os_string();
+        self.buf_writer.write_all(path.as_encoded_bytes())?;
+
+        Ok(())
+    }
+
+    pub fn write_dirname(
+        &mut self,
+        meta: &FileMetadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
+        self.buf_writer
+            .write_all(meta.file_name.as_encoded_bytes())?;
+        Ok(())
+    }
+
+    pub fn write_dirname_color(
+        &mut self,
+        meta: &FileMetadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
+        self.buf_writer.write_all("\x1b[0;34m".as_bytes())?;
+        self.buf_writer
+            .write_all(meta.file_name.as_encoded_bytes())?;
+        self.buf_writer.write_all("\x1b[0m".as_bytes())?;
+        Ok(())
+    }
+
+    pub fn write_filename(
+        &mut self,
+        meta: &FileMetadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
+        self.buf_writer
+            .write_all(meta.file_name.as_encoded_bytes())?;
+        Ok(())
+    }
+
+    pub fn paint_entry(
+        &mut self,
+        meta: &FileMetadata,
+        root: &PathBuf,
+        parent: &OsString,
+        f: WhichEntry<W>,
+    ) -> io::Result<()> {
+        f(self, meta, root, parent)
+    }
+}
+
 pub type WhichPaint<W> = fn(&mut Buffer<W>, &OsString) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
-    pub fn write_dir_name(&mut self, dir: &OsString) -> io::Result<()> {
-        self.buf_writer.write_all(dir.as_encoded_bytes())
-    }
+    // pub fn write_dir_name(&mut self, dir: &OsString) -> io::Result<()> {
+    //     self.buf_writer.write_all(dir.as_encoded_bytes())
+    // }
 
-    pub fn write_dir_name_color(&mut self, dir: &OsString) -> io::Result<()> {
-        self.buf_writer.write_all("\x1b[0;34m".as_bytes())?; // blue
-        self.buf_writer.write_all(dir.as_encoded_bytes())?;
-        self.buf_writer.write_all("\x1b[0m".as_bytes())
-    }
+    // pub fn write_dir_name_color(&mut self, dir: &OsString) -> io::Result<()> {
+    //     self.buf_writer.write_all("\x1b[0;34m".as_bytes())?; // blue
+    //     self.buf_writer.write_all(dir.as_encoded_bytes())?;
+    //     self.buf_writer.write_all("\x1b[0m".as_bytes())
+    // }
 
-    pub fn write_file_name(&mut self, file: &OsString) -> io::Result<()> {
-        self.buf_writer.write_all(file.as_encoded_bytes())
-    }
+    // pub fn write_file_name(&mut self, file: &OsString) -> io::Result<()> {
+    //     self.buf_writer.write_all(file.as_encoded_bytes())
+    // }
 
     fn write_no_file_ext(&mut self, file: &OsString) -> io::Result<()> {
         self.buf_writer.write_all("\x1b[0;32m".as_bytes())?; // green
         self.buf_writer.write_all(file.as_encoded_bytes())?;
         self.buf_writer.write_all("\x1b[0m".as_bytes())
     }
+
+    // fn write_relative_path(&mut self, file: &OsString) -> io::Result<()> {
+    //     Ok(())
+    // }
 
     pub fn paint(&mut self, dir: &OsString, f: WhichPaint<W>) -> io::Result<()> {
         f(self, dir)
@@ -225,21 +293,21 @@ mod test {
     // }
 
     // cargo test test_paint -- --nocapture
-    #[test]
-    fn test_paint() {
-        let stdout = io::stdout();
-        // let buffer = Buffer::new(stdout.lock());
+    // #[test]
+    // fn test_paint() {
+    //     let stdout = io::stdout();
+    //     // let buffer = Buffer::new(stdout.lock());
 
-        let mut buffer = Buffer {
-            buf_writer: io::BufWriter::new(stdout.lock()),
-        };
-        // let color = Buffer::write_dir_name_color;
-        // let color: PaintText<S> = Buffer::<StdoutLock>::write_dir_name_color;
-        buffer
-            .paint(
-                &OsString::from("Hello World!"),
-                Buffer::write_dir_name_color,
-            )
-            .unwrap();
-    }
+    //     let mut buffer = Buffer {
+    //         buf_writer: io::BufWriter::new(stdout.lock()),
+    //     };
+    //     // let color = Buffer::write_dir_name_color;
+    //     // let color: PaintText<S> = Buffer::<StdoutLock>::write_dir_name_color;
+    //     buffer
+    //         .paint(
+    //             &OsString::from("Hello World!"),
+    //             Buffer::write_dir_name_color,
+    //         )
+    //         .unwrap();
+    // }
 }

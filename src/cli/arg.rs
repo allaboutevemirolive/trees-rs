@@ -40,10 +40,19 @@ impl<'a> TreeArgs {
         }
     }
 
-    pub fn match_app(&mut self, setting: &mut Setting<'a>) -> UResult<PathBuf> {
-        check_target_path(&mut self.args, setting);
+    pub fn match_app(&mut self, setting: &mut Setting<'a>) -> UResult<(PathBuf, OsString)> {
+        let path_exist = path_exist(&mut self.args, setting);
 
-        let path = &setting.path;
+        let mut path = &PathBuf::new();
+        let mut path_filename = OsString::new();
+
+        if path_exist {
+            path = &setting.path;
+            path_filename = setting.path.file_name().unwrap().into();
+        } else {
+            path = &setting.path;
+            path_filename = OsString::from(".");
+        }
 
         let matches = tree_app()
             .try_get_matches_from(self.args.clone())
@@ -59,6 +68,10 @@ impl<'a> TreeArgs {
 
         if matches.get_flag(options::color::COLORLESS) {
             setting.cr.with_colorless_entry()?;
+        }
+
+        if matches.get_flag(options::path::RELATIVE) {
+            setting.cr.with_relative_path()?;
         }
 
         if matches.get_flag(options::read::VISIBLE) {
@@ -81,16 +94,16 @@ impl<'a> TreeArgs {
             setting.cr.with_date()?;
         }
 
-        Ok(path.to_path_buf())
+        Ok((path.to_path_buf(), path_filename))
     }
 }
 
-fn check_target_path(args: &mut Vec<OsString>, setting: &mut Setting) {
+fn path_exist(args: &mut Vec<OsString>, setting: &mut Setting) -> bool {
     let mut delete_index = None;
 
     for (index, arg) in args.iter().skip(1).enumerate() {
-        if let Some(path) = valid_path(arg) {
-            setting.path = path;
+        if let Some(arg_path) = valid_path(arg) {
+            setting.path = arg_path;
             delete_index = Some(index + 1);
             break;
         }
@@ -98,6 +111,9 @@ fn check_target_path(args: &mut Vec<OsString>, setting: &mut Setting) {
 
     if let Some(index) = delete_index {
         args.remove(index);
+        true
+    } else {
+        false
     }
 }
 

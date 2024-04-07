@@ -1,8 +1,7 @@
-// use crate::canva::buffer::WhichDate;
 use std::io::StdoutLock;
 
 use crate::{
-    canva::buffer::{Buffer, WhichAttribute, WhichDate, WhichPaint},
+    canva::buffer::{Buffer, WhichAttribute, WhichDate, WhichEntry, WhichPaint},
     config::path::WhichReader,
     error::simple::UResult,
     sort::dent::{reverse_sort_by_name, sort_by_name, WhichSort},
@@ -14,19 +13,29 @@ use super::path::Directory;
 pub struct CallbackRegistry<'a> {
     pub wr: WhichReader,
     pub ws: WhichSort,
-    pub wp: WhichPaint<StdoutLock<'a>>,
+    // pub wp: WhichPaint<StdoutLock<'a>>,
     pub wa: WhichAttribute<StdoutLock<'a>>,
     pub wd: WhichDate<StdoutLock<'a>>,
+    pub we: WhichEntry<StdoutLock<'a>>,
 }
 
 impl<'a> CallbackRegistry<'a> {
     pub fn new() -> UResult<Self> {
         let wr: WhichReader = Directory::read_visible_entries;
         let ws: WhichSort = sort_by_name;
-        let wp: WhichPaint<StdoutLock> = Buffer::write_dir_name_color;
+        // let wp: WhichPaint<StdoutLock> = Buffer::write_dir_name_color;
         let wa: WhichAttribute<StdoutLock> = Buffer::write_no_attribute;
         let wd: WhichDate<StdoutLock> = Buffer::write_no_date;
-        Ok(Self { wr, ws, wp, wa, wd })
+        let we: WhichEntry<StdoutLock> = Buffer::write_dirname_color;
+
+        Ok(Self {
+            wr,
+            ws,
+            // wp,
+            wa,
+            wd,
+            we,
+        })
     }
 }
 
@@ -76,10 +85,14 @@ impl<'a> CallbackRegistry<'a> {
 
 impl<'a> CallbackRegistry<'a> {
     pub fn with_color_entry(&mut self) -> UResult<()> {
-        Ok(self.wp = Buffer::write_dir_name_color)
+        Ok(self.we = Buffer::write_dirname_color)
     }
 
     pub fn with_colorless_entry(&mut self) -> UResult<()> {
-        Ok(self.wp = Buffer::write_dir_name)
+        Ok(self.we = Buffer::write_dirname)
+    }
+
+    pub fn with_relative_path(&mut self) -> UResult<()> {
+        Ok(self.we = Buffer::write_relative_path)
     }
 }

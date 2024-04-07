@@ -7,7 +7,7 @@ use crate::{
     tree::Tree,
 };
 
-use std::path::PathBuf;
+use std::{ffi::OsString, path::PathBuf};
 
 pub mod metada;
 use self::metada::*;
@@ -17,6 +17,7 @@ pub struct WalkDir<'wd, 'cv, 'st> {
     pub opts: WalkDirOption,
     pub config: &'wd mut WalkDirConfig<'cv>,
     pub root: &'wd PathBuf,
+    pub parent: &'wd OsString,
     pub setting: Setting<'st>,
 }
 
@@ -47,12 +48,14 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
         opts: WalkDirOption,
         config: &'wd mut WalkDirConfig<'cv>,
         root: &'wd PathBuf,
+        parent: &'wd OsString,
         setting: Setting<'st>,
     ) -> UResult<Self> {
         Ok(Self {
             opts,
             config,
             root,
+            parent,
             setting,
         })
     }
@@ -86,7 +89,7 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             }
 
             // Print filename
-            meta.print_entry(self)?;
+            meta.paint_entry(self)?;
 
             self.config.tree.nod.pop();
         }

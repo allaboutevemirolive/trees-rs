@@ -31,11 +31,11 @@ fn main() -> UResult<()> {
 
     let mut args = TreeArgs::new();
 
-    let path = args.match_app(&mut setting)?;
+    let (path, path_filename) = args.match_app(&mut setting)?;
 
     // walk_opts
     let walk_opts = WalkDirOption { flag: 1 };
-    let mut walk = WalkDir::new(walk_opts, &mut config, &path, setting)?;
+    let mut walk = WalkDir::new(walk_opts, &mut config, &path, &path_filename, setting)?;
     let path = Directory::new(&walk.root)?;
 
     walk.walk_dir(path)?;
