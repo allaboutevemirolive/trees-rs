@@ -1,7 +1,10 @@
 use std::io::StdoutLock;
 
 use crate::{
-    canva::buffer::{Buffer, WhichAttribute, WhichDate, WhichEntry, WhichPaint},
+    canva::buffer::{
+        Buffer, WhichAttribute, WhichDate, WhichEntry, WhichFile, WhichHeader,
+        WhichHeaderAttribute, WhichHeaderDate,
+    },
     config::path::WhichReader,
     error::simple::UResult,
     sort::dent::{reverse_sort_by_name, sort_by_name, WhichSort},
@@ -15,7 +18,12 @@ pub struct CallbackRegistry<'a> {
     pub ws: WhichSort,
     pub wa: WhichAttribute<StdoutLock<'a>>,
     pub wd: WhichDate<StdoutLock<'a>>,
+    /// Folder    
     pub we: WhichEntry<StdoutLock<'a>>,
+    pub wf: WhichFile<StdoutLock<'a>>,
+    pub wh: WhichHeader<StdoutLock<'a>>,
+    pub wha: WhichHeaderAttribute<StdoutLock<'a>>,
+    pub whd: WhichHeaderDate<StdoutLock<'a>>,
 }
 
 impl<'a> CallbackRegistry<'a> {
@@ -25,8 +33,21 @@ impl<'a> CallbackRegistry<'a> {
         let wa: WhichAttribute<StdoutLock> = Buffer::write_no_attribute;
         let wd: WhichDate<StdoutLock> = Buffer::write_no_date;
         let we: WhichEntry<StdoutLock> = Buffer::write_dirname_color;
-
-        Ok(Self { wr, ws, wa, wd, we })
+        let wf: WhichFile<StdoutLock> = Buffer::write_filename;
+        let wh: WhichHeader<StdoutLock> = Buffer::write_header_name;
+        let wha: WhichHeaderAttribute<StdoutLock> = Buffer::write_no_header_attribute;
+        let whd: WhichHeaderDate<StdoutLock> = Buffer::write_no_header_date;
+        Ok(Self {
+            wr,
+            ws,
+            wa,
+            wd,
+            we,
+            wf,
+            wh,
+            wha,
+            whd,
+        })
     }
 }
 
@@ -56,7 +77,9 @@ impl<'a> CallbackRegistry<'a> {
 
 impl<'a> CallbackRegistry<'a> {
     pub fn with_attributes(&mut self) -> UResult<()> {
-        Ok(self.wa = Buffer::write_attribute)
+        self.wa = Buffer::write_attribute;
+        self.wha = Buffer::write_header_attribute;
+        Ok(())
     }
 
     pub fn with_no_attributes(&mut self) -> UResult<()> {
@@ -66,7 +89,9 @@ impl<'a> CallbackRegistry<'a> {
 
 impl<'a> CallbackRegistry<'a> {
     pub fn with_date(&mut self) -> UResult<()> {
-        Ok(self.wd = Buffer::write_date)
+        self.wd = Buffer::write_date;
+        self.whd = Buffer::write_header_date;
+        Ok(())
     }
 
     pub fn with_no_date(&mut self) -> UResult<()> {
@@ -84,6 +109,9 @@ impl<'a> CallbackRegistry<'a> {
     }
 
     pub fn with_relative_path(&mut self) -> UResult<()> {
-        Ok(self.we = Buffer::write_relative_path)
+        self.we = Buffer::write_relative_path;
+        self.wf = Buffer::write_file_relative_path;
+        self.wh = Buffer::write_header_relative_path;
+        Ok(())
     }
 }

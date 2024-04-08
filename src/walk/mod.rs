@@ -1,9 +1,5 @@
 use crate::{
-    canva::*,
-    cli::opt::Setting,
-    config::{path::Directory, registry::CallbackRegistry},
-    error::simple::UResult,
-    report::*,
+    canva::*, cli::opt::Setting, config::path::Directory, error::simple::UResult, report::*,
     tree::Tree,
 };
 
@@ -65,7 +61,7 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
         let entries_len = entries.len();
 
         for (idx, entry) in entries {
-            let meta = FileMetadata::new(entry, &self.root, &self.config.tree.level)?;
+            let meta = FileMetadata::new(entry, &self.config.tree.level)?;
 
             // Print file attributes
             self.config

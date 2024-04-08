@@ -10,12 +10,14 @@ pub struct TreeArgs {
     pub args: Vec<OsString>,
 }
 
+#[allow(dead_code)]
 impl<'a> TreeArgs {
     pub fn new() -> Self {
         let args: Vec<OsString> = env::args_os().collect();
         TreeArgs { args }
     }
 
+    #[allow(dead_code)]
     pub fn extract_paths(&self) -> (Vec<&OsString>, Vec<&OsString>) {
         let mut remaining_args = Vec::new();
         let mut paths = Vec::new();
@@ -43,12 +45,15 @@ impl<'a> TreeArgs {
     pub fn match_app(&mut self, setting: &mut Setting<'a>) -> UResult<(PathBuf, OsString)> {
         let path_exist = path_exist(&mut self.args, setting);
 
+        #[allow(unused_assignments)]
         let mut path = &PathBuf::new();
+        #[allow(unused_assignments)]
         let mut path_filename = OsString::new();
 
         if path_exist {
             path = &setting.path;
-            path_filename = setting.path.file_name().unwrap().into();
+            // path_filename = setting.path.file_name().unwrap().into();
+            path_filename = <PathBuf as Clone>::clone(&setting.path).into();
         } else {
             path = &setting.path;
             path_filename = OsString::from(".");

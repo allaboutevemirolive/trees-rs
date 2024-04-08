@@ -1,7 +1,9 @@
 use chrono::{DateTime, Local};
 use std::ffi::OsString;
+use std::fs::Metadata;
+use std::os::unix::fs::PermissionsExt;
 use std::{
-    io::{self, BufWriter, Write},
+    io::{self, Write},
     path::PathBuf,
 };
 
@@ -39,11 +41,11 @@ impl<W: Write> Buffer<W> {
         self.write_space()?;
         self.write_message(&message.3)?;
         self.write_space()?;
-        self.write_message("hidden")?;
+        self.write_message("hidden, ")?;
         self.write_space()?;
         self.write_message(&message.2)?;
         self.write_space()?;
-        self.write_message("size,")?;
+        self.write_message("size")?;
         Ok(())
     }
 }
@@ -62,33 +64,149 @@ impl<W: Write> Buffer<W> {
     }
 }
 
-impl<W: Write> Buffer<W> {
-    // pub fn write_relative_path(&mut self, relative_path: PathBuf) -> io::Result<()> {
-    //     // ToDO:
-    //     self.buf_writer.write_all("./".as_bytes())?;
-    //     self.buf_writer
-    //         .write_all(relative_path.to_str().unwrap().as_bytes())
-    // }
+pub type WhichHeader<W> = fn(&mut Buffer<W>, &Metadata, &PathBuf, &OsString) -> io::Result<()>;
 
-    pub fn write_absolute_path(&mut self, absolute_path: PathBuf) -> io::Result<()> {
+impl<W: Write> Buffer<W> {
+    pub fn write_header_relative_path(
+        &mut self,
+        meta: &Metadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
+        let mut path = PathBuf::new();
+        path.push(parent);
+
+        let path = path.to_owned().into_os_string();
+        self.buf_writer.write_all(path.as_encoded_bytes())?;
+
+        Ok(())
+    }
+
+    #[allow(unused_variables)]
+    pub fn write_header_name(
+        &mut self,
+        meta: &Metadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
         self.buf_writer
-            .write_all(absolute_path.to_str().unwrap().as_bytes())
+            .write_all(root.file_name().unwrap().as_encoded_bytes())?;
+        Ok(())
+    }
+
+    pub fn paint_header(
+        &mut self,
+        meta: &Metadata,
+        root: &PathBuf,
+        parent: &OsString,
+        f: WhichHeader<W>,
+    ) -> io::Result<()> {
+        f(self, meta, root, parent)
     }
 }
 
+pub type WhichHeaderDate<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
+
 impl<W: Write> Buffer<W> {
-    pub fn paint_text(&mut self, start: &str, text: &str, reset: &str) -> io::Result<()> {
-        self.start_color(start)?;
-        self.buf_writer.write_all(text.as_bytes())?;
-        self.reset_color(reset)
+    pub fn write_header_date(&mut self, meta: &Metadata) -> io::Result<()> {
+        let created = meta.created()?;
+        let time = format_system_time(created);
+        self.write_space()?;
+        self.buf_writer.write_all(time.as_bytes())?;
+        self.write_space()
     }
 
-    fn start_color(&mut self, start: &str) -> io::Result<()> {
-        self.buf_writer.write_all(start.as_bytes())
+    pub fn write_no_header_date(&mut self, _meta: &Metadata) -> io::Result<()> {
+        self.buf_writer.write_all("".as_bytes())
     }
 
-    fn reset_color(&mut self, start: &str) -> io::Result<()> {
-        self.buf_writer.write_all(start.as_bytes())
+    pub fn paint_header_date(&mut self, meta: &Metadata, f: WhichHeaderDate<W>) -> io::Result<()> {
+        f(self, meta)
+    }
+}
+
+pub type WhichHeaderAttribute<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
+
+impl<W: Write> Buffer<W> {
+    pub fn write_header_attribute(&mut self, meta: &Metadata) -> io::Result<()> {
+        let permissions = meta.permissions();
+        let mode = permissions.mode();
+
+        let file_type = if meta.is_dir() { 'd' } else { '.' };
+
+        let symbolic_permissions = format!(
+            "{}{}{}{}{}{}{}{}{}{}",
+            file_type,
+            if mode & 0o400 != 0 { 'r' } else { '-' },
+            if mode & 0o200 != 0 { 'w' } else { '-' },
+            if mode & 0o100 != 0 { 'x' } else { '-' },
+            if mode & 0o40 != 0 { 'r' } else { '-' },
+            if mode & 0o20 != 0 { 'w' } else { '-' },
+            if mode & 0o10 != 0 { 'x' } else { '-' },
+            if mode & 0o4 != 0 { 'r' } else { '-' },
+            if mode & 0o2 != 0 { 'w' } else { '-' },
+            if mode & 0o1 != 0 { 'x' } else { '-' },
+        );
+
+        self.write_space()?;
+        self.buf_writer.write_all(symbolic_permissions.as_bytes())?;
+        self.write_space()
+    }
+
+    pub fn write_no_header_attribute(&mut self, _meta: &Metadata) -> io::Result<()> {
+        self.buf_writer.write_all("".as_bytes())
+    }
+
+    pub fn paint_header_attribute(
+        &mut self,
+        meta: &Metadata,
+        f: WhichHeaderAttribute<W>,
+    ) -> io::Result<()> {
+        f(self, meta)
+    }
+}
+
+pub type WhichFile<W> = fn(&mut Buffer<W>, &FileMetadata, &PathBuf, &OsString) -> io::Result<()>;
+
+impl<W: Write> Buffer<W> {
+    pub fn write_file_relative_path(
+        &mut self,
+        meta: &FileMetadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
+        let relative_path = meta.get_relative_path(root).unwrap();
+
+        let mut path = PathBuf::new();
+        path.push(parent);
+        path.push(relative_path);
+
+        let path = path.to_owned().into_os_string();
+        self.buf_writer.write_all(path.as_encoded_bytes())?;
+
+        Ok(())
+    }
+
+    #[allow(unused_variables)]
+    pub fn write_filename(
+        &mut self,
+        meta: &FileMetadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
+        self.buf_writer
+            .write_all(meta.file_name.as_encoded_bytes())?;
+        Ok(())
+    }
+
+    pub fn paint_file(
+        &mut self,
+        meta: &FileMetadata,
+        root: &PathBuf,
+        parent: &OsString,
+        f: WhichFile<W>,
+    ) -> io::Result<()> {
+        f(self, meta, root, parent)
     }
 }
 
@@ -137,17 +255,6 @@ impl<W: Write> Buffer<W> {
         Ok(())
     }
 
-    pub fn write_filename(
-        &mut self,
-        meta: &FileMetadata,
-        root: &PathBuf,
-        parent: &OsString,
-    ) -> io::Result<()> {
-        self.buf_writer
-            .write_all(meta.file_name.as_encoded_bytes())?;
-        Ok(())
-    }
-
     pub fn paint_entry(
         &mut self,
         meta: &FileMetadata,
@@ -159,48 +266,14 @@ impl<W: Write> Buffer<W> {
     }
 }
 
-pub type WhichPaint<W> = fn(&mut Buffer<W>, &OsString) -> io::Result<()>;
-
-impl<W: Write> Buffer<W> {
-    // pub fn write_dir_name(&mut self, dir: &OsString) -> io::Result<()> {
-    //     self.buf_writer.write_all(dir.as_encoded_bytes())
-    // }
-
-    // pub fn write_dir_name_color(&mut self, dir: &OsString) -> io::Result<()> {
-    //     self.buf_writer.write_all("\x1b[0;34m".as_bytes())?; // blue
-    //     self.buf_writer.write_all(dir.as_encoded_bytes())?;
-    //     self.buf_writer.write_all("\x1b[0m".as_bytes())
-    // }
-
-    // pub fn write_file_name(&mut self, file: &OsString) -> io::Result<()> {
-    //     self.buf_writer.write_all(file.as_encoded_bytes())
-    // }
-
-    fn write_no_file_ext(&mut self, file: &OsString) -> io::Result<()> {
-        self.buf_writer.write_all("\x1b[0;32m".as_bytes())?; // green
-        self.buf_writer.write_all(file.as_encoded_bytes())?;
-        self.buf_writer.write_all("\x1b[0m".as_bytes())
-    }
-
-    // fn write_relative_path(&mut self, file: &OsString) -> io::Result<()> {
-    //     Ok(())
-    // }
-
-    pub fn paint(&mut self, dir: &OsString, f: WhichPaint<W>) -> io::Result<()> {
-        f(self, dir)
-    }
-}
-
 pub type WhichAttribute<W> = fn(&mut Buffer<W>, &FileMetadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
     pub fn write_attribute(&mut self, meta: &FileMetadata) -> io::Result<()> {
         let symbolic_permissions = meta.get_symbolic_permissions()?;
-        // self.buf_writer.write_all("│ ".as_bytes())?;
         self.write_space()?;
         self.buf_writer
             .write_all(symbolic_permissions.as_encoded_bytes())?;
-        // self.buf_writer.write_all(" │".as_bytes())?;
         self.write_space()
     }
 
@@ -221,7 +294,6 @@ impl<W: Write> Buffer<W> {
         let time = format_system_time(created);
         self.write_space()?;
         self.buf_writer.write_all(time.as_bytes())?;
-        // self.buf_writer.write_all(" │".as_bytes())?;
         self.write_space()
     }
 
@@ -246,16 +318,12 @@ mod test {
     // cargo test test_write_message -- --nocapture
     #[test]
     fn test_write_message() {
-        // Create a buffer with an in-memory writer
         let mut buffer = Buffer::new(Vec::new());
 
-        // Write a message to the buffer
         let message = "Hello, world!";
         buffer.as_mut().unwrap().write_message(&message).unwrap();
 
-        // Get the contents of the buffer
         let buffer_contents = buffer.unwrap().buf_writer.into_inner().unwrap();
-
         let output_string = String::from_utf8(buffer_contents).unwrap();
 
         assert_eq!(OsString::from(output_string), message);
@@ -268,48 +336,4 @@ mod test {
 
         buffer.unwrap().write_message("Hello, world!").unwrap();
     }
-
-    // use std::io::{Cursor, StdoutLock};
-
-    // // Mock implementation of Write trait for testing purposes
-    // struct MockWriter(Vec<u8>);
-
-    // impl Write for MockWriter {
-    //     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-    //         self.0.extend_from_slice(buf);
-    //         Ok(buf.len())
-    //     }
-
-    //     fn flush(&mut self) -> io::Result<()> {
-    //         Ok(())
-    //     }
-    // }
-
-    // #[test]
-    // fn test_write_dir_name() {
-    //     let mut buffer = Buffer {
-    //         buf_writer: io::BufWriter::new(MockWriter(Vec::new())),
-    //     };
-    //     buffer.write_dir_name("test_dir").unwrap();
-    //     assert_eq!(buffer.buf_writer.get_ref().0, b"test_dir");
-    // }
-
-    // cargo test test_paint -- --nocapture
-    // #[test]
-    // fn test_paint() {
-    //     let stdout = io::stdout();
-    //     // let buffer = Buffer::new(stdout.lock());
-
-    //     let mut buffer = Buffer {
-    //         buf_writer: io::BufWriter::new(stdout.lock()),
-    //     };
-    //     // let color = Buffer::write_dir_name_color;
-    //     // let color: PaintText<S> = Buffer::<StdoutLock>::write_dir_name_color;
-    //     buffer
-    //         .paint(
-    //             &OsString::from("Hello World!"),
-    //             Buffer::write_dir_name_color,
-    //         )
-    //         .unwrap();
-    // }
 }
