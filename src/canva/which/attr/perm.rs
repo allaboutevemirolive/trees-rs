@@ -1,8 +1,7 @@
-use std::{
-    fs::Metadata,
-    io::{self, Write},
-    os::unix::fs::PermissionsExt,
-};
+use std::fs::Metadata;
+use std::io;
+use std::io::Write;
+use std::os::unix::fs::PermissionsExt;
 
 use crate::canva::buffer::Buffer;
 

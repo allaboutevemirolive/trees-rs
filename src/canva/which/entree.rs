@@ -1,10 +1,9 @@
 use crate::canva::buffer::Buffer;
 use crate::walk::metada::FileMetadata;
-use std::{
-    ffi::OsString,
-    io::{self, Write},
-    path::PathBuf,
-};
+use std::ffi::OsString;
+use std::io;
+use std::io::Write;
+use std::path::PathBuf;
 
 pub type WhichEntry<W> = fn(&mut Buffer<W>, &FileMetadata, &PathBuf, &OsString) -> io::Result<()>;
 

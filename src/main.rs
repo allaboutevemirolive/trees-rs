@@ -7,30 +7,30 @@ mod sort;
 mod tree;
 mod util;
 mod walk;
-
-use std::{fs, os::unix::fs::MetadataExt};
-
-use canva::buffer::Buffer;
-
-use crate::{
-    canva::Canva,
-    cli::{arg::TreeArgs, opt::Setting},
-    config::path::Directory,
-    error::simple::UResult,
-    report::Report,
-    tree::{level::Level, Tree},
-    walk::{WalkDir, WalkDirConfig, WalkDirOption},
-};
+use crate::canva::which;
+use crate::canva::Canva;
+use crate::cli::arg::TreeArgs;
+use crate::cli::opt::Setting;
+use crate::config::path::Directory;
+use crate::error::simple::UResult;
+use crate::report::Report;
+use crate::tree::level::Level;
+use crate::tree::Tree;
+use crate::walk::WalkDir;
+use crate::walk::WalkDirConfig;
+use crate::walk::WalkDirOption;
+use std::fs;
 
 fn main() -> UResult<()> {
     let tree = Tree::new(Level::with_lvl_and_cap(1, 5000), 5000)?;
     let canva = Canva::new()?;
     let report = Report::new()?;
 
-    // config
+    // Setup config
     let mut config = WalkDirConfig::new(tree, canva, report)?;
     let mut setting = Setting::new()?;
 
+    // Collect arguments
     let mut args = TreeArgs::new();
 
     let (path, path_filename) = args.match_app(&mut setting)?;

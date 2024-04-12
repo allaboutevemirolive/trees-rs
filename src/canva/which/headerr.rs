@@ -1,6 +1,7 @@
 use std::ffi::OsString;
 use std::fs::Metadata;
-use std::io::{self, Write};
+use std::io;
+use std::io::Write;
 use std::path::PathBuf;
 
 use crate::canva::buffer::Buffer;

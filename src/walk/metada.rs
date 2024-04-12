@@ -1,11 +1,10 @@
-use crate::{config::path::Directory, error::simple::UResult, tree::level::Level};
-
-use super::{WalkDir, WalkDirOption};
-
+use super::WalkDir;
+use super::WalkDirOption;
+use crate::config::path::Directory;
+use crate::error::simple::UResult;
+use crate::tree::level::Level;
 use std::ffi::OsString;
-use std::fs::{self, DirEntry, FileType, Metadata};
-use std::io::{self};
-use std::os::unix::fs::PermissionsExt;
+use std::fs::{DirEntry, FileType, Metadata};
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -100,6 +99,7 @@ mod metada_test {
     #[allow(unused_imports)]
     use super::*;
     use std::fs::{self, File};
+    use std::io;
     #[allow(unused_imports)]
     use std::io::Write;
     #[allow(unused_imports)]

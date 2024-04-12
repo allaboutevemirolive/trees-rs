@@ -1,9 +1,12 @@
-use crate::{
-    canva::*, cli::opt::Setting, config::path::Directory, error::simple::UResult, report::*,
-    tree::Tree,
-};
+use crate::canva::*;
+use crate::cli::opt::Setting;
+use crate::config::path::Directory;
+use crate::error::simple::UResult;
+use crate::report::*;
+use crate::tree::Tree;
 
-use std::{ffi::OsString, path::PathBuf};
+use std::ffi::OsString;
+use std::path::PathBuf;
 
 pub mod metada;
 use self::metada::*;
@@ -63,19 +66,22 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
         for (idx, entry) in entries {
             let fmeta = FileMetadata::new(entry, &self.config.tree.level)?;
 
-            // Print file attributes
+            // Print entry's permission
             self.config
                 .canva
                 .buffer
                 .paint_permission(&fmeta.meta, self.setting.cr.wa)?;
 
+            // Print entry's creation-date
             self.config
                 .canva
                 .buffer
                 .paint_date(&fmeta.meta, self.setting.cr.wd)?;
 
+            // Mark node
             self.config.tree.nod.mark_entry(idx, entries_len);
 
+            // Print branch based on node
             for (value, has_next) in self.config.tree.nod.into_iter() {
                 self.config.tree.branch.paint_branch(
                     value,
@@ -84,9 +90,10 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
                 )?;
             }
 
-            // Print filename
+            // Print entry's name
             fmeta.paint_entry(self)?;
 
+            // Pop last node's element
             self.config.tree.nod.pop();
         }
         Ok(())
