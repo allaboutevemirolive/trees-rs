@@ -7,7 +7,6 @@ mod sort;
 mod tree;
 mod util;
 mod walk;
-// use crate::canva::which;
 use crate::canva::Canva;
 use crate::cli::arg::TreeArgs;
 use crate::cli::opt::Setting;

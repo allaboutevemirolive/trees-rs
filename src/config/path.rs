@@ -14,6 +14,7 @@ pub struct Directory {
     pub path: PathBuf,
 }
 
+#[allow(dead_code)]
 impl<'pt, 'wd, 'cv, 'cr> Directory {
     pub fn new(path: impl Into<PathBuf>) -> UResult<Self> {
         Ok(Directory { path: path.into() })
@@ -159,91 +160,21 @@ pub fn get_absolute_current_shell() -> UResult<OsString> {
         .into_os_string())
 }
 
-// fn extract_paths(args: Vec<String>) -> (Vec<String>, Vec<String>) {
-//     let mut remaining_args = Vec::new();
-//     let mut paths = Vec::new();
-
-//     for arg in args {
-//         if Path::new(&arg).exists() {
-//             paths.push(arg);
-//         } else {
-//             remaining_args.push(arg);
-//         }
-//     }
-
-//     (remaining_args, paths)
-// }
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
     use std::fs;
-    use tempfile::tempdir;
-
-    // #[test]
-    // fn test_read_entries() {
-    //     let temp_dir = tempdir().expect("Failed to create temporary directory");
-    //     // println!("{:?}", temp_dir);
-    //     let directory = Directory::new(temp_dir.path()).unwrap();
-
-    //     // Create some dummy files in the test directory
-    //     fs::File::create(directory.path.join("file1.txt")).unwrap();
-    //     fs::File::create(directory.path.join("file2.txt")).unwrap();
-
-    //     let entries = directory.read_all_entries().unwrap();
-    //     // Expecting at least two entries: "." and ".." directories and possibly the files we created
-    //     assert!(entries.len() >= 2);
-    // }
-
-    // #[test]
-    // fn test_iterate_entries() {
-    //     let temp_dir = tempdir().expect("Failed to create temporary directory");
-    //     let directory = Directory::new(temp_dir.path());
-
-    //     // Create some dummy files in the test directory
-    //     fs::File::create(directory.path.join("file1.txt")).unwrap();
-    //     fs::File::create(directory.path.join("file2.txt")).unwrap();
-
-    //     let enumerated_entries = directory.iterate_entries().unwrap();
-    //     // Expecting at least two entries: "." and ".." directories and possibly the files we created
-    //     assert!(enumerated_entries.len() >= 2);
-
-    //     // Iterating over enumerated_entries
-    //     for (index, entry) in enumerated_entries {
-    //         assert!(entry.file_name().to_string_lossy().contains("file"));
-    //     }
-    // }
-
-    // #[test]
-    // fn test_is_hidden_file() {
-    //     let temp_dir = tempdir().expect("Failed to create temporary directory");
-    //     let directory = Directory::new(temp_dir.path()).unwrap();
-
-    //     // Create a dummy hidden file in the test directory
-    //     fs::File::create(directory.path.join(".hidden_file")).unwrap();
-
-    //     let entries = directory.read_all_entries().unwrap();
-    //     for entry in entries {
-    //         if is_hidden_file(&entry) {
-    //             assert_eq!(entry.file_name().to_string_lossy().starts_with('.'), true);
-    //         } else {
-    //             assert_eq!(entry.file_name().to_string_lossy().starts_with('.'), false);
-    //         }
-    //     }
-    // }
+    // use tempfile::tempdir;
 
     // cargo test test_test -- --nocapture
     #[test]
     fn test_relative_path() {
-        // Get the current directory
         let current_dir = std::env::current_dir().expect("Failed to get current directory");
 
-        // Get the relative paths of files in the current directory
         if let Ok(entries) = fs::read_dir(&current_dir) {
             for entry in entries {
                 if let Ok(entry) = entry {
                     let path = entry.path();
-                    // Convert the full path to a relative path
                     let relative_path = path
                         .strip_prefix(&current_dir)
                         .expect("Failed to get relative path")
@@ -254,27 +185,4 @@ mod tests {
             }
         }
     }
-
-    // cargo test test_extract_paths -- --nocapture
-    // #[test]
-    // fn test_extract_paths() {
-    //     let temp_dir = tempdir().expect("Failed to create temporary directory");
-    //     let temp_dir_path = temp_dir.path().to_string_lossy().into_owned();
-
-    //     let args = vec![
-    //         String::from("arg1"),
-    //         temp_dir_path.clone(),
-    //         String::from("arg2"),
-    //         String::from("./relative/path/to/dir"),
-    //         String::from("dir_name"),
-    //     ];
-
-    //     let (remaining_args, paths) = extract_paths(args);
-
-    //     assert_eq!(
-    //         remaining_args,
-    //         vec!["arg1", "arg2", "./relative/path/to/dir", "dir_name"]
-    //     );
-    //     assert_eq!(paths, vec![temp_dir_path]);
-    // }
 }

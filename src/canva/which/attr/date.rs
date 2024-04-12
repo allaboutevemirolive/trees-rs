@@ -17,7 +17,8 @@ impl<W: Write> Buffer<W> {
     }
 
     pub fn write_no_date(&mut self, _meta: &Metadata) -> io::Result<()> {
-        self.buf_writer.write_all("".as_bytes())
+        // self.buf_writer.write_all("".as_bytes())
+        Ok(())
     }
 
     pub fn paint_date(&mut self, meta: &Metadata, f: WhichDate<W>) -> io::Result<()> {

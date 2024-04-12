@@ -91,12 +91,16 @@ impl<'a> TreeArgs {
             setting.cr.read_visible_folders()?;
         }
 
-        if matches.get_flag(options::meta::ATTRIBUTE) {
+        if matches.get_flag(options::meta::PERMISSION) {
             setting.cr.with_permission()?;
         }
 
         if matches.get_flag(options::meta::DATE) {
             setting.cr.with_date()?;
+        }
+
+        if matches.get_flag(options::meta::SIZE) {
+            setting.cr.with_size()?;
         }
 
         Ok((path.to_path_buf(), path_filename))

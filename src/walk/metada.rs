@@ -1,5 +1,4 @@
 use super::WalkDir;
-// use super::WalkDirOption;
 use crate::config::path::Directory;
 use crate::error::simple::UResult;
 use crate::tree::level::Level;
@@ -20,10 +19,6 @@ pub struct FileMetadata {
 }
 
 impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
-    // entry.file_type().unwrap() => file_type
-    // entry.path() => full_path
-    /// `current_dir` is the original shell session where this program is executed.
-    // , current_dir: &PathBuf
     pub fn new(dent: DirEntry, level: &Level) -> UResult<Self> {
         let filety = dent.file_type()?;
         let abs = dent.path();
@@ -66,18 +61,16 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
                 walk.setting.cr.we,
             )?;
 
+            walk.config
+                .canva
+                .buffer
+                .paint_size(&self.meta, walk.setting.cr.wsz)?;
+
             walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.dir_plus_one();
             walk.config.tree.level.plus_one();
 
-            // let walk_opts = WalkDirOption { flag: 1 };
-            let mut walk = WalkDir::new(
-                // walk_opts,
-                walk.config,
-                walk.root,
-                walk.parent,
-                walk.setting.clone(),
-            )?;
+            let mut walk = WalkDir::new(walk.config, walk.root, walk.parent, walk.setting.clone())?;
             let path = Directory::new(&self.abs)?;
 
             walk.walk_dir(path)?;
@@ -89,6 +82,11 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
                 &walk.parent,
                 walk.setting.cr.wf,
             )?;
+
+            walk.config
+                .canva
+                .buffer
+                .paint_size(&self.meta, walk.setting.cr.wsz)?;
 
             walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.file_plus_one();

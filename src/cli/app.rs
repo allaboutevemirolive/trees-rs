@@ -30,8 +30,9 @@ pub mod options {
     }
 
     pub mod meta {
-        pub static ATTRIBUTE: &str = "show-entries-attribute";
+        pub static PERMISSION: &str = "show-entries-attribute";
         pub static DATE: &str = "show-entries-date-creation";
+        pub static SIZE: &str = "Show-entries-size";
     }
 }
 
@@ -117,9 +118,9 @@ pub fn tree_app() -> Command {
                 .action(ArgAction::SetTrue),
         )
         .arg(
-            Arg::new(options::meta::ATTRIBUTE)
-                .long("attribute")
-                .short('a')
+            Arg::new(options::meta::PERMISSION)
+                .long("permission")
+                .short('p')
                 .help("Print entires attribute.")
                 .action(ArgAction::SetTrue),
         )
@@ -128,6 +129,13 @@ pub fn tree_app() -> Command {
                 .long("date")
                 .short('D')
                 .help("Print entires date-creation.")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new(options::meta::SIZE)
+                .long("size")
+                // .short('s')
+                .help("Print entires's size.")
                 .action(ArgAction::SetTrue),
         )
         .arg(

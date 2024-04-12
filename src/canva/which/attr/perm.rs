@@ -77,7 +77,8 @@ impl<W: Write> Buffer<W> {
     }
 
     pub fn write_no_permission(&mut self, _meta: &Metadata) -> io::Result<()> {
-        self.buf_writer.write_all("".as_bytes())
+        // self.buf_writer.write_all("".as_bytes())
+        Ok(())
     }
 
     pub fn paint_permission(&mut self, meta: &Metadata, f: WhichPermission<W>) -> io::Result<()> {

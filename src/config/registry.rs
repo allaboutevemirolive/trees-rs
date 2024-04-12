@@ -1,10 +1,7 @@
 use crate::canva::buffer::Buffer;
-// use crate::canva::which::attr::date::write_date;
-// use crate::canva::which::attr::date::write_no_date;
 use crate::canva::which::attr::date::WhichDate;
-// use crate::canva::which::attr::perm::write_no_permission;
-// use crate::canva::which::attr::perm::write_permission;
 use crate::canva::which::attr::perm::WhichPermission;
+use crate::canva::which::attr::size::WhichSize;
 use crate::canva::which::entree::WhichEntry;
 use crate::canva::which::headerr::WhichHeader;
 use crate::config::path::WhichReader;
@@ -28,6 +25,7 @@ pub struct CallbackRegistry<'a> {
     pub wh: WhichHeader<StdoutLock<'a>>,
     pub wha: WhichPermission<StdoutLock<'a>>,
     pub whd: WhichDate<StdoutLock<'a>>,
+    pub wsz: WhichSize<StdoutLock<'a>>,
 }
 
 impl<'a> CallbackRegistry<'a> {
@@ -41,6 +39,7 @@ impl<'a> CallbackRegistry<'a> {
         let wh: WhichHeader<StdoutLock> = Buffer::write_header_name;
         let wha: WhichPermission<StdoutLock> = Buffer::write_no_permission;
         let whd: WhichDate<StdoutLock> = Buffer::write_no_date;
+        let wsz: WhichSize<StdoutLock> = Buffer::write_no_size;
         Ok(Self {
             wr,
             ws,
@@ -51,6 +50,7 @@ impl<'a> CallbackRegistry<'a> {
             wh,
             wha,
             whd,
+            wsz,
         })
     }
 }
@@ -116,6 +116,18 @@ impl<'a> CallbackRegistry<'a> {
         self.we = Buffer::write_entry_relative_path;
         self.wf = Buffer::write_entry_relative_path;
         self.wh = Buffer::write_header_relative_path;
+        Ok(())
+    }
+}
+
+impl<'a> CallbackRegistry<'a> {
+    pub fn with_size(&mut self) -> UResult<()> {
+        self.wsz = Buffer::write_size;
+        Ok(())
+    }
+
+    pub fn with_no_size(&mut self) -> UResult<()> {
+        self.wsz = Buffer::write_no_size;
         Ok(())
     }
 }
