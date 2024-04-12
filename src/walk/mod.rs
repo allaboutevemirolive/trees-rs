@@ -4,16 +4,13 @@ use crate::config::path::Directory;
 use crate::error::simple::UResult;
 use crate::report::*;
 use crate::tree::Tree;
-
 use std::ffi::OsString;
 use std::path::PathBuf;
-
 pub mod metada;
 use self::metada::*;
 
 #[derive(Debug)]
 pub struct WalkDir<'wd, 'cv, 'st> {
-    pub opts: WalkDirOption,
     pub config: &'wd mut WalkDirConfig<'cv>,
     pub root: &'wd PathBuf,
     pub parent: &'wd OsString,
@@ -37,21 +34,14 @@ impl<'cv> WalkDirConfig<'cv> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct WalkDirOption {
-    pub flag: i32,
-}
-
 impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
     pub fn new(
-        opts: WalkDirOption,
         config: &'wd mut WalkDirConfig<'cv>,
         root: &'wd PathBuf,
         parent: &'wd OsString,
         setting: Setting<'st>,
     ) -> UResult<Self> {
         Ok(Self {
-            opts,
             config,
             root,
             parent,
@@ -65,6 +55,8 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
 
         for (idx, entry) in entries {
             let fmeta = FileMetadata::new(entry, &self.config.tree.level)?;
+
+            self.config.report.tail.add_size(fmeta.size);
 
             // Print entry's permission
             self.config

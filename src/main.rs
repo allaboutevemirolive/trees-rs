@@ -7,7 +7,7 @@ mod sort;
 mod tree;
 mod util;
 mod walk;
-use crate::canva::which;
+// use crate::canva::which;
 use crate::canva::Canva;
 use crate::cli::arg::TreeArgs;
 use crate::cli::opt::Setting;
@@ -18,7 +18,6 @@ use crate::tree::level::Level;
 use crate::tree::Tree;
 use crate::walk::WalkDir;
 use crate::walk::WalkDirConfig;
-use crate::walk::WalkDirOption;
 use std::fs;
 
 fn main() -> UResult<()> {
@@ -39,9 +38,7 @@ fn main() -> UResult<()> {
     let path_header = path.clone();
     let filename_header = path_filename.clone();
 
-    // walk_opts
-    let walk_opts = WalkDirOption { flag: 1 };
-    let mut walk = WalkDir::new(walk_opts, &mut config, &path, &path_filename, setting)?;
+    let mut walk = WalkDir::new(&mut config, &path, &path_filename, setting)?;
     let path = Directory::new(&walk.root)?;
 
     walk.config

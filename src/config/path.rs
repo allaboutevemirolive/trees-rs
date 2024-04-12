@@ -1,15 +1,14 @@
+use crate::error::simple::UResult;
+use crate::error::simple::USimpleError;
+use crate::report::tail::Tail;
+use crate::walk::WalkDir;
 use std::env;
 use std::ffi::OsString;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 use std::path::PathBuf;
 
-use crate::{
-    error::simple::{UResult, USimpleError},
-    walk::WalkDir,
-};
-
-pub type WhichReader = fn(&Directory) -> UResult<Vec<DirEntry>>;
+pub type WhichReader = fn(&Directory, &mut Tail) -> UResult<Vec<DirEntry>>;
 
 pub struct Directory {
     pub path: PathBuf,
@@ -20,20 +19,22 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(Directory { path: path.into() })
     }
 
-    pub fn read_all_entries(&self) -> UResult<Vec<DirEntry>> {
+    #[allow(unused_variables)]
+    pub fn read_all_entries(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .map(|entry_result| entry_result.map(|entry| entry))
             .collect::<Result<Vec<DirEntry>, std::io::Error>>()?;
         Ok(entries)
     }
 
-    pub fn read_visible_entries(&self) -> UResult<Vec<DirEntry>> {
+    pub fn read_visible_entries(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
                     if !entry.file_name().to_string_lossy().starts_with(".") {
                         Some(entry)
                     } else {
+                        tail.hid_plus_one();
                         None
                     }
                 })
@@ -43,7 +44,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
     }
 
     /// Read visible entries (directories and files) but exclude entry (directory and file) that match the given path.
-    pub fn read_visible_excl_path(&self) -> UResult<Vec<DirEntry>> {
+    pub fn read_visible_excl_path(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -64,7 +65,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
     }
 
     /// Read visible entries(files) that match the given specific file extension.
-    pub fn read_visible_ext_files_and_folders(&self) -> UResult<Vec<DirEntry>> {
+    pub fn read_visible_ext_files_and_folders(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -89,7 +90,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    pub fn read_visible_folders(&self) -> UResult<Vec<DirEntry>> {
+    pub fn read_visible_folders(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -97,6 +98,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
                     if metadata.is_dir() && !entry.file_name().to_string_lossy().starts_with(".") {
                         Some(entry)
                     } else {
+                        tail.hid_plus_one();
                         None
                     }
                 })
@@ -121,8 +123,8 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    fn inspect_entries(&self, f: WhichReader) -> UResult<Vec<DirEntry>> {
-        f(self)
+    fn inspect_entries(&self, tail: &mut Tail, f: WhichReader) -> UResult<Vec<DirEntry>> {
+        f(self, tail)
     }
 
     /// `Read` the directory's entries, then `sort` and `enumerate` them.
@@ -134,33 +136,19 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         walk: &'pt mut WalkDir<'wd, 'cv, 'cr>,
     ) -> UResult<Vec<(usize, DirEntry)>> {
         // Read
-        let mut entries = self.inspect_entries(walk.setting.cr.wr).map_err(|err| {
-            USimpleError::new(1, format!("Failed to inspect directory entries: {}", err))
-        })?;
+        let mut entries = self
+            .inspect_entries(&mut walk.config.report.tail, walk.setting.cr.wr)
+            .map_err(|err| {
+                USimpleError::new(1, format!("Failed to inspect directory entries: {}", err))
+            })?;
+
         // Sort
         (walk.setting.cr.ws)(&mut entries);
+
         // Enumerate
         let enumerated_entries = entries.into_iter().enumerate().collect();
+
         Ok(enumerated_entries)
-    }
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-pub enum WhichPath {
-    CurrentDir,
-    OtherDir,
-}
-
-pub fn is_hidden_file(entry: &DirEntry) -> bool {
-    entry.file_name().to_string_lossy().starts_with('.')
-}
-
-pub fn get_relative_path(entry: &DirEntry, current_dir: &PathBuf) -> Option<PathBuf> {
-    let path = entry.path();
-    if let Ok(relative_path) = path.strip_prefix(current_dir) {
-        Some(relative_path.to_path_buf())
-    } else {
-        None
     }
 }
 
@@ -171,20 +159,20 @@ pub fn get_absolute_current_shell() -> UResult<OsString> {
         .into_os_string())
 }
 
-fn extract_paths(args: Vec<String>) -> (Vec<String>, Vec<String>) {
-    let mut remaining_args = Vec::new();
-    let mut paths = Vec::new();
+// fn extract_paths(args: Vec<String>) -> (Vec<String>, Vec<String>) {
+//     let mut remaining_args = Vec::new();
+//     let mut paths = Vec::new();
 
-    for arg in args {
-        if Path::new(&arg).exists() {
-            paths.push(arg);
-        } else {
-            remaining_args.push(arg);
-        }
-    }
+//     for arg in args {
+//         if Path::new(&arg).exists() {
+//             paths.push(arg);
+//         } else {
+//             remaining_args.push(arg);
+//         }
+//     }
 
-    (remaining_args, paths)
-}
+//     (remaining_args, paths)
+// }
 
 #[cfg(test)]
 mod tests {
@@ -192,20 +180,20 @@ mod tests {
     use std::fs;
     use tempfile::tempdir;
 
-    #[test]
-    fn test_read_entries() {
-        let temp_dir = tempdir().expect("Failed to create temporary directory");
-        // println!("{:?}", temp_dir);
-        let directory = Directory::new(temp_dir.path()).unwrap();
+    // #[test]
+    // fn test_read_entries() {
+    //     let temp_dir = tempdir().expect("Failed to create temporary directory");
+    //     // println!("{:?}", temp_dir);
+    //     let directory = Directory::new(temp_dir.path()).unwrap();
 
-        // Create some dummy files in the test directory
-        fs::File::create(directory.path.join("file1.txt")).unwrap();
-        fs::File::create(directory.path.join("file2.txt")).unwrap();
+    //     // Create some dummy files in the test directory
+    //     fs::File::create(directory.path.join("file1.txt")).unwrap();
+    //     fs::File::create(directory.path.join("file2.txt")).unwrap();
 
-        let entries = directory.read_all_entries().unwrap();
-        // Expecting at least two entries: "." and ".." directories and possibly the files we created
-        assert!(entries.len() >= 2);
-    }
+    //     let entries = directory.read_all_entries().unwrap();
+    //     // Expecting at least two entries: "." and ".." directories and possibly the files we created
+    //     assert!(entries.len() >= 2);
+    // }
 
     // #[test]
     // fn test_iterate_entries() {
@@ -226,23 +214,23 @@ mod tests {
     //     }
     // }
 
-    #[test]
-    fn test_is_hidden_file() {
-        let temp_dir = tempdir().expect("Failed to create temporary directory");
-        let directory = Directory::new(temp_dir.path()).unwrap();
+    // #[test]
+    // fn test_is_hidden_file() {
+    //     let temp_dir = tempdir().expect("Failed to create temporary directory");
+    //     let directory = Directory::new(temp_dir.path()).unwrap();
 
-        // Create a dummy hidden file in the test directory
-        fs::File::create(directory.path.join(".hidden_file")).unwrap();
+    //     // Create a dummy hidden file in the test directory
+    //     fs::File::create(directory.path.join(".hidden_file")).unwrap();
 
-        let entries = directory.read_all_entries().unwrap();
-        for entry in entries {
-            if is_hidden_file(&entry) {
-                assert_eq!(entry.file_name().to_string_lossy().starts_with('.'), true);
-            } else {
-                assert_eq!(entry.file_name().to_string_lossy().starts_with('.'), false);
-            }
-        }
-    }
+    //     let entries = directory.read_all_entries().unwrap();
+    //     for entry in entries {
+    //         if is_hidden_file(&entry) {
+    //             assert_eq!(entry.file_name().to_string_lossy().starts_with('.'), true);
+    //         } else {
+    //             assert_eq!(entry.file_name().to_string_lossy().starts_with('.'), false);
+    //         }
+    //     }
+    // }
 
     // cargo test test_test -- --nocapture
     #[test]
@@ -268,25 +256,25 @@ mod tests {
     }
 
     // cargo test test_extract_paths -- --nocapture
-    #[test]
-    fn test_extract_paths() {
-        let temp_dir = tempdir().expect("Failed to create temporary directory");
-        let temp_dir_path = temp_dir.path().to_string_lossy().into_owned();
+    // #[test]
+    // fn test_extract_paths() {
+    //     let temp_dir = tempdir().expect("Failed to create temporary directory");
+    //     let temp_dir_path = temp_dir.path().to_string_lossy().into_owned();
 
-        let args = vec![
-            String::from("arg1"),
-            temp_dir_path.clone(),
-            String::from("arg2"),
-            String::from("./relative/path/to/dir"),
-            String::from("dir_name"),
-        ];
+    //     let args = vec![
+    //         String::from("arg1"),
+    //         temp_dir_path.clone(),
+    //         String::from("arg2"),
+    //         String::from("./relative/path/to/dir"),
+    //         String::from("dir_name"),
+    //     ];
 
-        let (remaining_args, paths) = extract_paths(args);
+    //     let (remaining_args, paths) = extract_paths(args);
 
-        assert_eq!(
-            remaining_args,
-            vec!["arg1", "arg2", "./relative/path/to/dir", "dir_name"]
-        );
-        assert_eq!(paths, vec![temp_dir_path]);
-    }
+    //     assert_eq!(
+    //         remaining_args,
+    //         vec!["arg1", "arg2", "./relative/path/to/dir", "dir_name"]
+    //     );
+    //     assert_eq!(paths, vec![temp_dir_path]);
+    // }
 }

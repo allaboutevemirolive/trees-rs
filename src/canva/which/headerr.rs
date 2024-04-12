@@ -31,8 +31,24 @@ impl<W: Write> Buffer<W> {
         root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
-        self.buf_writer
-            .write_all(root.file_name().unwrap().as_encoded_bytes())?;
+        // Passing "../../" will result in panick thus we will conver pathbuf to string directly
+        // if we cannot retrieve the filename().
+        //
+        // thread 'main' panicked at src/canva/which/headerr.rs:35:41:
+        // called `Option::unwrap()` on a `None` value
+        // self.buf_writer
+        //     .write_all(root.file_name().unwrap_or_default().as_encoded_bytes())?;
+        if let Some(file_name) = root.file_name() {
+            self.buf_writer.write_all(file_name.as_encoded_bytes())?;
+        } else if let Some(folder_name) = root.file_stem() {
+            self.buf_writer.write_all(folder_name.as_encoded_bytes())?;
+        } else {
+            let path_buf = PathBuf::from(root);
+            let filename: String = path_buf.to_string_lossy().to_string();
+
+            self.buf_writer.write_all(filename.as_bytes())?;
+        }
+
         Ok(())
     }
 

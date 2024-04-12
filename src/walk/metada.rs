@@ -1,5 +1,5 @@
 use super::WalkDir;
-use super::WalkDirOption;
+// use super::WalkDirOption;
 use crate::config::path::Directory;
 use crate::error::simple::UResult;
 use crate::tree::level::Level;
@@ -16,6 +16,7 @@ pub struct FileMetadata {
     pub name: OsString,
     pub filety: FileType,
     pub lvl: Level,
+    pub size: u64,
 }
 
 impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
@@ -34,6 +35,8 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
 
         let meta = dent.metadata()?;
 
+        let size = meta.len();
+
         Ok(Self {
             abs,
             dent,
@@ -41,6 +44,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             filety,
             name,
             lvl: *level,
+            size,
         })
     }
 
@@ -66,9 +70,9 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             walk.config.report.tail.dir_plus_one();
             walk.config.tree.level.plus_one();
 
-            let walk_opts = WalkDirOption { flag: 1 };
+            // let walk_opts = WalkDirOption { flag: 1 };
             let mut walk = WalkDir::new(
-                walk_opts,
+                // walk_opts,
                 walk.config,
                 walk.root,
                 walk.parent,

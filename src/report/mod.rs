@@ -3,7 +3,7 @@ use crate::error::simple::UResult;
 use self::{head::Head, tail::Tail};
 
 mod head;
-mod tail;
+pub mod tail;
 
 #[derive(Debug)]
 pub struct Report {
@@ -25,12 +25,18 @@ impl Report {
         })
     }
 
-    pub fn get_tail(&self) -> (String, String, String, String) {
+    pub fn get_tail(&self) -> (String, String, String, String, String) {
+        let bytes = self.tail.size;
+
+        let gigabytes = bytes as f64 / 1_073_741_824.0;
+
         (
             self.tail.directories.to_string(),
             self.tail.files.to_string(),
-            self.tail.size.to_string(),
+            // self.tail.size.to_string(),
             self.tail.hidden_files.to_string(),
+            self.tail.size.to_string(),
+            gigabytes.to_string(),
         )
     }
 }

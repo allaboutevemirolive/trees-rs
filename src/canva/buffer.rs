@@ -22,7 +22,10 @@ impl<W: Write> Buffer<W> {
     }
 
     /// 41 directories, 480 files, 0 size, 0 hidden
-    pub fn write_report(&mut self, message: (String, String, String, String)) -> io::Result<()> {
+    pub fn write_report(
+        &mut self,
+        message: (String, String, String, String, String),
+    ) -> io::Result<()> {
         self.write_message(&message.0)?;
         self.write_space()?;
         self.write_message("directories,")?;
@@ -31,13 +34,17 @@ impl<W: Write> Buffer<W> {
         self.write_space()?;
         self.write_message("files,")?;
         self.write_space()?;
-        self.write_message(&message.3)?;
-        self.write_space()?;
-        self.write_message("hidden, ")?;
-        self.write_space()?;
         self.write_message(&message.2)?;
         self.write_space()?;
-        self.write_message("size")?;
+        self.write_message("hidden,")?;
+        self.write_space()?;
+        self.write_message(&message.3)?;
+        self.write_space()?;
+        self.write_message("bytes,")?;
+        self.write_space()?;
+        self.write_message(&message.4)?;
+        self.write_space()?;
+        self.write_message("gigabytes")?;
         Ok(())
     }
 }
