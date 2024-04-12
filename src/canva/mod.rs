@@ -7,6 +7,7 @@ use self::buffer::Buffer;
 pub mod ansi;
 pub mod buffer;
 mod mmap;
+pub mod which;
 
 #[derive(Debug)]
 pub struct Canva<'cv> {

@@ -92,7 +92,7 @@ impl<'a> TreeArgs {
         }
 
         if matches.get_flag(options::meta::ATTRIBUTE) {
-            setting.cr.with_attributes()?;
+            setting.cr.with_permission()?;
         }
 
         if matches.get_flag(options::meta::DATE) {

@@ -3,18 +3,20 @@ use crate::{config::path::Directory, error::simple::UResult, tree::level::Level}
 use super::{WalkDir, WalkDirOption};
 
 use std::ffi::OsString;
-use std::fs::{self, DirEntry, FileType};
+use std::fs::{self, DirEntry, FileType, Metadata};
 use std::io::{self};
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct FileMetadata {
-    pub absolute_path: PathBuf,
-    pub dir_entry: DirEntry,
-    pub file_name: OsString,
-    pub file_type: FileType,
-    pub level: Level,
+    pub abs: PathBuf,
+    pub dent: DirEntry,
+    pub meta: Metadata,
+    pub name: OsString,
+    pub filety: FileType,
+    pub lvl: Level,
 }
 
 impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
@@ -22,42 +24,29 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
     // entry.path() => full_path
     /// `current_dir` is the original shell session where this program is executed.
     // , current_dir: &PathBuf
-    pub fn new(dir_entry: DirEntry, level: &Level) -> UResult<Self> {
-        let file_type = dir_entry.file_type()?;
-        let absolute_path = dir_entry.path();
-        let file_name = dir_entry
+    pub fn new(dent: DirEntry, level: &Level) -> UResult<Self> {
+        let filety = dent.file_type()?;
+        let abs = dent.path();
+        let name = dent
             .path()
             .file_name()
             .map(|os_str| os_str.to_os_string())
             .unwrap();
 
+        let meta = dent.metadata()?;
+
         Ok(Self {
-            dir_entry,
-            file_name,
-            file_type,
-            level: *level,
-            absolute_path,
+            abs,
+            dent,
+            meta,
+            filety,
+            name,
+            lvl: *level,
         })
     }
 
-    // fn from_path(path: PathBuf) -> io::Result<Self> {
-    //     let metadata = fs::metadata(&path)?;
-
-    //     let level = Level { lvl: 0, cap: 0 };
-
-    //     let dir_entry = fs::read_dir(&path)?.last().unwrap().unwrap();
-
-    //     Ok(FileMetadata {
-    //         dir_entry,
-    //         absolute_path: path.clone(),
-    //         file_name: path.file_name().unwrap().into(),
-    //         file_type: metadata.file_type(),
-    //         level,
-    //     })
-    // }
-
     pub fn get_relative_path(&self, current_dir: &PathBuf) -> Option<PathBuf> {
-        let path = self.dir_entry.path();
+        let path = self.dent.path();
         if let Ok(relative_path) = path.strip_prefix(current_dir) {
             Some(relative_path.to_path_buf())
         } else {
@@ -65,32 +54,8 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
         }
     }
 
-    pub fn get_symbolic_permissions(&self) -> io::Result<OsString> {
-        let metadata = self.dir_entry.metadata()?;
-        let permissions = metadata.permissions();
-        let mode = permissions.mode();
-
-        let file_type = if metadata.is_dir() { 'd' } else { '.' };
-
-        let symbolic_permissions = format!(
-            "{}{}{}{}{}{}{}{}{}{}",
-            file_type,
-            if mode & 0o400 != 0 { 'r' } else { '-' },
-            if mode & 0o200 != 0 { 'w' } else { '-' },
-            if mode & 0o100 != 0 { 'x' } else { '-' },
-            if mode & 0o40 != 0 { 'r' } else { '-' },
-            if mode & 0o20 != 0 { 'w' } else { '-' },
-            if mode & 0o10 != 0 { 'x' } else { '-' },
-            if mode & 0o4 != 0 { 'r' } else { '-' },
-            if mode & 0o2 != 0 { 'w' } else { '-' },
-            if mode & 0o1 != 0 { 'x' } else { '-' },
-        );
-
-        Ok(OsString::from(symbolic_permissions))
-    }
-
     pub fn paint_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
-        if self.file_type.is_dir() {
+        if self.filety.is_dir() {
             walk.config.canva.buffer.paint_entry(
                 &self,
                 &walk.root,
@@ -110,7 +75,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
                 walk.parent,
                 walk.setting.clone(),
             )?;
-            let path = Directory::new(&self.absolute_path)?;
+            let path = Directory::new(&self.abs)?;
 
             walk.walk_dir(path)?;
             walk.config.tree.level.minus_one();

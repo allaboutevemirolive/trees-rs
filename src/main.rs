@@ -23,8 +23,6 @@ use crate::{
 };
 
 fn main() -> UResult<()> {
-    // println!(".");
-
     let tree = Tree::new(Level::with_lvl_and_cap(1, 5000), 5000)?;
     let canva = Canva::new()?;
     let report = Report::new()?;
@@ -49,12 +47,12 @@ fn main() -> UResult<()> {
     walk.config
         .canva
         .buffer
-        .paint_header_attribute(&metadata_header, walk.setting.cr.wha)?;
+        .paint_permission(&metadata_header, walk.setting.cr.wha)?;
 
     walk.config
         .canva
         .buffer
-        .paint_header_date(&metadata_header, walk.setting.cr.whd)?;
+        .paint_date(&metadata_header, walk.setting.cr.whd)?;
 
     walk.config.canva.buffer.paint_header(
         &metadata_header,
