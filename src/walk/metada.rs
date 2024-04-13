@@ -61,11 +61,6 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
                 walk.setting.cr.we,
             )?;
 
-            walk.config
-                .canva
-                .buffer
-                .paint_size(&self.meta, walk.setting.cr.wsz)?;
-
             walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.dir_plus_one();
             walk.config.tree.level.plus_one();
@@ -82,11 +77,6 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
                 &walk.parent,
                 walk.setting.cr.wf,
             )?;
-
-            walk.config
-                .canva
-                .buffer
-                .paint_size(&self.meta, walk.setting.cr.wsz)?;
 
             walk.config.canva.buffer.write_newline()?;
             walk.config.report.tail.file_plus_one();

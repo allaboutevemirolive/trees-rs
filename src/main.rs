@@ -50,6 +50,11 @@ fn main() -> UResult<()> {
         .buffer
         .paint_date(&metadata_header, walk.setting.cr.whd)?;
 
+    walk.config
+        .canva
+        .buffer
+        .paint_size(&metadata_header, walk.setting.cr.wsz)?;
+
     walk.config.canva.buffer.paint_header(
         &metadata_header,
         &path_header,     // abs_path

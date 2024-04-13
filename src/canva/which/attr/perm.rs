@@ -77,7 +77,6 @@ impl<W: Write> Buffer<W> {
     }
 
     pub fn write_no_permission(&mut self, _meta: &Metadata) -> io::Result<()> {
-        // self.buf_writer.write_all("".as_bytes())
         Ok(())
     }
 

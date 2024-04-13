@@ -64,16 +64,16 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
                 .buffer
                 .paint_permission(&fmeta.meta, self.setting.cr.wa)?;
 
-            // self.config
-            //     .canva
-            //     .buffer
-            //     .paint_size(&fmeta.meta, self.setting.cr.wsz)?;
-
             // Print entry's creation-date
             self.config
                 .canva
                 .buffer
                 .paint_date(&fmeta.meta, self.setting.cr.wd)?;
+
+            self.config
+                .canva
+                .buffer
+                .paint_size(&fmeta.meta, self.setting.cr.wsz)?;
 
             // Mark node
             self.config.tree.nod.mark_entry(idx, entries_len);

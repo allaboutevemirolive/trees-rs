@@ -36,7 +36,7 @@ impl<'a> CallbackRegistry<'a> {
         let wd: WhichDate<StdoutLock> = Buffer::write_no_date;
         let we: WhichEntry<StdoutLock> = Buffer::write_entry_color;
         let wf: WhichEntry<StdoutLock> = Buffer::write_entry;
-        let wh: WhichHeader<StdoutLock> = Buffer::write_header_name;
+        let wh: WhichHeader<StdoutLock> = Buffer::write_color_header_name;
         let wha: WhichPermission<StdoutLock> = Buffer::write_no_permission;
         let whd: WhichDate<StdoutLock> = Buffer::write_no_date;
         let wsz: WhichSize<StdoutLock> = Buffer::write_no_size;
@@ -109,7 +109,9 @@ impl<'a> CallbackRegistry<'a> {
     }
 
     pub fn with_colorless_entry(&mut self) -> UResult<()> {
-        Ok(self.we = Buffer::write_entry)
+        self.wh = Buffer::write_header_name;
+        self.we = Buffer::write_entry;
+        Ok(())
     }
 
     pub fn with_relative_path(&mut self) -> UResult<()> {

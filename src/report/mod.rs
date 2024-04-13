@@ -30,13 +30,14 @@ impl Report {
 
         let gigabytes = bytes as f64 / 1_073_741_824.0;
 
+        let gigabytes = format!("{:.2}", gigabytes);
         (
             self.tail.directories.to_string(),
             self.tail.files.to_string(),
-            // self.tail.size.to_string(),
             self.tail.hidden_files.to_string(),
-            self.tail.size.to_string(),
+            // self.tail.size.to_string(),
             gigabytes.to_string(),
+            self.tail.size.to_string(),
         )
     }
 }
