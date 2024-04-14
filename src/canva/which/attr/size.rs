@@ -1,9 +1,7 @@
-use std::{
-    fs::Metadata,
-    io::{self, Write},
-};
-
 use crate::canva::buffer::Buffer;
+use std::fs::Metadata;
+use std::io;
+use std::io::Write;
 
 pub type WhichSize<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
@@ -18,32 +16,25 @@ impl<W: Write> Buffer<W> {
 
     pub fn write_size(&mut self, meta: &Metadata) -> io::Result<()> {
         let size = meta.len();
-        self.write_space()?;
-
+        // Only 931.32 gigabytes, or 999999999999 bytes, can be supported at most by the padding.
+        // If the size is exceeded, the tree output will be distorted and not symmetrical.
         let padded_string = format!("{:^12}", size.to_string());
 
-        self.buf_writer.write_all("│".as_bytes())?;
         self.buf_writer.write_all(padded_string.as_bytes())?;
 
-        self.buf_writer.write_all("│".as_bytes())?;
-
-        self.write_space()?;
         Ok(())
     }
 
     pub fn write_size_color(&mut self, meta: &Metadata) -> io::Result<()> {
         let size = meta.len();
-        self.write_space()?;
-
+        // Only 931.32 gigabytes, or 999999999999 bytes, can be supported at most by the padding.
+        // If the size is exceeded, the tree output will be distorted and not symmetrical.
         let padded_string = format!("{:^12}", size.to_string());
 
-        self.buf_writer.write_all("│".as_bytes())?;
         self.buf_writer.write_all("\x1B[1;32m".as_bytes())?;
         self.buf_writer.write_all(padded_string.as_bytes())?;
         self.buf_writer.write_all("\x1b[0m".as_bytes())?;
-        self.buf_writer.write_all("│".as_bytes())?;
 
-        self.write_space()?;
         Ok(())
     }
 }

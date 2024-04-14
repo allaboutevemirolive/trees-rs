@@ -40,7 +40,7 @@ impl<'a> CallbackRegistry<'a> {
         let wh: WhichHeader<StdoutLock> = Buffer::write_color_header_name;
         let wha: WhichPermission<StdoutLock> = Buffer::write_no_permission;
         let whd: WhichDate<StdoutLock> = Buffer::write_no_date;
-        let wsz: WhichSize<StdoutLock> = Buffer::write_size_color;
+        let wsz: WhichSize<StdoutLock> = Buffer::write_no_size;
         Ok(Self {
             wr,
             ws,
@@ -72,6 +72,7 @@ impl<'a> CallbackRegistry<'a> {
         Ok(())
     }
 }
+
 #[allow(dead_code)]
 impl<'a> CallbackRegistry<'a> {
     pub fn with_sort_entries(&mut self) -> UResult<()> {

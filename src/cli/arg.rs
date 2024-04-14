@@ -1,9 +1,11 @@
-use std::path::PathBuf;
-use std::{env, ffi::OsString, path::Path};
-
-use super::app::*;
+use super::app::options;
+use super::app::tree_app;
 use crate::cli::opt::Setting;
 use crate::error::simple::UResult;
+use std::env;
+use std::ffi::OsString;
+use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Clone)]
 pub struct TreeArgs {
@@ -17,7 +19,6 @@ impl<'a> TreeArgs {
         TreeArgs { args }
     }
 
-    #[allow(dead_code)]
     pub fn extract_paths(&self) -> (Vec<&OsString>, Vec<&OsString>) {
         let mut remaining_args = Vec::new();
         let mut paths = Vec::new();
@@ -52,7 +53,6 @@ impl<'a> TreeArgs {
 
         if path_exist {
             path = &setting.path;
-            // path_filename = setting.path.file_name().unwrap().into();
             path_filename = <PathBuf as Clone>::clone(&setting.path).into();
         } else {
             path = &setting.path;
@@ -69,11 +69,6 @@ impl<'a> TreeArgs {
 
         if matches.get_flag(options::color::COLOR) {
             setting.cr.with_color_entry()?;
-        }
-
-        if matches.get_flag(options::color::COLORLESS) {
-            setting.cr.with_colorless_entry()?;
-            setting.cr.with_size()?;
         }
 
         if matches.get_flag(options::path::RELATIVE) {
@@ -106,7 +101,9 @@ impl<'a> TreeArgs {
 
         if matches.get_flag(options::color::COLORLESS) {
             setting.cr.with_colorless_entry()?;
-            setting.cr.with_size()?;
+            if matches.get_flag(options::meta::SIZE) {
+                setting.cr.with_size()?;
+            }
         }
 
         Ok((path.to_path_buf(), path_filename))
