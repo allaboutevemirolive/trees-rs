@@ -71,21 +71,33 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             buffer::Buffer::paint_permission(
                 &mut self.config.canva.buffer,
                 &fmeta.meta,
-                self.setting.cr.wa,
+                self.setting.cr.pms,
             )?;
 
             // Print entry's creation-date
-            buffer::Buffer::paint_date(
+            buffer::Buffer::paint_btime(
                 &mut self.config.canva.buffer,
                 &fmeta.meta,
-                self.setting.cr.wd,
+                self.setting.cr.btime,
+            )?;
+
+            buffer::Buffer::paint_mtime(
+                &mut self.config.canva.buffer,
+                &fmeta.meta,
+                self.setting.cr.mtime,
+            )?;
+
+            buffer::Buffer::paint_atime(
+                &mut self.config.canva.buffer,
+                &fmeta.meta,
+                self.setting.cr.atime,
             )?;
 
             // Print entry's size
             buffer::Buffer::paint_size(
                 &mut self.config.canva.buffer,
                 &fmeta.meta,
-                self.setting.cr.wsz,
+                self.setting.cr.size,
             )?;
 
             // Mark node based on idx of current entries and entries's len

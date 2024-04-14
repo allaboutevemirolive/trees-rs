@@ -138,13 +138,13 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
     ) -> UResult<Vec<(usize, DirEntry)>> {
         // Read
         let mut entries = self
-            .inspect_entries(&mut walk.config.report.tail, walk.setting.cr.wr)
+            .inspect_entries(&mut walk.config.report.tail, walk.setting.cr.read)
             .map_err(|err| {
                 USimpleError::new(1, format!("Failed to inspect directory entries: {}", err))
             })?;
 
         // Sort
-        (walk.setting.cr.ws)(&mut entries);
+        (walk.setting.cr.sort)(&mut entries);
 
         // Enumerate
         let enumerated_entries = entries.into_iter().enumerate().collect();

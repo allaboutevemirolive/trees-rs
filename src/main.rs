@@ -57,21 +57,33 @@ fn main() -> UResult<()> {
     canva::buffer::Buffer::paint_permission(
         &mut walk.config.canva.buffer,
         &metadata_header,
-        walk.setting.cr.wha,
+        walk.setting.cr.pms,
     )?;
 
     // Print header creation-date
-    canva::buffer::Buffer::paint_date(
+    canva::buffer::Buffer::paint_btime(
         &mut walk.config.canva.buffer,
         &metadata_header,
-        walk.setting.cr.whd,
+        walk.setting.cr.btime,
+    )?;
+
+    canva::buffer::Buffer::paint_mtime(
+        &mut walk.config.canva.buffer,
+        &metadata_header,
+        walk.setting.cr.mtime,
+    )?;
+
+    canva::buffer::Buffer::paint_atime(
+        &mut walk.config.canva.buffer,
+        &metadata_header,
+        walk.setting.cr.atime,
     )?;
 
     // Print header size
     canva::buffer::Buffer::paint_size(
         &mut walk.config.canva.buffer,
         &metadata_header,
-        walk.setting.cr.wsz,
+        walk.setting.cr.size,
     )?;
 
     // Print header's name
@@ -80,7 +92,7 @@ fn main() -> UResult<()> {
         &metadata_header,
         &path_header,
         &filename_header,
-        walk.setting.cr.wh,
+        walk.setting.cr.head,
     )?;
     canva::buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
 

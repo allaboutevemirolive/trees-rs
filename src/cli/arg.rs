@@ -91,8 +91,16 @@ impl<'a> TreeArgs {
             setting.cr.with_permission()?;
         }
 
-        if matches.get_flag(options::meta::DATE) {
-            setting.cr.with_date()?;
+        if matches.get_flag(options::meta::BTIME) {
+            setting.cr.with_btime()?;
+        }
+
+        if matches.get_flag(options::meta::MTIME) {
+            setting.cr.with_mtime()?;
+        }
+
+        if matches.get_flag(options::meta::ATIME) {
+            setting.cr.with_atime()?;
         }
 
         if matches.get_flag(options::meta::SIZE) {

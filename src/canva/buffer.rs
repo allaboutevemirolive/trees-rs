@@ -1,5 +1,4 @@
 use crate::error::simple::UResult;
-use chrono::{DateTime, Local};
 use std::io::{self, Write};
 
 #[derive(Debug)]
@@ -62,11 +61,6 @@ impl<W: Write> Buffer<W> {
     pub fn write_space(&mut self) -> io::Result<()> {
         self.buf_writer.write_all(" ".as_bytes())
     }
-}
-
-pub fn format_system_time(time: std::time::SystemTime) -> String {
-    let datetime: DateTime<Local> = time.into();
-    datetime.format("%e %b %H:%M").to_string()
 }
 
 #[cfg(test)]

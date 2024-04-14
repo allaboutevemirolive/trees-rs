@@ -1,6 +1,8 @@
 use crate::canva::buffer::Buffer;
-use crate::canva::which::attr::date::WhichDate;
-use crate::canva::which::attr::perm::WhichPermission;
+use crate::canva::which::attr::atime::WhichAccessTime;
+use crate::canva::which::attr::btime::WhichBirthTime;
+use crate::canva::which::attr::mtime::WhichModificationTime;
+use crate::canva::which::attr::pms::WhichPermission;
 use crate::canva::which::attr::size::WhichSize;
 use crate::canva::which::entree::WhichEntry;
 use crate::canva::which::headerr::WhichHeader;
@@ -15,60 +17,65 @@ use super::path::Directory;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CallbackRegistry<'a> {
-    pub wr: WhichReader,
-    pub ws: WhichSort,
-    pub wa: WhichPermission<StdoutLock<'a>>,
-    pub wd: WhichDate<StdoutLock<'a>>,
-    /// Entries  
-    pub we: WhichEntry<StdoutLock<'a>>,
-    pub wf: WhichEntry<StdoutLock<'a>>,
-    pub wh: WhichHeader<StdoutLock<'a>>,
-    // Attribute
-    pub wha: WhichPermission<StdoutLock<'a>>,
-    pub whd: WhichDate<StdoutLock<'a>>,
-    pub wsz: WhichSize<StdoutLock<'a>>,
+    pub read: WhichReader,
+    pub sort: WhichSort,
+    /// Entry  
+    pub dir: WhichEntry<StdoutLock<'a>>,
+    pub file: WhichEntry<StdoutLock<'a>>,
+    pub head: WhichHeader<StdoutLock<'a>>,
+    // Metadata
+    pub pms: WhichPermission<StdoutLock<'a>>,
+    pub btime: WhichBirthTime<StdoutLock<'a>>,
+    pub mtime: WhichModificationTime<StdoutLock<'a>>,
+    pub atime: WhichAccessTime<StdoutLock<'a>>,
+    pub size: WhichSize<StdoutLock<'a>>,
 }
 
 impl<'a> CallbackRegistry<'a> {
     pub fn new() -> UResult<Self> {
-        let wr: WhichReader = Directory::read_visible_entries;
-        let ws: WhichSort = sort_by_name;
-        let wa: WhichPermission<StdoutLock> = Buffer::write_no_permission;
-        let wd: WhichDate<StdoutLock> = Buffer::write_no_date;
-        let we: WhichEntry<StdoutLock> = Buffer::write_entry_color;
-        let wf: WhichEntry<StdoutLock> = Buffer::write_entry;
-        let wh: WhichHeader<StdoutLock> = Buffer::write_color_header_name;
-        let wha: WhichPermission<StdoutLock> = Buffer::write_no_permission;
-        let whd: WhichDate<StdoutLock> = Buffer::write_no_date;
-        let wsz: WhichSize<StdoutLock> = Buffer::write_no_size;
+        let read: WhichReader = Directory::read_visible_entries;
+        let sort: WhichSort = sort_by_name;
+
+        // Entry
+        let dir: WhichEntry<StdoutLock> = Buffer::write_entry_color;
+        let file: WhichEntry<StdoutLock> = Buffer::write_entry;
+        let head: WhichHeader<StdoutLock> = Buffer::write_color_header_name;
+
+        // Meta
+        let pms: WhichPermission<StdoutLock> = Buffer::write_no_permission;
+        let btime: WhichBirthTime<StdoutLock> = Buffer::write_no_btime;
+        let mtime: WhichModificationTime<StdoutLock> = Buffer::write_no_mtime;
+        let atime: WhichAccessTime<StdoutLock> = Buffer::write_no_atime;
+        let size: WhichSize<StdoutLock> = Buffer::write_no_size;
+
         Ok(Self {
-            wr,
-            ws,
-            wa,
-            wd,
-            we,
-            wf,
-            wh,
-            wha,
-            whd,
-            wsz,
+            read,
+            sort,
+            dir,
+            file,
+            head,
+            pms,
+            btime,
+            mtime,
+            atime,
+            size,
         })
     }
 }
 
 impl<'a> CallbackRegistry<'a> {
     pub fn read_all_entries(&mut self) -> UResult<()> {
-        self.wr = Directory::read_all_entries;
+        self.read = Directory::read_all_entries;
         Ok(())
     }
 
     pub fn read_visible_entries(&mut self) -> UResult<()> {
-        self.wr = Directory::read_visible_entries;
+        self.read = Directory::read_visible_entries;
         Ok(())
     }
 
     pub fn read_visible_folders(&mut self) -> UResult<()> {
-        self.wr = Directory::read_visible_folders;
+        self.read = Directory::read_visible_folders;
         Ok(())
     }
 }
@@ -76,12 +83,12 @@ impl<'a> CallbackRegistry<'a> {
 #[allow(dead_code)]
 impl<'a> CallbackRegistry<'a> {
     pub fn with_sort_entries(&mut self) -> UResult<()> {
-        self.ws = sort_by_name;
+        self.sort = sort_by_name;
         Ok(())
     }
 
     pub fn with_reverse_sort_entries(&mut self) -> UResult<()> {
-        self.ws = reverse_sort_by_name;
+        self.sort = reverse_sort_by_name;
         Ok(())
     }
 }
@@ -89,47 +96,72 @@ impl<'a> CallbackRegistry<'a> {
 #[allow(dead_code)]
 impl<'a> CallbackRegistry<'a> {
     pub fn with_permission(&mut self) -> UResult<()> {
-        self.wa = Buffer::write_permission;
-        self.wha = Buffer::write_permission;
+        // self.wa = Buffer::write_permission;
+        self.pms = Buffer::write_permission;
         Ok(())
     }
 
     pub fn with_no_permission(&mut self) -> UResult<()> {
-        self.wa = Buffer::write_no_permission;
+        self.pms = Buffer::write_no_permission;
         Ok(())
     }
 }
 
 #[allow(dead_code)]
 impl<'a> CallbackRegistry<'a> {
-    pub fn with_date(&mut self) -> UResult<()> {
-        self.wd = Buffer::write_date;
-        self.whd = Buffer::write_date;
+    pub fn with_btime(&mut self) -> UResult<()> {
+        self.btime = Buffer::write_btime;
         Ok(())
     }
 
-    pub fn with_no_date(&mut self) -> UResult<()> {
-        self.wd = Buffer::write_no_date;
+    pub fn with_no_btime(&mut self) -> UResult<()> {
+        self.btime = Buffer::write_no_btime;
+        Ok(())
+    }
+}
+
+#[allow(dead_code)]
+impl<'a> CallbackRegistry<'a> {
+    pub fn with_mtime(&mut self) -> UResult<()> {
+        self.mtime = Buffer::write_mtime;
+        Ok(())
+    }
+
+    pub fn with_no_mtime(&mut self) -> UResult<()> {
+        self.mtime = Buffer::write_no_mtime;
+        Ok(())
+    }
+}
+
+#[allow(dead_code)]
+impl<'a> CallbackRegistry<'a> {
+    pub fn with_atime(&mut self) -> UResult<()> {
+        self.atime = Buffer::write_atime;
+        Ok(())
+    }
+
+    pub fn with_no_atime(&mut self) -> UResult<()> {
+        self.atime = Buffer::write_no_atime;
         Ok(())
     }
 }
 
 impl<'a> CallbackRegistry<'a> {
     pub fn with_color_entry(&mut self) -> UResult<()> {
-        self.we = Buffer::write_entry_color;
+        self.dir = Buffer::write_entry_color;
         Ok(())
     }
 
     pub fn with_colorless_entry(&mut self) -> UResult<()> {
-        self.wh = Buffer::write_header_name;
-        self.we = Buffer::write_entry;
+        self.head = Buffer::write_header_name;
+        self.dir = Buffer::write_entry;
         Ok(())
     }
 
     pub fn with_relative_path(&mut self) -> UResult<()> {
-        self.we = Buffer::write_entry_relative_path;
-        self.wf = Buffer::write_entry_relative_path;
-        self.wh = Buffer::write_header_relative_path;
+        self.dir = Buffer::write_entry_relative_path;
+        self.file = Buffer::write_entry_relative_path;
+        self.head = Buffer::write_header_relative_path;
         Ok(())
     }
 }
@@ -137,17 +169,17 @@ impl<'a> CallbackRegistry<'a> {
 #[allow(dead_code)]
 impl<'a> CallbackRegistry<'a> {
     pub fn with_size(&mut self) -> UResult<()> {
-        self.wsz = Buffer::write_size;
+        self.size = Buffer::write_size;
         Ok(())
     }
 
     pub fn with_size_color(&mut self) -> UResult<()> {
-        self.wsz = Buffer::write_size_color;
+        self.size = Buffer::write_size_color;
         Ok(())
     }
 
     pub fn with_no_size(&mut self) -> UResult<()> {
-        self.wsz = Buffer::write_no_size;
+        self.size = Buffer::write_no_size;
         Ok(())
     }
 }

@@ -29,8 +29,10 @@ pub mod options {
     }
 
     pub mod meta {
-        pub static PERMISSION: &str = "show-entries-attribute";
-        pub static DATE: &str = "show-entries-date-creation";
+        pub static PERMISSION: &str = "show-entry-permission";
+        pub static BTIME: &str = "show-entries-creation-time";
+        pub static MTIME: &str = "show-entries-modification-time";
+        pub static ATIME: &str = "show-entries-access-time";
         pub static SIZE: &str = "Show-entries-size";
     }
 }
@@ -98,21 +100,18 @@ pub fn tree_app() -> Command {
         .arg(
             Arg::new(options::read::VISIBLE)
                 .long("visible")
-                // .short('v')
                 .help("Print visible entries only.")
                 .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new(options::read::ALL)
                 .long("all")
-                // .short('A')
                 .help("Print all entries.")
                 .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new(options::read::FOLDER)
                 .long("folder")
-                // .short('A')
                 .help("Print directoris only.")
                 .action(ArgAction::SetTrue),
         )
@@ -124,16 +123,26 @@ pub fn tree_app() -> Command {
                 .action(ArgAction::SetTrue),
         )
         .arg(
-            Arg::new(options::meta::DATE)
-                .long("date")
-                .short('D')
-                .help("Print entires date-creation.")
+            Arg::new(options::meta::BTIME)
+                .long("btime")
+                .help("Print the date that the entry was created.")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new(options::meta::MTIME)
+                .long("mtime")
+                .help("Print the date that the entry was modified.")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new(options::meta::ATIME)
+                .long("atime")
+                .help("Print the date that the entry was last time accessed.")
                 .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new(options::meta::SIZE)
                 .long("size")
-                // .short('s')
                 .help("Print entires's size.")
                 .action(ArgAction::SetTrue),
         )

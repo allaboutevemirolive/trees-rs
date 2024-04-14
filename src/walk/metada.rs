@@ -1,6 +1,6 @@
-// use super::buffer::Buffer;
-// use super::tail::Tail;
-use super::{buffer, tail, WalkDir};
+use super::buffer;
+use super::tail;
+use super::WalkDir;
 use crate::config::path::Directory;
 use crate::error::simple::UResult;
 use crate::tree::level::Level;
@@ -61,7 +61,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
                 self,
                 walk.root,
                 walk.parent,
-                walk.setting.cr.we,
+                walk.setting.cr.dir,
             )?;
 
             buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
@@ -79,7 +79,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
                 self,
                 walk.root,
                 walk.parent,
-                walk.setting.cr.wf,
+                walk.setting.cr.file,
             )?;
 
             buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
