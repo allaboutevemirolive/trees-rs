@@ -24,18 +24,4 @@ impl<'a> Setting<'a> {
 
         Ok(Self { path, cr })
     }
-
-    pub fn with_path(&self, path_dir: String) -> UResult<Self> {
-        let mut path = PathBuf::new();
-        path.push(path_dir);
-
-        Ok(Self { path, cr: self.cr })
-    }
-
-    pub fn with_registry(&self, cr: CallbackRegistry<'a>) -> UResult<Self> {
-        Ok(Self {
-            path: self.path.clone(),
-            cr,
-        })
-    }
 }

@@ -1,22 +1,31 @@
 mod canva;
-mod cli;
-mod config;
-mod error;
-mod report;
-mod sort;
-mod tree;
-mod util;
-mod walk;
 use crate::canva::Canva;
+
+mod cli;
 use crate::cli::arg::TreeArgs;
 use crate::cli::opt::Setting;
+
+mod config;
 use crate::config::path::Directory;
+
+mod error;
 use crate::error::simple::UResult;
+
+mod report;
 use crate::report::Report;
+
+mod sort;
+
+mod tree;
 use crate::tree::level::Level;
 use crate::tree::Tree;
+
+mod util;
+
+mod walk;
 use crate::walk::WalkDir;
 use crate::walk::WalkDirConfig;
+
 use std::fs;
 
 fn main() -> UResult<()> {
@@ -31,40 +40,55 @@ fn main() -> UResult<()> {
     // Collect arguments
     let mut args = TreeArgs::new();
 
-    let (path, path_filename) = args.match_app(&mut setting)?;
+    // Match arguments and get target path
+    let (path, path_filename) = TreeArgs::match_app(&mut args, &mut setting)?;
 
-    let metadata_header = fs::metadata(path.clone())?;
+    // Collect header metadata
+    let metadata_header: fs::Metadata = fs::metadata(path.clone())?;
     let path_header = path.clone();
     let filename_header = path_filename.clone();
 
+    // Initialize walk configuration
     let mut walk = WalkDir::new(&mut config, &path, &path_filename, setting)?;
-    let path = Directory::new(&walk.root)?;
+    // Setup entry point of traversal
+    let path = Directory::new(walk.root)?;
 
-    walk.config
-        .canva
-        .buffer
-        .paint_permission(&metadata_header, walk.setting.cr.wha)?;
-
-    walk.config
-        .canva
-        .buffer
-        .paint_date(&metadata_header, walk.setting.cr.whd)?;
-
-    walk.config
-        .canva
-        .buffer
-        .paint_size(&metadata_header, walk.setting.cr.wsz)?;
-
-    walk.config.canva.buffer.paint_header(
+    // Print header permission
+    canva::buffer::Buffer::paint_permission(
+        &mut walk.config.canva.buffer,
         &metadata_header,
-        &path_header,     // abs_path
-        &filename_header, // ../../tree/src
+        walk.setting.cr.wha,
+    )?;
+
+    // Print header creation-date
+    canva::buffer::Buffer::paint_date(
+        &mut walk.config.canva.buffer,
+        &metadata_header,
+        walk.setting.cr.whd,
+    )?;
+
+    // Print header size
+    canva::buffer::Buffer::paint_size(
+        &mut walk.config.canva.buffer,
+        &metadata_header,
+        walk.setting.cr.wsz,
+    )?;
+
+    // Print header's name
+    canva::buffer::Buffer::paint_header(
+        &mut walk.config.canva.buffer,
+        &metadata_header,
+        &path_header,
+        &filename_header,
         walk.setting.cr.wh,
     )?;
-    walk.config.canva.buffer.write_newline()?;
+    canva::buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
 
-    walk.walk_dir(path)?;
-    walk.report()?;
+    // Traversing
+    WalkDir::walk_dir(&mut walk, path)?;
+
+    // Print summarize
+    WalkDir::report(&mut walk)?;
 
     Ok(())
 }

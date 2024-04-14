@@ -1,13 +1,19 @@
-use crate::canva::*;
+use crate::canva::buffer;
+use crate::canva::Canva;
 use crate::cli::opt::Setting;
 use crate::config::path::Directory;
 use crate::error::simple::UResult;
-use crate::report::*;
+use crate::report::tail;
+use crate::report::Report;
+use crate::tree::branch;
+use crate::tree::node;
 use crate::tree::Tree;
+
+pub mod metada;
+use self::metada::FileMetadata;
+
 use std::ffi::OsString;
 use std::path::PathBuf;
-pub mod metada;
-use self::metada::*;
 
 #[derive(Debug)]
 pub struct WalkDir<'wd, 'cv, 'st> {
@@ -50,37 +56,46 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
     }
 
     pub fn walk_dir(&mut self, path: Directory) -> UResult<()> {
-        let entries = path.iterate_entries(self)?;
+        // Read, sort and enumerate entries
+        let entries: Vec<(usize, std::fs::DirEntry)> = Directory::iterate_entries(&path, self)?;
         let entries_len = entries.len();
 
         for (idx, entry) in entries {
+            // Collect metadata
             let fmeta = FileMetadata::new(entry, &self.config.tree.level)?;
 
-            self.config.report.tail.add_size(fmeta.size);
+            // Accumulate size for all entries
+            tail::Tail::add_size(&mut self.config.report.tail, fmeta.size);
 
             // Print entry's permission
-            self.config
-                .canva
-                .buffer
-                .paint_permission(&fmeta.meta, self.setting.cr.wa)?;
+            buffer::Buffer::paint_permission(
+                &mut self.config.canva.buffer,
+                &fmeta.meta,
+                self.setting.cr.wa,
+            )?;
 
             // Print entry's creation-date
-            self.config
-                .canva
-                .buffer
-                .paint_date(&fmeta.meta, self.setting.cr.wd)?;
+            buffer::Buffer::paint_date(
+                &mut self.config.canva.buffer,
+                &fmeta.meta,
+                self.setting.cr.wd,
+            )?;
 
-            self.config
-                .canva
-                .buffer
-                .paint_size(&fmeta.meta, self.setting.cr.wsz)?;
+            // Print entry's size
+            buffer::Buffer::paint_size(
+                &mut self.config.canva.buffer,
+                &fmeta.meta,
+                self.setting.cr.wsz,
+            )?;
 
-            // Mark node
-            self.config.tree.nod.mark_entry(idx, entries_len);
+            // Mark node based on idx of current entries and entries's len
+            node::Node::mark_entry(&mut self.config.tree.nod, idx, entries_len);
 
             // Print branch based on node
             for (value, has_next) in self.config.tree.nod.into_iter() {
-                self.config.tree.branch.paint_branch(
+                // Print branch's structure for current entry
+                branch::Branch::paint_branch(
+                    &self.config.tree.branch,
                     value,
                     has_next,
                     &mut self.config.canva.buffer,
@@ -88,19 +103,21 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             }
 
             // Print entry's name
-            fmeta.paint_entry(self)?;
+            FileMetadata::paint_entry(&fmeta, self)?;
 
             // Pop last node's element
-            self.config.tree.nod.pop();
+            node::Node::pop(&mut self.config.tree.nod);
         }
         Ok(())
     }
 
     pub fn report(&mut self) -> UResult<()> {
-        self.config.canva.buffer.write_newline()?;
-        let report = self.config.report.get_tail();
-        self.config.canva.buffer.write_report(report)?;
-        self.config.canva.buffer.write_newline()?;
+        buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
+        // Get summarize
+        let report = Report::get_tail(&self.config.report);
+        // Print summarize
+        buffer::Buffer::write_report(&mut self.config.canva.buffer, report)?;
+        buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
         Ok(())
     }
 }

@@ -2,14 +2,12 @@ use std::fs;
 
 pub type WhichSort = fn(&mut Vec<fs::DirEntry>);
 
-// fn sort_entries(vector: &mut Vec<fs::DirEntry>, f: WhichSort) {
-//     f(vector)
-// }
-
+#[allow(clippy::ptr_arg)]
 pub fn sort_by_name(vector: &mut Vec<fs::DirEntry>) {
-    vector.sort_unstable_by(|a, b| a.file_name().cmp(&b.file_name()));
+    vector.sort_unstable_by_key(|a| a.file_name())
 }
 
+#[allow(clippy::ptr_arg)]
 pub fn reverse_sort_by_name(vector: &mut Vec<fs::DirEntry>) {
-    vector.sort_unstable_by(|a, b| b.file_name().cmp(&a.file_name()));
+    vector.sort_unstable_by_key(|b| std::cmp::Reverse(b.file_name()));
 }

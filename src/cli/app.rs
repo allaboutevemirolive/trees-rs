@@ -7,7 +7,6 @@ pub mod options {
     }
 
     pub mod path {
-        pub static TARGET_PATH: &str = "get-target-path";
         pub static ABSOLUTE: &str = "absolute-path";
         pub static RELATIVE: &str = "relative-path";
     }

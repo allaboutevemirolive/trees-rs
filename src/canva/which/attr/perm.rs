@@ -1,13 +1,20 @@
+use crate::canva::buffer::Buffer;
 use std::fs::Metadata;
 use std::io;
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 
-use crate::canva::buffer::Buffer;
-
 pub type WhichPermission<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
+    pub fn paint_permission(&mut self, meta: &Metadata, f: WhichPermission<W>) -> io::Result<()> {
+        f(self, meta)
+    }
+
+    pub fn write_no_permission(&mut self, _meta: &Metadata) -> io::Result<()> {
+        Ok(())
+    }
+
     pub fn write_permission(&mut self, meta: &Metadata) -> io::Result<()> {
         let mode = meta.permissions().mode();
 
@@ -74,13 +81,5 @@ impl<W: Write> Buffer<W> {
         }
 
         self.write_space()
-    }
-
-    pub fn write_no_permission(&mut self, _meta: &Metadata) -> io::Result<()> {
-        Ok(())
-    }
-
-    pub fn paint_permission(&mut self, meta: &Metadata, f: WhichPermission<W>) -> io::Result<()> {
-        f(self, meta)
     }
 }

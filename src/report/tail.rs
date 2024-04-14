@@ -7,6 +7,7 @@ pub struct Tail {
 }
 
 impl Tail {
+    #[allow(dead_code)]
     pub fn initialize(directories: usize, files: usize, size: u64, hidden_files: usize) -> Self {
         Self {
             directories,

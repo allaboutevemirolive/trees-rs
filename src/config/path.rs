@@ -14,17 +14,17 @@ pub struct Directory {
     pub path: PathBuf,
 }
 
+#[allow(unused_variables)]
 #[allow(dead_code)]
 impl<'pt, 'wd, 'cv, 'cr> Directory {
     pub fn new(path: impl Into<PathBuf>) -> UResult<Self> {
         Ok(Directory { path: path.into() })
     }
 
-    #[allow(unused_variables)]
     pub fn read_all_entries(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
-        let entries = fs::read_dir(&self.path)?
-            .map(|entry_result| entry_result.map(|entry| entry))
-            .collect::<Result<Vec<DirEntry>, std::io::Error>>()?;
+        let entries =
+            fs::read_dir(&self.path)?.collect::<Result<Vec<DirEntry>, std::io::Error>>()?;
+
         Ok(entries)
     }
 
@@ -32,7 +32,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
-                    if !entry.file_name().to_string_lossy().starts_with(".") {
+                    if !entry.file_name().to_string_lossy().starts_with('.') {
                         Some(entry)
                     } else {
                         tail.hid_plus_one();
@@ -52,8 +52,8 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
                     let entry_path = entry.path();
                     // TODO: Implement this feature
                     let excluded_path = PathBuf::new();
-                    if !entry.file_name().to_string_lossy().starts_with(".")
-                        || !(entry_path == excluded_path)
+                    if !entry.file_name().to_string_lossy().starts_with('.')
+                        || entry_path != excluded_path
                     {
                         Some(entry)
                     } else {
@@ -72,7 +72,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
                 entry_result.ok().and_then(|entry| {
                     let file_name = entry.file_name();
                     let file_name_str = file_name.to_string_lossy().to_string();
-                    if file_name_str.starts_with(".") {
+                    if file_name_str.starts_with('.') {
                         None
                     } else if entry.path().is_dir() {
                         Some(entry)
@@ -96,7 +96,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
                     let metadata = entry.metadata().ok()?;
-                    if metadata.is_dir() && !entry.file_name().to_string_lossy().starts_with(".") {
+                    if metadata.is_dir() && !entry.file_name().to_string_lossy().starts_with('.') {
                         Some(entry)
                     } else {
                         tail.hid_plus_one();

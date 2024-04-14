@@ -8,6 +8,7 @@ pub struct Node {
 impl Node {
     /// For testing and not intended to be use in production as
     /// this will initialize default capacity.
+    #[allow(dead_code)]
     fn new(nod: Vec<i32>) -> Self {
         Node { nod }
     }
@@ -26,10 +27,12 @@ impl Node {
         self.nod.push(num);
     }
 
+    #[allow(dead_code)]
     fn enumerate_node(&self) -> impl Iterator<Item = (usize, &i32)> {
         self.nod.iter().enumerate()
     }
 
+    #[allow(dead_code)]
     /// Get next element or subslice and consume the iterator.
     fn next_iter<'a>(
         &'a self,

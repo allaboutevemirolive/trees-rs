@@ -8,10 +8,12 @@ use std::path::PathBuf;
 pub type WhichHeader<W> = fn(&mut Buffer<W>, &Metadata, &PathBuf, &OsString) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
+    #[allow(unused_variables)]
+    #[allow(clippy::ptr_arg)]
     pub fn write_header_relative_path(
         &mut self,
-        _meta: &Metadata,
-        _root: &PathBuf,
+        meta: &Metadata,
+        root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
         let mut path = PathBuf::new();

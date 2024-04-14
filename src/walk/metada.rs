@@ -1,4 +1,6 @@
-use super::WalkDir;
+// use super::buffer::Buffer;
+// use super::tail::Tail;
+use super::{buffer, tail, WalkDir};
 use crate::config::path::Directory;
 use crate::error::simple::UResult;
 use crate::tree::level::Level;
@@ -54,32 +56,34 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
 
     pub fn paint_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
         if self.filety.is_dir() {
-            walk.config.canva.buffer.paint_entry(
-                &self,
-                &walk.root,
-                &walk.parent,
+            buffer::Buffer::paint_entry(
+                &mut walk.config.canva.buffer,
+                self,
+                walk.root,
+                walk.parent,
                 walk.setting.cr.we,
             )?;
 
-            walk.config.canva.buffer.write_newline()?;
-            walk.config.report.tail.dir_plus_one();
-            walk.config.tree.level.plus_one();
+            buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
+            tail::Tail::dir_plus_one(&mut walk.config.report.tail);
+            Level::plus_one(&mut walk.config.tree.level);
 
             let mut walk = WalkDir::new(walk.config, walk.root, walk.parent, walk.setting.clone())?;
-            let path = Directory::new(&self.abs)?;
+            let path: Directory = Directory::new(&self.abs)?;
 
-            walk.walk_dir(path)?;
-            walk.config.tree.level.minus_one();
+            WalkDir::walk_dir(&mut walk, path)?;
+            Level::minus_one(&mut walk.config.tree.level);
         } else {
-            walk.config.canva.buffer.paint_entry(
-                &self,
-                &walk.root,
-                &walk.parent,
+            buffer::Buffer::paint_entry(
+                &mut walk.config.canva.buffer,
+                self,
+                walk.root,
+                walk.parent,
                 walk.setting.cr.wf,
             )?;
 
-            walk.config.canva.buffer.write_newline()?;
-            walk.config.report.tail.file_plus_one();
+            buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
+            tail::Tail::file_plus_one(&mut walk.config.report.tail);
         }
         Ok(())
     }

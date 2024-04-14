@@ -73,6 +73,7 @@ impl<'a> TreeArgs {
 
         if matches.get_flag(options::color::COLORLESS) {
             setting.cr.with_colorless_entry()?;
+            setting.cr.with_size()?;
         }
 
         if matches.get_flag(options::path::RELATIVE) {
@@ -100,6 +101,11 @@ impl<'a> TreeArgs {
         }
 
         if matches.get_flag(options::meta::SIZE) {
+            setting.cr.with_size_color()?;
+        }
+
+        if matches.get_flag(options::color::COLORLESS) {
+            setting.cr.with_colorless_entry()?;
             setting.cr.with_size()?;
         }
 

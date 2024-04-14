@@ -27,6 +27,7 @@ impl<W: Write> Buffer<W> {
     }
 
     #[allow(unused_variables)]
+    #[allow(clippy::ptr_arg)]
     pub fn write_entry(
         &mut self,
         meta: &FileMetadata,
@@ -38,6 +39,7 @@ impl<W: Write> Buffer<W> {
     }
 
     #[allow(unused_variables)]
+    #[allow(clippy::ptr_arg)]
     pub fn write_entry_color(
         &mut self,
         meta: &FileMetadata,
