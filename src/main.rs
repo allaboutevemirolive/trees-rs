@@ -67,12 +67,14 @@ fn main() -> UResult<()> {
         walk.setting.cr.btime,
     )?;
 
+    // Print entry's modification-time
     canva::buffer::Buffer::paint_mtime(
         &mut walk.config.canva.buffer,
         &metadata_header,
         walk.setting.cr.mtime,
     )?;
 
+    // Print entry's access-time
     canva::buffer::Buffer::paint_atime(
         &mut walk.config.canva.buffer,
         &metadata_header,

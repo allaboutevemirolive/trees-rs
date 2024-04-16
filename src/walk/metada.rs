@@ -3,9 +3,12 @@ use super::tail;
 use super::WalkDir;
 use crate::config::path::Directory;
 use crate::error::simple::UResult;
-use crate::tree::level::Level;
+use crate::tree::level;
+
 use std::ffi::OsString;
-use std::fs::{DirEntry, FileType, Metadata};
+use std::fs::DirEntry;
+use std::fs::FileType;
+use std::fs::Metadata;
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -16,19 +19,19 @@ pub struct FileMetadata {
     pub meta: Metadata,
     pub name: OsString,
     pub filety: FileType,
-    pub lvl: Level,
+    pub lvl: level::Level,
     pub size: u64,
 }
 
 impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
-    pub fn new(dent: DirEntry, level: &Level) -> UResult<Self> {
+    pub fn new(dent: DirEntry, level: &level::Level) -> UResult<Self> {
         let filety = dent.file_type()?;
         let abs = dent.path();
         let name = dent
             .path()
             .file_name()
             .map(|os_str| os_str.to_os_string())
-            .unwrap();
+            .expect("Failed to get file name");
 
         let meta = dent.metadata()?;
 
@@ -66,13 +69,13 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
 
             buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
             tail::Tail::dir_plus_one(&mut walk.config.report.tail);
-            Level::plus_one(&mut walk.config.tree.level);
+            level::Level::plus_one(&mut walk.config.tree.level);
 
             let mut walk = WalkDir::new(walk.config, walk.root, walk.parent, walk.setting.clone())?;
             let path: Directory = Directory::new(&self.abs)?;
 
             WalkDir::walk_dir(&mut walk, path)?;
-            Level::minus_one(&mut walk.config.tree.level);
+            level::Level::minus_one(&mut walk.config.tree.level);
         } else {
             buffer::Buffer::paint_entry(
                 &mut walk.config.canva.buffer,

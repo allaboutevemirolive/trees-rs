@@ -1,10 +1,14 @@
-use crate::error::simple::{UResult, USimpleError};
-
-use self::{branch::Branch, level::Level, node::Node};
-
 pub mod branch;
+use self::branch::Branch;
+
 pub mod level;
+use self::level::Level;
+
 pub mod node;
+use self::node::Node;
+
+use crate::error::simple::UResult;
+use crate::error::simple::USimpleError;
 
 #[derive(Debug, Clone)]
 pub struct Tree {

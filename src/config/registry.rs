@@ -1,3 +1,4 @@
+use super::path::Directory;
 use crate::canva::buffer::Buffer;
 use crate::canva::which::attr::atime::WhichAccessTime;
 use crate::canva::which::attr::btime::WhichBirthTime;
@@ -11,9 +12,8 @@ use crate::error::simple::UResult;
 use crate::sort::dent::reverse_sort_by_name;
 use crate::sort::dent::sort_by_name;
 use crate::sort::dent::WhichSort;
-use std::io::StdoutLock;
 
-use super::path::Directory;
+use std::io::StdoutLock;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CallbackRegistry<'a> {
@@ -96,7 +96,6 @@ impl<'a> CallbackRegistry<'a> {
 #[allow(dead_code)]
 impl<'a> CallbackRegistry<'a> {
     pub fn with_permission(&mut self) -> UResult<()> {
-        // self.wa = Buffer::write_permission;
         self.pms = Buffer::write_permission;
         Ok(())
     }

@@ -81,12 +81,14 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
                 self.setting.cr.btime,
             )?;
 
+            // Print entry's modification-time
             buffer::Buffer::paint_mtime(
                 &mut self.config.canva.buffer,
                 &fmeta.meta,
                 self.setting.cr.mtime,
             )?;
 
+            // Print entry's access-time
             buffer::Buffer::paint_atime(
                 &mut self.config.canva.buffer,
                 &fmeta.meta,
@@ -103,7 +105,7 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             // Mark node based on idx of current entries and entries's len
             node::Node::mark_entry(&mut self.config.tree.nod, idx, entries_len);
 
-            // Print branch based on node
+            // Print branch based on marked node
             for (value, has_next) in self.config.tree.nod.into_iter() {
                 // Print branch's structure for current entry
                 branch::Branch::paint_branch(
@@ -114,10 +116,10 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
                 )?;
             }
 
-            // Print entry's name
+            // Print the entry's name and traverse if the entry is a folder; otherwise, just print the entry.
             FileMetadata::paint_entry(&fmeta, self)?;
 
-            // Pop last node's element
+            // Pop the last node's element.
             node::Node::pop(&mut self.config.tree.nod);
         }
         Ok(())
