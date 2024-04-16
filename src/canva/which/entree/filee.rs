@@ -1,16 +1,16 @@
 use crate::canva::buffer::Buffer;
-use crate::walk::metada::FileMetadata;
+use crate::walk::metada::Visitor;
 use std::ffi::OsString;
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 
-pub type WhichEntry<W> = fn(&mut Buffer<W>, &FileMetadata, &PathBuf, &OsString) -> io::Result<()>;
+pub type FnOutFile<W> = fn(&mut Buffer<W>, &Visitor, &PathBuf, &OsString) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
     pub fn write_entry_relative_path(
         &mut self,
-        meta: &FileMetadata,
+        meta: &Visitor,
         root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
@@ -30,7 +30,7 @@ impl<W: Write> Buffer<W> {
     #[allow(clippy::ptr_arg)]
     pub fn write_entry(
         &mut self,
-        meta: &FileMetadata,
+        meta: &Visitor,
         root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
@@ -42,7 +42,7 @@ impl<W: Write> Buffer<W> {
     #[allow(clippy::ptr_arg)]
     pub fn write_entry_color(
         &mut self,
-        meta: &FileMetadata,
+        meta: &Visitor,
         root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
@@ -54,10 +54,10 @@ impl<W: Write> Buffer<W> {
 
     pub fn paint_entry(
         &mut self,
-        meta: &FileMetadata,
+        meta: &Visitor,
         root: &PathBuf,
         parent: &OsString,
-        f: WhichEntry<W>,
+        f: FnOutFile<W>,
     ) -> io::Result<()> {
         f(self, meta, root, parent)
     }

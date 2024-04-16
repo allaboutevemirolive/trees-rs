@@ -1,4 +1,4 @@
-use crate::error::simple::UResult;
+use crate::error::simple::TResult;
 use std::io::{self, Write};
 
 #[derive(Debug)]
@@ -7,7 +7,7 @@ pub struct Buffer<W: Write> {
 }
 
 impl<W: Write> Buffer<W> {
-    pub fn new(writer: W) -> UResult<Self> {
+    pub fn new(writer: W) -> TResult<Self> {
         let buf_writer = io::BufWriter::new(writer);
         Ok(Buffer { buf_writer })
     }

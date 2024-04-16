@@ -1,14 +1,15 @@
-use crate::error::simple::UResult;
-use crate::error::simple::USimpleError;
+use crate::error::simple::TResult;
+use crate::error::simple::TSimpleError;
 use crate::report::tail::Tail;
 use crate::walk::WalkDir;
 use std::env;
 use std::ffi::OsString;
-use std::fs::{self, DirEntry};
+use std::fs;
+use std::fs::DirEntry;
 use std::path::Path;
 use std::path::PathBuf;
 
-pub type WhichReader = fn(&Directory, &mut Tail) -> UResult<Vec<DirEntry>>;
+pub type FnReadDir = fn(&Directory, &mut Tail) -> TResult<Vec<DirEntry>>;
 
 pub struct Directory {
     pub path: PathBuf,
@@ -17,18 +18,18 @@ pub struct Directory {
 #[allow(unused_variables)]
 #[allow(dead_code)]
 impl<'pt, 'wd, 'cv, 'cr> Directory {
-    pub fn new(path: impl Into<PathBuf>) -> UResult<Self> {
+    pub fn new(path: impl Into<PathBuf>) -> TResult<Self> {
         Ok(Directory { path: path.into() })
     }
 
-    pub fn read_all_entries(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
+    pub fn read_all_entries(&self, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
         let entries =
             fs::read_dir(&self.path)?.collect::<Result<Vec<DirEntry>, std::io::Error>>()?;
 
         Ok(entries)
     }
 
-    pub fn read_visible_entries(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
+    pub fn read_visible_entries(&self, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -45,7 +46,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
     }
 
     /// Read visible entries (directories and files) but exclude entry (directory and file) that match the given path.
-    pub fn read_visible_excl_path(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
+    pub fn read_visible_excl_path(&self, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -66,7 +67,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
     }
 
     /// Read visible entries(files) that match the given specific file extension.
-    pub fn read_visible_ext_files_and_folders(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
+    pub fn read_visible_ext_files_and_folders(&self, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -91,7 +92,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    pub fn read_visible_folders(&self, tail: &mut Tail) -> UResult<Vec<DirEntry>> {
+    pub fn read_visible_folders(&self, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -108,7 +109,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    pub fn read_all_folders(&self) -> UResult<Vec<DirEntry>> {
+    pub fn read_all_folders(&self) -> TResult<Vec<DirEntry>> {
         let entries = fs::read_dir(&self.path)?
             .filter_map(|entry_result| {
                 entry_result.ok().and_then(|entry| {
@@ -124,7 +125,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    fn inspect_entries(&self, tail: &mut Tail, f: WhichReader) -> UResult<Vec<DirEntry>> {
+    fn inspect_entries(&self, tail: &mut Tail, f: FnReadDir) -> TResult<Vec<DirEntry>> {
         f(self, tail)
     }
 
@@ -135,12 +136,12 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
     pub fn iterate_entries(
         &self,
         walk: &'pt mut WalkDir<'wd, 'cv, 'cr>,
-    ) -> UResult<Vec<(usize, DirEntry)>> {
+    ) -> TResult<Vec<(usize, DirEntry)>> {
         // Read
         let mut entries = self
             .inspect_entries(&mut walk.config.report.tail, walk.setting.cr.read)
             .map_err(|err| {
-                USimpleError::new(1, format!("Failed to inspect directory entries: {}", err))
+                TSimpleError::new(1, format!("Failed to inspect directory entries: {}", err))
             })?;
 
         // Sort
@@ -154,7 +155,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
 }
 
 /// If no path where given, retrieve current path where shell executed
-pub fn get_absolute_current_shell() -> UResult<OsString> {
+pub fn get_absolute_current_shell() -> TResult<OsString> {
     Ok(env::current_dir()
         .expect("Failed to get current directory")
         .into_os_string())

@@ -1,7 +1,8 @@
 use super::app::options;
 use super::app::tree_app;
 use crate::cli::opt::Setting;
-use crate::error::simple::UResult;
+use crate::error::simple::TResult;
+use crate::walk::Config;
 
 use std::env;
 use std::ffi::OsString;
@@ -9,15 +10,15 @@ use std::path::Path;
 use std::path::PathBuf;
 
 #[derive(Clone)]
-pub struct TreeArgs {
+pub struct TArgs {
     pub args: Vec<OsString>,
 }
 
 #[allow(dead_code)]
-impl<'a> TreeArgs {
+impl<'a> TArgs {
     pub fn new() -> Self {
         let args: Vec<OsString> = env::args_os().collect();
-        TreeArgs { args }
+        TArgs { args }
     }
 
     pub fn extract_paths(&self) -> (Vec<&OsString>, Vec<&OsString>) {
@@ -44,25 +45,45 @@ impl<'a> TreeArgs {
         }
     }
 
-    pub fn match_app(&mut self, setting: &mut Setting<'a>) -> UResult<(PathBuf, OsString)> {
+    pub fn match_app(
+        &mut self,
+        setting: &mut Setting<'a>,
+        config: &mut Config,
+    ) -> TResult<(PathBuf, OsString)> {
         let path_exist = path_exist(&mut self.args, setting);
 
         #[allow(unused_assignments)]
         let mut path = &PathBuf::new();
         #[allow(unused_assignments)]
-        let mut path_filename = OsString::new();
+        let mut root_filename = OsString::new();
 
         if path_exist {
             path = &setting.path;
-            path_filename = <PathBuf as Clone>::clone(&setting.path).into();
+            root_filename = <PathBuf as Clone>::clone(&setting.path).into();
         } else {
             path = &setting.path;
-            path_filename = OsString::from(".");
+            root_filename = OsString::from(".");
         }
 
         let matches = tree_app()
             .try_get_matches_from(self.args.clone())
             .unwrap_or_else(|e| e.exit());
+
+        if matches.contains_id(options::miscellaneous::LEVEL) {
+            let level: usize = *matches
+                .get_one(options::miscellaneous::LEVEL)
+                .expect("default");
+
+            config.tree.level.cap = level as i32;
+        }
+
+        if matches.get_flag(options::meta::META) {
+            setting.cr.with_permission()?;
+            setting.cr.with_btime()?;
+            setting.cr.with_mtime()?;
+            setting.cr.with_atime()?;
+            setting.cr.with_size_color()?;
+        }
 
         if matches.get_flag(options::sort::REVERSE) {
             setting.cr.with_reverse_sort_entries()?;
@@ -115,7 +136,7 @@ impl<'a> TreeArgs {
             }
         }
 
-        Ok((path.to_path_buf(), path_filename))
+        Ok((path.to_path_buf(), root_filename))
     }
 }
 
@@ -170,7 +191,7 @@ mod tests {
         writeln!(file2, "Some content").expect("Failed to write to file2");
 
         let args = vec![OsString::from(file2_path), OsString::from(file1_path)];
-        let tree_args = TreeArgs { args };
+        let tree_args = TArgs { args };
         let (remaining, paths) = tree_args.extract_paths();
 
         assert_eq!(remaining.len(), 0);
@@ -179,7 +200,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let tree_args = TreeArgs::new();
+        let tree_args = TArgs::new();
         assert!(tree_args.args.len() >= 1);
     }
 
@@ -193,14 +214,14 @@ mod tests {
         writeln!(file1, "Some content").expect("Failed to write to file1");
 
         let args = vec![OsString::from(file1_path.clone())];
-        let tree_args = TreeArgs { args };
+        let tree_args = TArgs { args };
         assert!(tree_args.assert_single_path().is_some());
 
         let args = vec![
             OsString::from(file1_path.clone()),
             OsString::from(file1_path),
         ];
-        let tree_args = TreeArgs { args };
+        let tree_args = TArgs { args };
         assert!(tree_args.assert_single_path().is_none());
     }
 }

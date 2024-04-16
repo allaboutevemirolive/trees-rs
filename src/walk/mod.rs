@@ -2,7 +2,7 @@ use crate::canva::buffer;
 use crate::canva::Canva;
 use crate::cli::opt::Setting;
 use crate::config::path::Directory;
-use crate::error::simple::UResult;
+use crate::error::simple::TResult;
 use crate::report::tail;
 use crate::report::Report;
 use crate::tree::branch;
@@ -10,28 +10,28 @@ use crate::tree::node;
 use crate::tree::Tree;
 
 pub mod metada;
-use self::metada::FileMetadata;
+use self::metada::Visitor;
 
 use std::ffi::OsString;
 use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct WalkDir<'wd, 'cv, 'st> {
-    pub config: &'wd mut WalkDirConfig<'cv>,
+    pub config: &'wd mut Config<'cv>,
     pub root: &'wd PathBuf,
     pub parent: &'wd OsString,
     pub setting: Setting<'st>,
 }
 
 #[derive(Debug)]
-pub struct WalkDirConfig<'cv> {
+pub struct Config<'cv> {
     pub tree: Tree,
     pub canva: Canva<'cv>,
     pub report: Report,
 }
 
-impl<'cv> WalkDirConfig<'cv> {
-    pub fn new(tree: Tree, canva: Canva<'cv>, report: Report) -> UResult<Self> {
+impl<'cv> Config<'cv> {
+    pub fn new(tree: Tree, canva: Canva<'cv>, report: Report) -> TResult<Self> {
         Ok(Self {
             tree,
             canva,
@@ -42,11 +42,11 @@ impl<'cv> WalkDirConfig<'cv> {
 
 impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
     pub fn new(
-        config: &'wd mut WalkDirConfig<'cv>,
+        config: &'wd mut Config<'cv>,
         root: &'wd PathBuf,
         parent: &'wd OsString,
         setting: Setting<'st>,
-    ) -> UResult<Self> {
+    ) -> TResult<Self> {
         Ok(Self {
             config,
             root,
@@ -55,50 +55,50 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
         })
     }
 
-    pub fn walk_dir(&mut self, path: Directory) -> UResult<()> {
+    pub fn walk_dir(&mut self, path: Directory) -> TResult<()> {
         // Read, sort and enumerate entries
         let entries: Vec<(usize, std::fs::DirEntry)> = Directory::iterate_entries(&path, self)?;
         let entries_len = entries.len();
 
         for (idx, entry) in entries {
             // Collect metadata
-            let fmeta = FileMetadata::new(entry, &self.config.tree.level)?;
+            let visitor = Visitor::new(entry, &self.config.tree.level)?;
 
             // Accumulate size for all entries
-            tail::Tail::add_size(&mut self.config.report.tail, fmeta.size);
+            tail::Tail::add_size(&mut self.config.report.tail, visitor.size);
 
             // Print entry's permission
             buffer::Buffer::paint_permission(
                 &mut self.config.canva.buffer,
-                &fmeta.meta,
+                &visitor.meta,
                 self.setting.cr.pms,
             )?;
 
             // Print entry's creation-date
             buffer::Buffer::paint_btime(
                 &mut self.config.canva.buffer,
-                &fmeta.meta,
+                &visitor.meta,
                 self.setting.cr.btime,
             )?;
 
             // Print entry's modification-time
             buffer::Buffer::paint_mtime(
                 &mut self.config.canva.buffer,
-                &fmeta.meta,
+                &visitor.meta,
                 self.setting.cr.mtime,
             )?;
 
             // Print entry's access-time
             buffer::Buffer::paint_atime(
                 &mut self.config.canva.buffer,
-                &fmeta.meta,
+                &visitor.meta,
                 self.setting.cr.atime,
             )?;
 
             // Print entry's size
             buffer::Buffer::paint_size(
                 &mut self.config.canva.buffer,
-                &fmeta.meta,
+                &visitor.meta,
                 self.setting.cr.size,
             )?;
 
@@ -117,7 +117,7 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             }
 
             // Print the entry's name and traverse if the entry is a folder; otherwise, just print the entry.
-            FileMetadata::paint_entry(&fmeta, self)?;
+            Visitor::paint_entry(&visitor, self)?;
 
             // Pop the last node's element.
             node::Node::pop(&mut self.config.tree.nod);
@@ -125,7 +125,7 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
         Ok(())
     }
 
-    pub fn report(&mut self) -> UResult<()> {
+    pub fn report(&mut self) -> TResult<()> {
         buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
         // Get summarize
         let report = Report::get_tail(&self.config.report);

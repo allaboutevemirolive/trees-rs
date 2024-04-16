@@ -1,19 +1,19 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
-pub type UResult<T> = Result<T, Box<dyn UError>>;
+pub type TResult<T> = Result<T, Box<dyn UError>>;
 
 pub trait UError: Error + Send + Sync + 'static {
     fn code(&self) -> i32;
 }
 
 #[derive(Debug)]
-pub struct USimpleError {
+pub struct TSimpleError {
     pub code: i32,
     pub message: String,
 }
 
-impl USimpleError {
+impl TSimpleError {
     #[allow(clippy::new_ret_no_self)]
     pub fn new<S: Into<String>>(code: i32, message: S) -> Self {
         Self {
@@ -23,29 +23,29 @@ impl USimpleError {
     }
 }
 
-impl Error for USimpleError {}
+impl Error for TSimpleError {}
 
-impl Display for USimpleError {
+impl Display for TSimpleError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         self.message.fmt(f)
     }
 }
 
-impl UError for USimpleError {
+impl UError for TSimpleError {
     fn code(&self) -> i32 {
         self.code
     }
 }
 
-impl From<USimpleError> for Box<dyn UError> {
-    fn from(err: USimpleError) -> Self {
+impl From<TSimpleError> for Box<dyn UError> {
+    fn from(err: TSimpleError) -> Self {
         Box::new(err)
     }
 }
 
 impl From<std::io::Error> for Box<dyn UError> {
     fn from(err: std::io::Error) -> Self {
-        Box::new(USimpleError::new(1, format!("IO Error: {}", err)))
+        Box::new(TSimpleError::new(1, format!("IO Error: {}", err)))
     }
 }
 
@@ -56,7 +56,7 @@ impl From<std::io::Error> for Box<dyn UError> {
 //     fn from(option: Option<T>) -> Self {
 //         match option {
 //             Some(inner) => inner.into(),
-//             None => Box::new(USimpleError::new(
+//             None => Box::new(TSimpleError::new(
 //                 1,
 //                 "Failed to get relative path".to_string(),
 //             )),
@@ -66,7 +66,7 @@ impl From<std::io::Error> for Box<dyn UError> {
 
 #[allow(dead_code)]
 fn find_resource(id: u64) -> Result<(), Box<dyn UError>> {
-    Err(USimpleError::new(404, format!("Resource with id {} not found", id)).into())
+    Err(TSimpleError::new(404, format!("Resource with id {} not found", id)).into())
 }
 
 #[cfg(test)]
@@ -75,13 +75,13 @@ mod tests {
 
     #[test]
     fn test_usimple_error_message() {
-        let error = USimpleError::new(404, "Not Found");
+        let error = TSimpleError::new(404, "Not Found");
         assert_eq!(error.to_string(), "Not Found");
     }
 
     #[test]
     fn test_usimple_error_code() {
-        let error = USimpleError::new(404, "Not Found");
+        let error = TSimpleError::new(404, "Not Found");
         assert_eq!(error.code(), 404);
     }
 

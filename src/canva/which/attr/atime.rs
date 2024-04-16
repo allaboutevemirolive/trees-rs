@@ -5,10 +5,10 @@ use std::fs::Metadata;
 use std::io;
 use std::io::Write;
 
-pub type WhichAccessTime<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
+pub type FnExtAccessTime<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
-    pub fn paint_atime(&mut self, meta: &Metadata, f: WhichAccessTime<W>) -> io::Result<()> {
+    pub fn paint_atime(&mut self, meta: &Metadata, f: FnExtAccessTime<W>) -> io::Result<()> {
         f(self, meta)
     }
 

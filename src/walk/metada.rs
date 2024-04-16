@@ -2,7 +2,7 @@ use super::buffer;
 use super::tail;
 use super::WalkDir;
 use crate::config::path::Directory;
-use crate::error::simple::UResult;
+use crate::error::simple::TResult;
 use crate::tree::level;
 
 use std::ffi::OsString;
@@ -13,7 +13,7 @@ use std::path::PathBuf;
 
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct FileMetadata {
+pub struct Visitor {
     pub abs: PathBuf,
     pub dent: DirEntry,
     pub meta: Metadata,
@@ -23,8 +23,8 @@ pub struct FileMetadata {
     pub size: u64,
 }
 
-impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
-    pub fn new(dent: DirEntry, level: &level::Level) -> UResult<Self> {
+impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> Visitor {
+    pub fn new(dent: DirEntry, level: &level::Level) -> TResult<Self> {
         let filety = dent.file_type()?;
         let abs = dent.path();
         let name = dent
@@ -57,7 +57,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
         }
     }
 
-    pub fn paint_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> UResult<()> {
+    pub fn paint_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> TResult<()> {
         if self.filety.is_dir() {
             buffer::Buffer::paint_entry(
                 &mut walk.config.canva.buffer,
@@ -68,14 +68,21 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             )?;
 
             buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
+
             tail::Tail::dir_plus_one(&mut walk.config.report.tail);
-            level::Level::plus_one(&mut walk.config.tree.level);
 
-            let mut walk = WalkDir::new(walk.config, walk.root, walk.parent, walk.setting.clone())?;
-            let path: Directory = Directory::new(&self.abs)?;
+            if walk.config.tree.level.lvl < walk.config.tree.level.cap {
+                level::Level::plus_one(&mut walk.config.tree.level);
 
-            WalkDir::walk_dir(&mut walk, path)?;
-            level::Level::minus_one(&mut walk.config.tree.level);
+                let mut walk =
+                    WalkDir::new(walk.config, walk.root, walk.parent, walk.setting.clone())?;
+
+                let path: Directory = Directory::new(&self.abs)?;
+
+                WalkDir::walk_dir(&mut walk, path)?;
+
+                level::Level::minus_one(&mut walk.config.tree.level);
+            }
         } else {
             buffer::Buffer::paint_entry(
                 &mut walk.config.canva.buffer,
@@ -86,6 +93,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> FileMetadata {
             )?;
 
             buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
+
             tail::Tail::file_plus_one(&mut walk.config.report.tail);
         }
         Ok(())
@@ -166,7 +174,7 @@ mod metada_test {
 
     // #[test]
     // fn test_new() {
-    //     let metadata = FileMetadata::new();
+    //     let metadata = Visitor::new();
     //     assert_eq!(metadata.file_name, "");
     //     assert_eq!(metadata.file_size, 0);
     //     // assert_eq!(metadata.file_type, FileTy::Unknown);
@@ -180,7 +188,7 @@ mod metada_test {
 
     // #[test]
     // fn test_with_file_path() {
-    //     let mut metadata = FileMetadata::new();
+    //     let mut metadata = Visitor::new();
     //     let file_path = PathBuf::from("/path/to/file");
     //     metadata = metadata.with_file_path(file_path.clone());
     //     assert_eq!(metadata.file_path, file_path);
@@ -188,7 +196,7 @@ mod metada_test {
 
     // #[test]
     // fn test_with_file_name() {
-    //     let mut metadata = FileMetadata::new();
+    //     let mut metadata = Visitor::new();
     //     let file_path = PathBuf::from("/path/to/file.txt");
     //     metadata = metadata.with_file_name(file_path.clone());
     //     assert_eq!(metadata.file_name, "file.txt");
@@ -196,7 +204,7 @@ mod metada_test {
 
     // #[test]
     // fn test_with_file_type() {
-    //     let mut metadata = FileMetadata::new();
+    //     let mut metadata = Visitor::new();
     //     let file_path = PathBuf::from("/path/to/file");
     //     let dir_entry = fs::metadata(&file_path).unwrap();
     //     metadata = metadata.with_file_type(dir_entry);
@@ -205,7 +213,7 @@ mod metada_test {
 
     // #[test]
     // fn test_with_size() {
-    //     let mut metadata = FileMetadata::new();
+    //     let mut metadata = Visitor::new();
     //     let file_path = PathBuf::from("/path/to/file.txt");
     //     metadata = metadata.with_size(file_path.clone());
     //     let expected_size = fs::metadata(&file_path).unwrap().len();
@@ -214,7 +222,7 @@ mod metada_test {
 
     // #[test]
     // fn test_with_permissions() {
-    //     let mut metadata = FileMetadata::new();
+    //     let mut metadata = Visitor::new();
     //     let file_path = Path::new("/path/to/file.txt");
     //     metadata = metadata.with_permissions(file_path);
     //     let expected_perms = format!(
@@ -227,7 +235,7 @@ mod metada_test {
     // #[test]
     // fn test_with_file_path() {
     //     let sample_path = PathBuf::from("/path/to/sample/file.txt");
-    //     let metadata = FileMetadata::new();
+    //     let metadata = Visitor::new();
     //     let metadata_with_path = metadata.with_file_path(sample_path.clone());
     //     assert_eq!(metadata_with_path.file_path, sample_path);
     // }

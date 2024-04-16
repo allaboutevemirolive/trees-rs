@@ -7,8 +7,8 @@ use self::level::Level;
 pub mod node;
 use self::node::Node;
 
-use crate::error::simple::UResult;
-use crate::error::simple::USimpleError;
+use crate::error::simple::TResult;
+use crate::error::simple::TSimpleError;
 
 #[derive(Debug, Clone)]
 pub struct Tree {
@@ -18,12 +18,12 @@ pub struct Tree {
 }
 
 impl Tree {
-    pub fn new(level: Level, node_cap: i32) -> UResult<Self> {
+    pub fn new(level: Level, node_cap: i32) -> TResult<Self> {
         let branch = Branch::initialize("└── ", "├── ", "    ", "│   ")
-            .map_err(|err| USimpleError::new(1, format!("Failed to initialize branch: {}", err)))?;
+            .map_err(|err| TSimpleError::new(1, format!("Failed to initialize branch: {}", err)))?;
 
         let nod = Node::with_capacity(node_cap)
-            .map_err(|err| USimpleError::new(1, format!("Failed to initialize node: {}", err)))?;
+            .map_err(|err| TSimpleError::new(1, format!("Failed to initialize node: {}", err)))?;
 
         Ok(Self { nod, branch, level })
     }

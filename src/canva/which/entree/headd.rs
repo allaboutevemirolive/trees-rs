@@ -5,7 +5,7 @@ use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 
-pub type WhichHeader<W> = fn(&mut Buffer<W>, &Metadata, &PathBuf, &OsString) -> io::Result<()>;
+pub type FnOutHead<W> = fn(&mut Buffer<W>, &Metadata, &PathBuf, &OsString) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
     #[allow(unused_variables)]
@@ -35,7 +35,7 @@ impl<W: Write> Buffer<W> {
         // Passing "../../" will result in panick thus we will convert pathbuf to string directly
         // if we cannot retrieve the filename().
         //
-        // thread 'main' panicked at src/canva/which/headerr.rs:35:41:
+        // thread 'main' panicked at src/canva/which/headd.rs:35:41:
         // called `Option::unwrap()` on a `None` value
         // self.buf_writer
         //     .write_all(root.file_name().unwrap_or_default().as_encoded_bytes())?;
@@ -63,7 +63,7 @@ impl<W: Write> Buffer<W> {
         // Passing "../../" will result in panick thus we will convert pathbuf to string directly
         // if we cannot retrieve the filename().
         //
-        // thread 'main' panicked at src/canva/which/headerr.rs:35:41:
+        // thread 'main' panicked at src/canva/which/headd.rs:35:41:
         // called `Option::unwrap()` on a `None` value
         // self.buf_writer
         //     .write_all(root.file_name().unwrap_or_default().as_encoded_bytes())?;
@@ -91,7 +91,7 @@ impl<W: Write> Buffer<W> {
         meta: &Metadata,
         root: &PathBuf,
         parent: &OsString,
-        f: WhichHeader<W>,
+        f: FnOutHead<W>,
     ) -> io::Result<()> {
         f(self, meta, root, parent)
     }

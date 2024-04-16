@@ -4,10 +4,10 @@ use std::io;
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 
-pub type WhichPermission<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
+pub type FnExtPermission<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
-    pub fn paint_permission(&mut self, meta: &Metadata, f: WhichPermission<W>) -> io::Result<()> {
+    pub fn paint_permission(&mut self, meta: &Metadata, f: FnExtPermission<W>) -> io::Result<()> {
         f(self, meta)
     }
 

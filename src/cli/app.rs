@@ -31,6 +31,7 @@ pub mod options {
     }
 
     pub mod meta {
+        pub static META: &str = "show-all-default-metadata";
         pub static PERMISSION: &str = "show-entry-permission";
         pub static BTIME: &str = "show-entries-creation-time";
         pub static MTIME: &str = "show-entries-modification-time";
@@ -115,6 +116,13 @@ pub fn tree_app() -> Command {
             Arg::new(options::read::FOLDER)
                 .long("folder")
                 .help("Print directoris only.")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new(options::meta::META)
+                .long("meta")
+                .short('m')
+                .help("Print all default entry's metadata.")
                 .action(ArgAction::SetTrue),
         )
         .arg(

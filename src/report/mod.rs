@@ -1,4 +1,4 @@
-use crate::error::simple::UResult;
+use crate::error::simple::TResult;
 
 use self::tail::Tail;
 
@@ -11,7 +11,7 @@ pub struct Report {
 
 impl Report {
     /// We set directories to 1 to include the current directory
-    pub fn new() -> UResult<Self> {
+    pub fn new() -> TResult<Self> {
         Ok(Self {
             tail: Tail {
                 directories: 1,

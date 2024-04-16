@@ -1,5 +1,5 @@
 use crate::canva::buffer::Buffer;
-use crate::error::simple::UResult;
+use crate::error::simple::TResult;
 use std::io::StdoutLock;
 
 #[derive(Debug, Clone)]
@@ -20,7 +20,7 @@ impl Branch {
         middle: &'static str,
         space: &'static str,
         structural: &'static str,
-    ) -> UResult<Self> {
+    ) -> TResult<Self> {
         Ok(Branch {
             end,
             middle,
@@ -34,7 +34,7 @@ impl Branch {
         value: i32,
         has_next: bool,
         buffer: &mut Buffer<StdoutLock>,
-    ) -> UResult<()> {
+    ) -> TResult<()> {
         match has_next {
             true => {
                 if value == 1 {

@@ -3,10 +3,10 @@ use std::fs::Metadata;
 use std::io;
 use std::io::Write;
 
-pub type WhichSize<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
+pub type FnExtSize<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
-    pub fn paint_size(&mut self, meta: &Metadata, f: WhichSize<W>) -> io::Result<()> {
+    pub fn paint_size(&mut self, meta: &Metadata, f: FnExtSize<W>) -> io::Result<()> {
         f(self, meta)
     }
 

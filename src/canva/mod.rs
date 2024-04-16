@@ -1,6 +1,6 @@
 use std::io::{self, StdoutLock};
 
-use crate::error::simple::UResult;
+use crate::error::simple::TResult;
 
 use self::buffer::Buffer;
 
@@ -15,16 +15,10 @@ pub struct Canva<'cv> {
 }
 
 impl<'a> Canva<'a> {
-    pub fn new() -> UResult<Self> {
+    pub fn new() -> TResult<Self> {
         let stdout = io::stdout();
         let buffer = Buffer::new(stdout.lock())?;
 
         Ok(Self { buffer })
     }
-
-    // pub fn new_in_memory() -> Self {
-    //     // let stdout = io::stdout();
-    //     let buffer = Buffer::new(Vec::new());
-    //     Self { buffer }
-    // }
 }

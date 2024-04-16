@@ -1,4 +1,4 @@
-use crate::error::simple::UResult;
+use crate::error::simple::TResult;
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -13,7 +13,7 @@ impl Node {
         Node { nod }
     }
 
-    pub fn with_capacity(cap: i32) -> UResult<Self> {
+    pub fn with_capacity(cap: i32) -> TResult<Self> {
         Ok(Node {
             nod: Vec::with_capacity(cap as usize),
         })

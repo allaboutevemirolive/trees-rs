@@ -5,10 +5,10 @@ use std::fs::Metadata;
 use std::io;
 use std::io::Write;
 
-pub type WhichBirthTime<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
+pub type FnExtBTime<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
-    pub fn paint_btime(&mut self, meta: &Metadata, f: WhichBirthTime<W>) -> io::Result<()> {
+    pub fn paint_btime(&mut self, meta: &Metadata, f: FnExtBTime<W>) -> io::Result<()> {
         f(self, meta)
     }
 
