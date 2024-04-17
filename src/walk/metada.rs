@@ -59,6 +59,8 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> Visitor {
 
     pub fn paint_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> TResult<()> {
         if self.filety.is_dir() {
+            tail::Tail::dir_plus_one(&mut walk.config.report.tail);
+
             buffer::Buffer::paint_entry(
                 &mut walk.config.canva.buffer,
                 self,
@@ -68,8 +70,6 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> Visitor {
             )?;
 
             buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
-
-            tail::Tail::dir_plus_one(&mut walk.config.report.tail);
 
             if walk.config.tree.level.lvl < walk.config.tree.level.cap {
                 level::Level::plus_one(&mut walk.config.tree.level);
@@ -84,6 +84,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> Visitor {
                 level::Level::minus_one(&mut walk.config.tree.level);
             }
         } else {
+            tail::Tail::file_plus_one(&mut walk.config.report.tail);
             buffer::Buffer::paint_entry(
                 &mut walk.config.canva.buffer,
                 self,
@@ -93,8 +94,6 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> Visitor {
             )?;
 
             buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
-
-            tail::Tail::file_plus_one(&mut walk.config.report.tail);
         }
         Ok(())
     }
