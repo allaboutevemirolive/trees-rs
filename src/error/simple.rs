@@ -1,5 +1,6 @@
 use std::error::Error;
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
+use std::fmt::Formatter;
 
 pub type TResult<T> = Result<T, Box<dyn UError>>;
 
@@ -48,21 +49,6 @@ impl From<std::io::Error> for Box<dyn UError> {
         Box::new(TSimpleError::new(1, format!("IO Error: {}", err)))
     }
 }
-
-// impl<T> From<Option<T>> for Box<dyn UError>
-// where
-//     T: Into<Box<dyn UError>>,
-// {
-//     fn from(option: Option<T>) -> Self {
-//         match option {
-//             Some(inner) => inner.into(),
-//             None => Box::new(TSimpleError::new(
-//                 1,
-//                 "Failed to get relative path".to_string(),
-//             )),
-//         }
-//     }
-// }
 
 #[allow(dead_code)]
 fn find_resource(id: u64) -> Result<(), Box<dyn UError>> {

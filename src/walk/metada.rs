@@ -71,6 +71,7 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> Visitor {
 
             buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
 
+            // Check depth-bound based on user preference. Default: 5000.
             if walk.config.tree.level.lvl < walk.config.tree.level.cap {
                 level::Level::plus_one(&mut walk.config.tree.level);
 
