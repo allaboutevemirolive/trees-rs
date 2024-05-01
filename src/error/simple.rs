@@ -2,9 +2,9 @@ use std::error::Error;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
-pub type TResult<T> = Result<T, Box<dyn UError>>;
+pub type TResult<T> = Result<T, Box<dyn TError>>;
 
-pub trait UError: Error + Send + Sync + 'static {
+pub trait TError: Error + Send + Sync + 'static {
     fn code(&self) -> i32;
 }
 
@@ -32,26 +32,26 @@ impl Display for TSimpleError {
     }
 }
 
-impl UError for TSimpleError {
+impl TError for TSimpleError {
     fn code(&self) -> i32 {
         self.code
     }
 }
 
-impl From<TSimpleError> for Box<dyn UError> {
+impl From<TSimpleError> for Box<dyn TError> {
     fn from(err: TSimpleError) -> Self {
         Box::new(err)
     }
 }
 
-impl From<std::io::Error> for Box<dyn UError> {
+impl From<std::io::Error> for Box<dyn TError> {
     fn from(err: std::io::Error) -> Self {
         Box::new(TSimpleError::new(1, format!("IO Error: {}", err)))
     }
 }
 
 #[allow(dead_code)]
-fn find_resource(id: u64) -> Result<(), Box<dyn UError>> {
+fn find_resource(id: u64) -> Result<(), Box<dyn TError>> {
     Err(TSimpleError::new(404, format!("Resource with id {} not found", id)).into())
 }
 

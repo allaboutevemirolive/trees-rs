@@ -41,7 +41,7 @@ impl<'a> Registry<'a> {
         let file: FnOutFile<StdoutLock> = Buffer::write_entry;
         let head: FnOutHead<StdoutLock> = Buffer::write_color_header_name;
 
-        // Meta
+        // Entry's metadata
         let pms: FnExtPermission<StdoutLock> = Buffer::write_no_permission;
         let btime: FnExtBTime<StdoutLock> = Buffer::write_no_btime;
         let mtime: FnExtModTime<StdoutLock> = Buffer::write_no_mtime;

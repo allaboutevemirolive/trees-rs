@@ -1,7 +1,7 @@
-use super::buffer;
-use super::tail;
-use super::WalkDir;
-use crate::config::path::Directory;
+// use super::buffer;
+// use super::tail;
+// use super::WalkDir;
+// use crate::config::path::Directory;
 use crate::error::simple::TResult;
 use crate::tree::level;
 
@@ -23,7 +23,7 @@ pub struct Visitor {
     pub size: u64,
 }
 
-impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> Visitor {
+impl Visitor {
     pub fn new(dent: DirEntry, level: &level::Level) -> TResult<Self> {
         let filety = dent.file_type()?;
         let abs = dent.path();
@@ -55,48 +55,6 @@ impl<'wd, 'ft, 'cv: 'cr, 'cr: 'cv> Visitor {
         } else {
             None
         }
-    }
-
-    pub fn paint_entry(&self, walk: &'ft mut WalkDir<'wd, 'cv, 'cr>) -> TResult<()> {
-        if self.filety.is_dir() {
-            tail::Tail::dir_plus_one(&mut walk.config.report.tail);
-
-            buffer::Buffer::paint_entry(
-                &mut walk.config.canva.buffer,
-                self,
-                walk.root,
-                walk.parent,
-                walk.setting.cr.dir,
-            )?;
-
-            buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
-
-            // Check depth-bound based on user preference. Default: 5000.
-            if walk.config.tree.level.lvl < walk.config.tree.level.cap {
-                level::Level::plus_one(&mut walk.config.tree.level);
-
-                let mut walk =
-                    WalkDir::new(walk.config, walk.root, walk.parent, walk.setting.clone())?;
-
-                let path: Directory = Directory::new(&self.abs)?;
-
-                WalkDir::walk_dir(&mut walk, path)?;
-
-                level::Level::minus_one(&mut walk.config.tree.level);
-            }
-        } else {
-            tail::Tail::file_plus_one(&mut walk.config.report.tail);
-            buffer::Buffer::paint_entry(
-                &mut walk.config.canva.buffer,
-                self,
-                walk.root,
-                walk.parent,
-                walk.setting.cr.file,
-            )?;
-
-            buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
-        }
-        Ok(())
     }
 }
 

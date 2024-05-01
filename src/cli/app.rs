@@ -61,7 +61,7 @@ pub fn tree_app() -> Command {
         .arg(
             Arg::new(options::path::RELATIVE)
                 .long("relative")
-                .short('R')
+                .short('f')
                 .help("Print file/dir name along with it relative path")
                 .action(ArgAction::SetTrue),
         )

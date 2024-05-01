@@ -32,8 +32,8 @@ impl Node {
         self.nod.iter().enumerate()
     }
 
-    #[allow(dead_code)]
     /// Get next element or subslice and consume the iterator.
+    #[allow(dead_code)]
     fn next_iter<'a>(
         &'a self,
         iter: &mut impl Iterator<Item = (usize, &'a i32)>,
@@ -47,7 +47,7 @@ impl Node {
         self.nod.get(idx + 1)
     }
 
-    /// If there is remaining folder needs to traverse
+    /// If there is remaining folder needs to be traverse
     pub fn mark_entry(&mut self, curr_index: usize, num_entries: usize) {
         if curr_index < num_entries - 1 {
             self.push(1);

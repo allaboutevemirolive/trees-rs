@@ -6,6 +6,7 @@ use crate::error::simple::TResult;
 use crate::report::tail;
 use crate::report::Report;
 use crate::tree::branch;
+use crate::tree::level;
 use crate::tree::node;
 use crate::tree::Tree;
 
@@ -117,7 +118,53 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             }
 
             // Print the entry's name and traverse if the entry is a folder; otherwise, just print the entry.
-            Visitor::paint_entry(&visitor, self)?;
+            // Visitor::paint_entry(&visitor, self)?;
+
+            if visitor.filety.is_dir() {
+                tail::Tail::dir_plus_one(&mut self.config.report.tail);
+
+                buffer::Buffer::paint_entry(
+                    &mut self.config.canva.buffer,
+                    &visitor,
+                    self.root,
+                    self.parent,
+                    self.setting.cr.dir,
+                )?;
+
+                buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
+
+                // Check depth-bound based on user preference. Default: 5000.
+                if self.config.tree.level.lvl < self.config.tree.level.cap {
+                    // Preparing to traverse next directory's depth
+                    level::Level::plus_one(&mut self.config.tree.level);
+
+                    let mut walk =
+                        WalkDir::new(self.config, self.root, self.parent, self.setting.clone())?;
+
+                    // Get next directory's path for traversing
+                    let path: Directory = Directory::new(&visitor.abs)?;
+
+                    // Traversing
+                    WalkDir::walk_dir(&mut walk, path)?;
+
+                    // Indicates that we return to the current directory after traversing
+                    level::Level::minus_one(&mut self.config.tree.level);
+                }
+            } else {
+                // Accumulate entries
+                tail::Tail::file_plus_one(&mut self.config.report.tail);
+
+                // Paint entry's name
+                buffer::Buffer::paint_entry(
+                    &mut self.config.canva.buffer,
+                    &visitor,
+                    self.root,
+                    self.parent,
+                    self.setting.cr.file,
+                )?;
+
+                buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
+            }
 
             // Pop the last node's element.
             node::Node::pop(&mut self.config.tree.nod);
