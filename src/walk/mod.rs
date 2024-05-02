@@ -65,43 +65,8 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             // Collect metadata
             let visitor = Visitor::new(entry, &self.config.tree.level)?;
 
-            // Accumulate size for all entries
-            tail::Tail::add_size(&mut self.config.report.tail, visitor.size);
-
-            // Print entry's permission
-            buffer::Buffer::paint_permission(
-                &mut self.config.canva.buffer,
-                &visitor.meta,
-                self.setting.cr.pms,
-            )?;
-
-            // Print entry's creation-date
-            buffer::Buffer::paint_btime(
-                &mut self.config.canva.buffer,
-                &visitor.meta,
-                self.setting.cr.btime,
-            )?;
-
-            // Print entry's modification-time
-            buffer::Buffer::paint_mtime(
-                &mut self.config.canva.buffer,
-                &visitor.meta,
-                self.setting.cr.mtime,
-            )?;
-
-            // Print entry's access-time
-            buffer::Buffer::paint_atime(
-                &mut self.config.canva.buffer,
-                &visitor.meta,
-                self.setting.cr.atime,
-            )?;
-
-            // Print entry's size
-            buffer::Buffer::paint_size(
-                &mut self.config.canva.buffer,
-                &visitor.meta,
-                self.setting.cr.size,
-            )?;
+            // print entry's metadata
+            Visitor::print_meta(&visitor.meta, self)?;
 
             // Mark node based on idx of current entries and entries's len
             node::Node::mark_entry(&mut self.config.tree.nod, idx, entries_len);

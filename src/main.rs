@@ -1,4 +1,6 @@
 mod canva;
+use walk::metada::Visitor;
+
 use crate::canva::Canva;
 
 mod cli;
@@ -67,36 +69,8 @@ pub fn run_tree<'wd, 'cv: 'st, 'st: 'cv>(
     hfilename: OsString,
     mut walk: WalkDir<'wd, 'cv, 'st>,
 ) -> TResult<()> {
-    // Print header permission
-    canva::buffer::Buffer::paint_permission(
-        &mut walk.config.canva.buffer,
-        &hmeta,
-        walk.setting.cr.pms,
-    )?;
-
-    // Print header creation-date
-    canva::buffer::Buffer::paint_btime(
-        &mut walk.config.canva.buffer,
-        &hmeta,
-        walk.setting.cr.btime,
-    )?;
-
-    // Print entry's modification-time
-    canva::buffer::Buffer::paint_mtime(
-        &mut walk.config.canva.buffer,
-        &hmeta,
-        walk.setting.cr.mtime,
-    )?;
-
-    // Print entry's access-time
-    canva::buffer::Buffer::paint_atime(
-        &mut walk.config.canva.buffer,
-        &hmeta,
-        walk.setting.cr.atime,
-    )?;
-
-    // Print header size
-    canva::buffer::Buffer::paint_size(&mut walk.config.canva.buffer, &hmeta, walk.setting.cr.size)?;
+    // Print header's metadata
+    Visitor::print_meta(&hmeta, &mut walk)?;
 
     // Print header's name
     canva::buffer::Buffer::paint_header(
