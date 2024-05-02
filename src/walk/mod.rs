@@ -65,7 +65,7 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             // Collect metadata
             let visitor = Visitor::new(entry, &self.config.tree.level)?;
 
-            // print entry's metadata
+            // Print entry's metadata
             Visitor::print_meta(&visitor.meta, self)?;
 
             // Mark node based on idx of current entries and entries's len
@@ -82,9 +82,6 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
                 )?;
             }
 
-            // Print the entry's name and traverse if the entry is a folder; otherwise, just print the entry.
-            // Visitor::paint_entry(&visitor, self)?;
-
             if visitor.filety.is_dir() {
                 tail::Tail::dir_plus_one(&mut self.config.report.tail);
 
@@ -99,22 +96,7 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
                 buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
 
                 // Check depth-bound based on user preference. Default: 5000.
-                if self.config.tree.level.lvl < self.config.tree.level.cap {
-                    // Preparing to traverse next directory's depth
-                    level::Level::plus_one(&mut self.config.tree.level);
-
-                    let mut walk =
-                        WalkDir::new(self.config, self.root, self.parent, self.setting.clone())?;
-
-                    // Get next directory's path for traversing
-                    let path: Directory = Directory::new(&visitor.abs)?;
-
-                    // Traversing
-                    WalkDir::walk_dir(&mut walk, path)?;
-
-                    // Indicates that we return to the current directory after traversing
-                    level::Level::minus_one(&mut self.config.tree.level);
-                }
+                self.is_traversable(&visitor)?;
             } else {
                 // Accumulate entries
                 tail::Tail::file_plus_one(&mut self.config.report.tail);
@@ -133,6 +115,25 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
 
             // Pop the last node's element.
             node::Node::pop(&mut self.config.tree.nod);
+        }
+        Ok(())
+    }
+
+    fn is_traversable(&mut self, visitor: &Visitor) -> TResult<()> {
+        if self.config.tree.level.lvl < self.config.tree.level.cap {
+            // Preparing to traverse next directory's depth
+            level::Level::plus_one(&mut self.config.tree.level);
+
+            let mut walk = WalkDir::new(self.config, self.root, self.parent, self.setting.clone())?;
+
+            // Get next directory's path for traversing
+            let path: Directory = Directory::new(&visitor.abs)?;
+
+            // Traversing
+            WalkDir::walk_dir(&mut walk, path)?;
+
+            // Indicates that we return to the current directory after traversing
+            level::Level::minus_one(&mut self.config.tree.level);
         }
         Ok(())
     }
