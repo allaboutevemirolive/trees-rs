@@ -1,6 +1,7 @@
 use crate::error::simple::TResult;
 use crate::error::simple::TSimpleError;
 use crate::report::tail::Tail;
+use crate::sort::dent::which_sort;
 use crate::walk::WalkDir;
 use std::env;
 use std::ffi::OsString;
@@ -145,7 +146,7 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
             })?;
 
         // Sort
-        (walk.setting.cr.sort)(&mut entries);
+        which_sort(walk.setting.cr.sort, &mut entries);
 
         // Enumerate
         let enumerated_entries = entries.into_iter().enumerate().collect();

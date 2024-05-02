@@ -1,6 +1,11 @@
 use std::fs;
+use std::fs::DirEntry;
 
 pub type FnSortEntries = fn(&mut Vec<fs::DirEntry>);
+
+pub fn which_sort(sort: FnSortEntries, entries: &mut Vec<DirEntry>) {
+    (sort)(entries);
+}
 
 #[allow(clippy::ptr_arg)]
 pub fn sort_by_name(vector: &mut Vec<fs::DirEntry>) {
