@@ -26,7 +26,9 @@ mod walk;
 use crate::walk::Config;
 use crate::walk::WalkDir;
 
+use std::ffi::OsString;
 use std::fs;
+use std::fs::Metadata;
 
 fn main() -> TResult<()> {
     let tree = Tree::new(Level::with_lvl_and_cap(1, 10_000), 5000)?;
@@ -49,10 +51,22 @@ fn main() -> TResult<()> {
     let hfilename = root_filename.clone();
 
     // Initialize walk configuration
-    let mut walk = WalkDir::new(&mut config, &path, &root_filename, setting)?;
+    let walk = WalkDir::new(&mut config, &path, &root_filename, setting)?;
     // Setup entry point of traversal
     let path = Directory::new(walk.root)?;
 
+    run_tree(path, hpath, hmeta, hfilename, walk)?;
+
+    Ok(())
+}
+
+pub fn run_tree<'wd, 'cv: 'st, 'st: 'cv>(
+    path: Directory,
+    hpath: std::path::PathBuf,
+    hmeta: Metadata,
+    hfilename: OsString,
+    mut walk: WalkDir<'wd, 'cv, 'st>,
+) -> TResult<()> {
     // Print header permission
     canva::buffer::Buffer::paint_permission(
         &mut walk.config.canva.buffer,
@@ -95,10 +109,10 @@ fn main() -> TResult<()> {
     canva::buffer::Buffer::write_newline(&mut walk.config.canva.buffer)?;
 
     // Traversing
-    WalkDir::walk_dir(&mut walk, path)?;
+    walk::WalkDir::walk_dir(&mut walk, path)?;
 
     // Print summarize
-    WalkDir::report(&mut walk)?;
+    walk::WalkDir::report(&mut walk)?;
 
     Ok(())
 }

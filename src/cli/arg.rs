@@ -21,7 +21,7 @@ impl<'a> TArgs {
         TArgs { args }
     }
 
-    pub fn extract_paths(&self) -> (Vec<&OsString>, Vec<&OsString>) {
+    fn extract_paths(&self) -> (Vec<&OsString>, Vec<&OsString>) {
         let mut remaining_args = Vec::new();
         let mut paths = Vec::new();
 
@@ -36,7 +36,7 @@ impl<'a> TArgs {
         (remaining_args, paths)
     }
 
-    pub fn assert_single_path(&self) -> Option<&OsString> {
+    fn assert_single_path(&self) -> Option<&OsString> {
         let (_, paths) = self.extract_paths();
         if paths.len() == 1 {
             Some(paths[0])
@@ -87,6 +87,10 @@ impl<'a> TArgs {
 
         if matches.get_flag(options::sort::REVERSE) {
             setting.cr.with_reverse_sort_entries()?;
+        }
+
+        if matches.get_flag(options::sort::FILEFIRST) {
+            setting.cr.with_sort_by_file_first()?;
         }
 
         if matches.get_flag(options::color::COLOR) {

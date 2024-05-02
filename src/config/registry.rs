@@ -10,6 +10,7 @@ use crate::canva::which::entree::headd::FnOutHead;
 use crate::config::path::FnReadDir;
 use crate::error::simple::TResult;
 use crate::sort::dent::reverse_sort_by_name;
+use crate::sort::dent::sort_by_file_first;
 use crate::sort::dent::sort_by_name;
 use crate::sort::dent::FnSortEntries;
 
@@ -89,6 +90,11 @@ impl<'a> Registry<'a> {
 
     pub fn with_reverse_sort_entries(&mut self) -> TResult<()> {
         self.sort = reverse_sort_by_name;
+        Ok(())
+    }
+
+    pub fn with_sort_by_file_first(&mut self) -> TResult<()> {
+        self.sort = sort_by_file_first;
         Ok(())
     }
 }

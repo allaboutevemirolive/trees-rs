@@ -17,6 +17,7 @@ pub mod options {
         pub static ASCENDING: &str = "general-sort";
         pub static REVERSE: &str = "reverse-sort";
         pub static NOSORT: &str = "no-sort";
+        pub static FILEFIRST: &str = "sort-file-first";
     }
 
     pub mod color {
@@ -84,6 +85,13 @@ pub fn tree_app() -> Command {
                 .long("sort")
                 .short('s')
                 .help("Sort entries.")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new(options::sort::FILEFIRST)
+                .long("filesfirst")
+                .short('F')
+                .help("Sort files first.")
                 .action(ArgAction::SetTrue),
         )
         .arg(
