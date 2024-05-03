@@ -135,15 +135,23 @@ impl<'a> TArgs {
 
         // This statement should revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
+            // Default entries state
             setting.cr.with_colorless_entry()?;
 
             if matches.get_flag(options::meta::SIZE) {
                 setting.cr.with_size()?;
             }
 
-            // If user provide '-m'
             if matches.get_flag(options::meta::META) {
-                setting.cr.with_size()?;
+                setting.cr.with_permission()?;
+                setting.cr.with_btime()?;
+                setting.cr.with_mtime()?;
+                setting.cr.with_atime()?;
+                setting.cr.with_size()?; // no color
+            }
+
+            if matches.get_flag(options::path::RELATIVE) {
+                setting.cr.with_relative_path()?;
             }
         }
 
