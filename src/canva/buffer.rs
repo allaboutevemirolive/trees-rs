@@ -40,7 +40,7 @@ impl<W: Write> Buffer<W> {
         self.write_message(&message.3)?;
         self.write_space()?;
         self.write_message("gigabytes")?;
-        self.write_space()?;
+        // self.write_space()?;
         // self.write_message(&message.4)?;
         // self.write_space()?;
         // self.write_message("bytes")?;

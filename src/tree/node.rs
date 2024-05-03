@@ -63,14 +63,14 @@ pub struct NodeIterator<'a> {
 }
 
 impl<'a> Iterator for NodeIterator<'a> {
-    type Item = (i32, bool);
+    type Item = (bool, bool);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < self.node.nod.len() {
-            let value = self.node.nod[self.index];
+            let curr_value_is_one = self.node.nod[self.index] == 1;
             let has_next = self.node.next_ref(self.index).is_some();
             self.index += 1;
-            Some((value, has_next))
+            Some((curr_value_is_one, has_next))
         } else {
             None
         }
@@ -78,7 +78,7 @@ impl<'a> Iterator for NodeIterator<'a> {
 }
 
 impl<'a> IntoIterator for &'a Node {
-    type Item = (i32, bool);
+    type Item = (bool, bool);
     type IntoIter = NodeIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {

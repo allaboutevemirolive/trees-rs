@@ -1,4 +1,5 @@
 mod canva;
+use report::tail;
 use walk::metada::Visitor;
 
 use crate::canva::Canva;
@@ -31,6 +32,7 @@ use crate::walk::WalkDir;
 use std::ffi::OsString;
 use std::fs;
 use std::fs::Metadata;
+use std::os::unix::fs::MetadataExt;
 
 fn main() -> TResult<()> {
     let tree = Tree::new(Level::with_lvl_and_cap(1, 10_000), 5000)?;
@@ -71,6 +73,9 @@ pub fn run_tree<'wd, 'cv: 'st, 'st: 'cv>(
 ) -> TResult<()> {
     // Print header's metadata
     Visitor::print_meta(&hmeta, &mut walk)?;
+
+    // Accumulate head's size
+    tail::Tail::add_size(&mut walk.config.report.tail, hmeta.size());
 
     // Print header's name
     canva::buffer::Buffer::paint_header(

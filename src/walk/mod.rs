@@ -65,6 +65,9 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             // Collect metadata
             let visitor = Visitor::new(entry, &self.config.tree.level)?;
 
+            // Accumulate size
+            tail::Tail::add_size(&mut self.config.report.tail, visitor.size);
+
             // Print entry's metadata
             Visitor::print_meta(&visitor.meta, self)?;
 
@@ -72,11 +75,11 @@ impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
             node::Node::mark_entry(&mut self.config.tree.nod, idx, entries_len);
 
             // Print branch based on marked node
-            for (value, has_next) in self.config.tree.nod.into_iter() {
+            for (is_one, has_next) in self.config.tree.nod.into_iter() {
                 // Print branch's structure for current entry
                 branch::Branch::paint_branch(
                     &self.config.tree.branch,
-                    value,
+                    is_one,
                     has_next,
                     &mut self.config.canva.buffer,
                 )?;

@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
-use crate::{
-    config::{path::get_absolute_current_shell, registry::Registry},
-    error::simple::{TResult, TSimpleError},
-};
+use crate::config::path::get_absolute_current_shell;
+use crate::config::registry::Registry;
+use crate::error::simple::TResult;
+use crate::error::simple::TSimpleError;
 
 #[derive(Debug, Clone)]
 pub struct Setting<'a> {

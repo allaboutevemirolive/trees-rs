@@ -31,24 +31,21 @@ impl Branch {
 
     pub fn paint_branch(
         &self,
-        value: i32,
+        value_is_one: bool,
         has_next: bool,
         buffer: &mut Buffer<StdoutLock>,
     ) -> TResult<()> {
-        match has_next {
-            true => {
-                if value == 1 {
-                    buffer.write_branch(self.structural)?;
-                } else {
-                    buffer.write_branch(self.space)?;
-                }
+        if has_next {
+            if value_is_one {
+                buffer.write_branch(self.structural)?;
+            } else {
+                buffer.write_branch(self.space)?;
             }
-            false => {
-                if value == 1 {
-                    buffer.write_branch(self.middle)?;
-                } else {
-                    buffer.write_branch(self.end)?;
-                }
+        } else {
+            if value_is_one {
+                buffer.write_branch(self.middle)?;
+            } else {
+                buffer.write_branch(self.end)?;
             }
         }
         Ok(())
