@@ -133,9 +133,16 @@ impl<'a> TArgs {
             setting.cr.with_size_color()?;
         }
 
+        // This statement should revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
             setting.cr.with_colorless_entry()?;
+
             if matches.get_flag(options::meta::SIZE) {
+                setting.cr.with_size()?;
+            }
+
+            // If user provide '-m'
+            if matches.get_flag(options::meta::META) {
                 setting.cr.with_size()?;
             }
         }
