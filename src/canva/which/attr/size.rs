@@ -6,6 +6,7 @@ use std::io::Write;
 pub type FnExtSize<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
+    /// Print entry's size
     pub fn paint_size(&mut self, meta: &Metadata, f: FnExtSize<W>) -> io::Result<()> {
         f(self, meta)
     }

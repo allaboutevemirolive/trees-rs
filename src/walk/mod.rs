@@ -1,5 +1,4 @@
 use crate::canva::buffer;
-
 use crate::config::path::get_absolute_current_shell;
 use crate::config::path::Directory;
 use crate::config::registry::Registry;
@@ -78,15 +77,15 @@ impl<'gcx> GlobalCtxt<'gcx> {
         let enumerated_entries: Vec<(usize, std::fs::DirEntry)> =
             entries.into_iter().enumerate().collect();
 
-        let entries_len = enumerated_entries.len();
+        let idxs_entries = enumerated_entries.len() - 1;
 
         for (idx, entry) in enumerated_entries {
             let visitor = Visitor::new(entry, &self.level)?;
 
             self.tail.add_size(visitor.size);
-            self.xprint_meta(&visitor.meta)?;
+            self.print_meta(&visitor.meta)?;
 
-            self.nod.mark_entry(idx, entries_len);
+            self.nod.push_if(idx, idxs_entries);
             self.nod.to_branches(&self.branch, &mut self.buf)?;
 
             if visitor.filety.is_dir() {
@@ -119,22 +118,12 @@ impl<'gcx> GlobalCtxt<'gcx> {
         Ok(())
     }
 
-    pub fn xprint_meta(&mut self, meta: &Metadata) -> TResult<()> {
-        // Print entry's permission
+    pub fn print_meta(&mut self, meta: &Metadata) -> TResult<()> {
         self.buf.paint_permission(&meta, self.rg.pms)?;
-
-        // Print entry's creation-date
         self.buf.paint_btime(&meta, self.rg.btime)?;
-
-        // Print entry's modification-time
         self.buf.paint_mtime(&meta, self.rg.mtime)?;
-
-        // Print entry's access-time
         self.buf.paint_atime(&meta, self.rg.atime)?;
-
-        // Print entry's size
         self.buf.paint_size(&meta, self.rg.size)?;
-
         Ok(())
     }
 }
@@ -154,7 +143,6 @@ impl RootPath {
 
         let mut fpath = PathBuf::new();
         fpath.push(path_dir);
-
         let fname = fpath.file_name().unwrap().to_os_string();
         let fdot = OsString::from(".");
 

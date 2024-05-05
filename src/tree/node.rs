@@ -10,8 +10,7 @@ pub struct Node {
 }
 
 impl Node {
-    /// For testing and not intended to be use in production as
-    /// this will initialize default capacity.
+    /// For testing and not intended to be use in production as this will initialize default capacity.
     #[allow(dead_code)]
     fn new(nod: Vec<i32>) -> Self {
         Node { nod }
@@ -52,8 +51,8 @@ impl Node {
     }
 
     /// If there is remaining folder needs to be traverse
-    pub fn mark_entry(&mut self, curr_index: usize, num_entries: usize) {
-        if curr_index < num_entries - 1 {
+    pub fn push_if(&mut self, curr_index: usize, idxs_entries: usize) {
+        if curr_index < idxs_entries {
             self.push(1);
         } else {
             self.push(2);
@@ -186,7 +185,7 @@ mod tests {
 
         // Add markers for each entry except the last one
         for i in 0..num_entries {
-            node.mark_entry(i, num_entries);
+            node.push_if(i, num_entries);
         }
 
         // Check the contents of the node

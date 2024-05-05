@@ -29,7 +29,7 @@ fn main() -> TResult<()> {
     let (fpath, fname, fmeta) = args.xmatch_app(&mut gcx)?;
 
     gcx.tail.add_size(fmeta.size());
-    gcx.xprint_meta(&fmeta)?;
+    gcx.print_meta(&fmeta)?;
     gcx.buf
         .paint_header(&fmeta, &fpath.clone(), &fname, gcx.rg.head)?;
     gcx.buf.write_newline()?;

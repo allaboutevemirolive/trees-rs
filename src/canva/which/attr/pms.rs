@@ -7,6 +7,7 @@ use std::os::unix::fs::PermissionsExt;
 pub type FnExtPermission<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
+    /// Print entry's permission
     pub fn paint_permission(&mut self, meta: &Metadata, f: FnExtPermission<W>) -> io::Result<()> {
         f(self, meta)
     }
