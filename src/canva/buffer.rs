@@ -1,5 +1,6 @@
 use crate::error::simple::TResult;
-use std::io::{self, Write};
+use std::io;
+use std::io::Write;
 
 #[derive(Debug)]
 pub struct Buffer<W: Write> {

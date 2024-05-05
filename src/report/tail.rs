@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use std::fmt;
+
+#[derive(Debug, Clone, Copy)]
 pub struct Tail {
     pub directories: usize,
     pub files: usize,
@@ -31,6 +33,19 @@ impl Tail {
 
     pub fn add_size(&mut self, size: u64) {
         self.size += size
+    }
+}
+
+impl fmt::Display for Tail {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let gigabytes = self.size as f64 / 1_073_741_824.0;
+        let gigabytes = format!("{:.2}", gigabytes);
+
+        write!(
+            f,
+            "{} directories, {} files, {} hidden, {} gigabytes",
+            self.directories, self.files, self.hidden_files, gigabytes
+        )
     }
 }
 

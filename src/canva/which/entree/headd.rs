@@ -10,6 +10,25 @@ pub type FnOutHead<W> = fn(&mut Buffer<W>, &Metadata, &PathBuf, &OsString) -> io
 impl<W: Write> Buffer<W> {
     #[allow(unused_variables)]
     #[allow(clippy::ptr_arg)]
+    pub fn write_color_header_relative_path(
+        &mut self,
+        meta: &Metadata,
+        root: &PathBuf,
+        parent: &OsString,
+    ) -> io::Result<()> {
+        let mut path = PathBuf::new();
+        path.push(parent);
+
+        let path = path.to_owned().into_os_string();
+        self.buf_writer.write_all("\x1b[0;34m".as_bytes())?;
+        self.buf_writer.write_all(path.as_encoded_bytes())?;
+        self.buf_writer.write_all("\x1b[0m".as_bytes())?;
+
+        Ok(())
+    }
+
+    #[allow(unused_variables)]
+    #[allow(clippy::ptr_arg)]
     pub fn write_header_relative_path(
         &mut self,
         meta: &Metadata,

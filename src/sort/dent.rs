@@ -3,7 +3,7 @@ use std::fs::DirEntry;
 
 pub type FnSortEntries = fn(&mut Vec<fs::DirEntry>);
 
-pub fn which_sort(sort: FnSortEntries, entries: &mut Vec<DirEntry>) {
+pub fn ty_sort(sort: FnSortEntries, entries: &mut Vec<DirEntry>) {
     (sort)(entries);
 }
 

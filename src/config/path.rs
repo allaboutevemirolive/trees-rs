@@ -1,8 +1,6 @@
 use crate::error::simple::TResult;
-use crate::error::simple::TSimpleError;
 use crate::report::tail::Tail;
-use crate::sort::dent::which_sort;
-use crate::walk::WalkDir;
+
 use std::env;
 use std::ffi::OsString;
 use std::fs;
@@ -18,7 +16,7 @@ pub struct Directory {
 
 #[allow(unused_variables)]
 #[allow(dead_code)]
-impl<'pt, 'wd, 'cv, 'cr> Directory {
+impl Directory {
     pub fn new(path: impl Into<PathBuf>) -> TResult<Self> {
         Ok(Directory { path: path.into() })
     }
@@ -126,32 +124,8 @@ impl<'pt, 'wd, 'cv, 'cr> Directory {
         Ok(entries)
     }
 
-    fn inspect_entries(&self, tail: &mut Tail, f: FnReadDir) -> TResult<Vec<DirEntry>> {
+    pub fn inspect_entries(&self, tail: &mut Tail, f: FnReadDir) -> TResult<Vec<DirEntry>> {
         f(self, tail)
-    }
-
-    /// `Read` the directory's entries, then `sort` and `enumerate` them.
-    ///
-    /// We must maintain the order of operations because indexes from the enumeration
-    /// will be used in `add_entry_marker` to generate tree branches.
-    pub fn iterate_entries(
-        &self,
-        walk: &'pt mut WalkDir<'wd, 'cv, 'cr>,
-    ) -> TResult<Vec<(usize, DirEntry)>> {
-        // Read
-        let mut entries = self
-            .inspect_entries(&mut walk.config.report.tail, walk.setting.cr.read)
-            .map_err(|err| {
-                TSimpleError::new(1, format!("Failed to inspect directory entries: {}", err))
-            })?;
-
-        // Sort
-        which_sort(walk.setting.cr.sort, &mut entries);
-
-        // Enumerate
-        let enumerated_entries = entries.into_iter().enumerate().collect();
-
-        Ok(enumerated_entries)
     }
 }
 
@@ -164,10 +138,8 @@ pub fn get_absolute_current_shell() -> TResult<OsString> {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
-    use std::fs;
-    // use tempfile::tempdir;
 
+    use std::fs;
     // cargo test test_test -- --nocapture
     #[test]
     fn test_relative_path() {

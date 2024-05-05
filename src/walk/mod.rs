@@ -1,153 +1,163 @@
 use crate::canva::buffer;
-use crate::canva::Canva;
-use crate::cli::opt::Setting;
+
+use crate::config::path::get_absolute_current_shell;
 use crate::config::path::Directory;
+use crate::config::registry::Registry;
 use crate::error::simple::TResult;
-use crate::report::tail;
-use crate::report::Report;
-use crate::tree::branch;
-use crate::tree::level;
-use crate::tree::node;
-use crate::tree::Tree;
+use crate::error::simple::TSimpleError;
+use crate::report::tail::Tail;
+use crate::sort::dent::ty_sort;
+use crate::tree::branch::Branch;
+use crate::tree::level::Level;
+use crate::tree::node::Node;
+use crate::walk::buffer::Buffer;
 
 pub mod metada;
 use self::metada::Visitor;
 
 use std::ffi::OsString;
+use std::fs::Metadata;
+use std::io;
+use std::io::StdoutLock;
 use std::path::PathBuf;
 
-#[derive(Debug)]
-pub struct WalkDir<'wd, 'cv, 'st> {
-    pub config: &'wd mut Config<'cv>,
-    pub root: &'wd PathBuf,
-    pub parent: &'wd OsString,
-    pub setting: Setting<'st>,
+pub struct GlobalCtxt<'gcx> {
+    pub branch: Branch,
+    pub buf: Buffer<StdoutLock<'gcx>>,
+    pub level: Level,
+    pub nod: Node,
+    pub rg: Registry<'gcx>,
+    pub rpath: RootPath,
+    pub tail: Tail,
 }
 
-#[derive(Debug)]
-pub struct Config<'cv> {
-    pub tree: Tree,
-    pub canva: Canva<'cv>,
-    pub report: Report,
-}
+impl<'gcx> GlobalCtxt<'gcx> {
+    pub fn new() -> TResult<Self> {
+        let stdout = io::stdout();
+        let buf = Buffer::new(stdout.lock())?;
 
-impl<'cv> Config<'cv> {
-    pub fn new(tree: Tree, canva: Canva<'cv>, report: Report) -> TResult<Self> {
+        let branch = Branch::initialize("└── ", "├── ", "    ", "│   ")
+            .map_err(|err| TSimpleError::new(1, format!("Failed to initialize branch: {}", err)))?;
+
+        let node_cap = 5_000;
+
+        let nod = Node::with_capacity(node_cap)
+            .map_err(|err| TSimpleError::new(1, format!("Failed to initialize node: {}", err)))?;
+
+        let tail = Tail {
+            directories: 1,
+            files: 0,
+            size: 0,
+            hidden_files: 0,
+        };
+
+        let level = Level::with_lvl_and_cap(1, 10_000);
+        let rg = Registry::new()?;
+        let rpath = RootPath::abs_curr_shell()?;
+
         Ok(Self {
-            tree,
-            canva,
-            report,
+            branch,
+            buf,
+            level,
+            nod,
+            rg,
+            rpath,
+            tail,
         })
     }
-}
 
-impl<'wd, 'cv: 'st, 'st: 'cv> WalkDir<'wd, 'cv, 'st> {
-    pub fn new(
-        config: &'wd mut Config<'cv>,
-        root: &'wd PathBuf,
-        parent: &'wd OsString,
-        setting: Setting<'st>,
-    ) -> TResult<Self> {
-        Ok(Self {
-            config,
-            root,
-            parent,
-            setting,
-        })
-    }
+    pub fn walk_dir<T>(&mut self, path: T) -> TResult<()>
+    where
+        T: Into<PathBuf>,
+    {
+        let mut entries: Vec<std::fs::DirEntry> =
+            Directory::new(path)?.inspect_entries(&mut self.tail, self.rg.read)?;
 
-    pub fn walk_dir(&mut self, path: Directory) -> TResult<()> {
-        // Read, sort and enumerate entries
-        let entries: Vec<(usize, std::fs::DirEntry)> = Directory::iterate_entries(&path, self)?;
-        let entries_len = entries.len();
+        ty_sort(self.rg.sort, &mut entries);
 
-        for (idx, entry) in entries {
-            // Collect metadata
-            let visitor = Visitor::new(entry, &self.config.tree.level)?;
+        let enumerated_entries: Vec<(usize, std::fs::DirEntry)> =
+            entries.into_iter().enumerate().collect();
 
-            // Accumulate size
-            tail::Tail::add_size(&mut self.config.report.tail, visitor.size);
+        let entries_len = enumerated_entries.len();
 
-            // Print entry's metadata
-            Visitor::print_meta(&visitor.meta, self)?;
+        for (idx, entry) in enumerated_entries {
+            let visitor = Visitor::new(entry, &self.level)?;
 
-            // Mark node based on idx of current entries and entries's len
-            node::Node::mark_entry(&mut self.config.tree.nod, idx, entries_len);
+            self.tail.add_size(visitor.size);
+            self.xprint_meta(&visitor.meta)?;
 
-            // Print branch based on marked node
-            for (is_one, has_next) in self.config.tree.nod.into_iter() {
-                // Print branch's structure for current entry
-                branch::Branch::paint_branch(
-                    &self.config.tree.branch,
-                    is_one,
-                    has_next,
-                    &mut self.config.canva.buffer,
-                )?;
-            }
+            self.nod.mark_entry(idx, entries_len);
+            self.nod.to_branches(&self.branch, &mut self.buf)?;
 
             if visitor.filety.is_dir() {
-                tail::Tail::dir_plus_one(&mut self.config.report.tail);
-
-                buffer::Buffer::paint_entry(
-                    &mut self.config.canva.buffer,
+                self.tail.dir_plus_one();
+                self.buf.paint_entry(
                     &visitor,
-                    self.root,
-                    self.parent,
-                    self.setting.cr.dir,
+                    &self.rpath.fpath,
+                    &self.rpath.fname,
+                    self.rg.dir,
                 )?;
-
-                buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
-
-                // Check depth-bound based on user preference. Default: 5000.
-                self.is_traversable(&visitor)?;
+                self.buf.write_newline()?;
+                if self.level.lvl < self.level.cap {
+                    self.level.plus_one();
+                    self.walk_dir(visitor.abs)?; // Traverse
+                    self.level.minus_one();
+                }
             } else {
-                // Accumulate entries
-                tail::Tail::file_plus_one(&mut self.config.report.tail);
-
-                // Paint entry's name
-                buffer::Buffer::paint_entry(
-                    &mut self.config.canva.buffer,
+                self.tail.file_plus_one();
+                self.buf.paint_entry(
                     &visitor,
-                    self.root,
-                    self.parent,
-                    self.setting.cr.file,
+                    &self.rpath.fpath,
+                    &self.rpath.fname,
+                    self.rg.file,
                 )?;
-
-                buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
+                self.buf.write_newline()?;
             }
-
-            // Pop the last node's element.
-            node::Node::pop(&mut self.config.tree.nod);
+            self.nod.pop();
         }
+
         Ok(())
     }
 
-    fn is_traversable(&mut self, visitor: &Visitor) -> TResult<()> {
-        if self.config.tree.level.lvl < self.config.tree.level.cap {
-            // Preparing to traverse next directory's depth
-            level::Level::plus_one(&mut self.config.tree.level);
+    pub fn xprint_meta(&mut self, meta: &Metadata) -> TResult<()> {
+        // Print entry's permission
+        self.buf.paint_permission(&meta, self.rg.pms)?;
 
-            let mut walk = WalkDir::new(self.config, self.root, self.parent, self.setting.clone())?;
+        // Print entry's creation-date
+        self.buf.paint_btime(&meta, self.rg.btime)?;
 
-            // Get next directory's path for traversing
-            let path: Directory = Directory::new(&visitor.abs)?;
+        // Print entry's modification-time
+        self.buf.paint_mtime(&meta, self.rg.mtime)?;
 
-            // Traversing
-            WalkDir::walk_dir(&mut walk, path)?;
+        // Print entry's access-time
+        self.buf.paint_atime(&meta, self.rg.atime)?;
 
-            // Indicates that we return to the current directory after traversing
-            level::Level::minus_one(&mut self.config.tree.level);
-        }
+        // Print entry's size
+        self.buf.paint_size(&meta, self.rg.size)?;
+
         Ok(())
     }
+}
 
-    pub fn report(&mut self) -> TResult<()> {
-        buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
-        // Get summarize
-        let report = Report::get_tail(&self.config.report);
-        // Print summarize
-        buffer::Buffer::write_report(&mut self.config.canva.buffer, report)?;
-        buffer::Buffer::write_newline(&mut self.config.canva.buffer)?;
-        Ok(())
+/// Struct that store the path where we needs to start traverse
+pub struct RootPath {
+    pub fdot: OsString,
+    pub fname: OsString,
+    pub fpath: PathBuf,
+}
+
+impl RootPath {
+    pub fn abs_curr_shell() -> TResult<Self> {
+        let path_dir = get_absolute_current_shell().map_err(|err| {
+            TSimpleError::new(1, format!("Failed to get absolute current shell: {}", err))
+        })?;
+
+        let mut fpath = PathBuf::new();
+        fpath.push(path_dir);
+
+        let fname = fpath.file_name().unwrap().to_os_string();
+        let fdot = OsString::from(".");
+
+        Ok(Self { fdot, fname, fpath })
     }
 }

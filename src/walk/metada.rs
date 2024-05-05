@@ -1,4 +1,3 @@
-use crate::canva::buffer;
 use crate::error::simple::TResult;
 use crate::tree::level;
 
@@ -7,8 +6,6 @@ use std::fs::DirEntry;
 use std::fs::FileType;
 use std::fs::Metadata;
 use std::path::PathBuf;
-
-use super::WalkDir;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -22,7 +19,7 @@ pub struct Visitor {
     pub size: u64,
 }
 
-impl<'mt, 'wd, 'cv: 'cr, 'cr: 'cv> Visitor {
+impl Visitor {
     pub fn new(dent: DirEntry, level: &level::Level) -> TResult<Self> {
         let filety = dent.file_type()?;
         let abs = dent.path();
@@ -54,46 +51,6 @@ impl<'mt, 'wd, 'cv: 'cr, 'cr: 'cv> Visitor {
         } else {
             None
         }
-    }
-
-    #[rustfmt::skip]
-    pub fn print_meta(meta: &Metadata, walk: &'mt mut WalkDir<'wd, 'cv, 'cr>) -> TResult<()> {
-        // Print entry's permission
-        buffer::Buffer::paint_permission(
-            &mut walk.config.canva.buffer,
-            &meta,
-            walk.setting.cr.pms,
-        )?;
-
-        // Print entry's creation-date
-        buffer::Buffer::paint_btime(
-            &mut walk.config.canva.buffer, 
-            &meta, 
-            walk.setting.cr.btime
-        )?;
-
-        // Print entry's modification-time
-        buffer::Buffer::paint_mtime(
-            &mut walk.config.canva.buffer, 
-            &meta, 
-            walk.setting.cr.mtime
-        )?;
-
-        // Print entry's access-time
-        buffer::Buffer::paint_atime(
-            &mut walk.config.canva.buffer, 
-            &meta, 
-            walk.setting.cr.atime
-        )?;
-
-        // Print entry's size
-        buffer::Buffer::paint_size(
-            &mut walk.config.canva.buffer, 
-            &meta, 
-            walk.setting.cr.size
-        )?;
-
-        Ok(())
     }
 }
 

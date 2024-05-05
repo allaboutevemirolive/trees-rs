@@ -163,6 +163,13 @@ impl<'a> Registry<'a> {
         Ok(())
     }
 
+    pub fn with_color_relative_path(&mut self) -> TResult<()> {
+        self.dir = Buffer::write_color_entry_relative_path;
+        self.file = Buffer::write_entry_relative_path;
+        self.head = Buffer::write_color_header_relative_path;
+        Ok(())
+    }
+
     pub fn with_relative_path(&mut self) -> TResult<()> {
         self.dir = Buffer::write_entry_relative_path;
         self.file = Buffer::write_entry_relative_path;

@@ -1,11 +1,12 @@
 use super::app::options;
 use super::app::tree_app;
-use crate::cli::opt::Setting;
 use crate::error::simple::TResult;
-use crate::walk::Config;
+use crate::walk::GlobalCtxt;
 
 use std::env;
 use std::ffi::OsString;
+use std::fs;
+use std::fs::Metadata;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -45,24 +46,21 @@ impl<'a> TArgs {
         }
     }
 
-    pub fn match_app(
-        &mut self,
-        setting: &mut Setting<'a>,
-        config: &mut Config,
-    ) -> TResult<(PathBuf, OsString)> {
-        let path_exist = path_exist(&mut self.args, setting);
+    pub fn xmatch_app(&mut self, gcx: &mut GlobalCtxt) -> TResult<(PathBuf, OsString, Metadata)> {
+        let path_exist = xpath_exist(&mut self.args, gcx);
 
         #[allow(unused_assignments)]
-        let mut path = &PathBuf::new();
+        let mut fpath = PathBuf::new();
         #[allow(unused_assignments)]
-        let mut root_filename = OsString::new();
+        let mut fname = OsString::new();
 
         if path_exist {
-            path = &setting.path;
-            root_filename = <PathBuf as Clone>::clone(&setting.path).into();
+            fpath = gcx.rpath.fpath.clone();
+            fname = <PathBuf as Clone>::clone(&gcx.rpath.fpath).into();
         } else {
-            path = &setting.path;
-            root_filename = OsString::from(".");
+            fpath = gcx.rpath.fpath.clone();
+            gcx.rpath.fname = OsString::from("."); // relative-path for entries in the absence of provided path by user
+            fname = OsString::from("."); // header
         }
 
         let matches = tree_app()
@@ -74,97 +72,104 @@ impl<'a> TArgs {
                 .get_one(options::miscellaneous::LEVEL)
                 .expect("default");
 
-            config.tree.level.cap = level as i32;
+            gcx.level.cap = level as i32;
         }
 
         if matches.get_flag(options::meta::META) {
-            setting.cr.with_permission()?;
-            setting.cr.with_btime()?;
-            setting.cr.with_mtime()?;
-            setting.cr.with_atime()?;
-            setting.cr.with_size_color()?;
+            gcx.rg.with_permission()?;
+            gcx.rg.with_btime()?;
+            gcx.rg.with_mtime()?;
+            gcx.rg.with_atime()?;
+            gcx.rg.with_size_color()?;
         }
 
         if matches.get_flag(options::sort::REVERSE) {
-            setting.cr.with_reverse_sort_entries()?;
+            gcx.rg.with_reverse_sort_entries()?;
         }
 
         if matches.get_flag(options::sort::FILEFIRST) {
-            setting.cr.with_sort_by_file_first()?;
+            gcx.rg.with_sort_by_file_first()?;
         }
 
         if matches.get_flag(options::color::COLOR) {
-            setting.cr.with_color_entry()?;
+            gcx.rg.with_color_entry()?;
         }
 
         if matches.get_flag(options::path::RELATIVE) {
-            setting.cr.with_relative_path()?;
+            gcx.rg.with_color_relative_path()?;
         }
 
         if matches.get_flag(options::read::VISIBLE) {
-            setting.cr.read_visible_entries()?;
+            gcx.rg.read_visible_entries()?;
         }
 
         if matches.get_flag(options::read::ALL) {
-            setting.cr.read_all_entries()?;
+            gcx.rg.read_all_entries()?;
         }
 
         if matches.get_flag(options::read::FOLDER) {
-            setting.cr.read_visible_folders()?;
+            gcx.rg.read_visible_folders()?;
         }
 
         if matches.get_flag(options::meta::PERMISSION) {
-            setting.cr.with_permission()?;
+            gcx.rg.with_permission()?;
         }
 
         if matches.get_flag(options::meta::BTIME) {
-            setting.cr.with_btime()?;
+            gcx.rg.with_btime()?;
         }
 
         if matches.get_flag(options::meta::MTIME) {
-            setting.cr.with_mtime()?;
+            gcx.rg.with_mtime()?;
         }
 
         if matches.get_flag(options::meta::ATIME) {
-            setting.cr.with_atime()?;
+            gcx.rg.with_atime()?;
         }
 
         if matches.get_flag(options::meta::SIZE) {
-            setting.cr.with_size_color()?;
+            gcx.rg.with_size_color()?;
         }
 
         // This statement should revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
             // Default entries state
-            setting.cr.with_colorless_entry()?;
+            gcx.rg.with_colorless_entry()?;
 
             if matches.get_flag(options::meta::SIZE) {
-                setting.cr.with_size()?;
+                gcx.rg.with_size()?;
             }
 
             if matches.get_flag(options::meta::META) {
-                setting.cr.with_permission()?;
-                setting.cr.with_btime()?;
-                setting.cr.with_mtime()?;
-                setting.cr.with_atime()?;
-                setting.cr.with_size()?; // no color
+                gcx.rg.with_permission()?;
+                gcx.rg.with_btime()?;
+                gcx.rg.with_mtime()?;
+                gcx.rg.with_atime()?;
+                gcx.rg.with_size()?; // no color
             }
 
             if matches.get_flag(options::path::RELATIVE) {
-                setting.cr.with_relative_path()?;
+                gcx.rg.with_relative_path()?;
+            }
+
+            if matches.get_flag(options::path::RELATIVE) {
+                gcx.rg.with_relative_path()?;
             }
         }
 
-        Ok((path.to_path_buf(), root_filename))
+        let fmeta = fs::metadata(fpath.clone())?;
+
+        Ok((fpath.to_path_buf(), fname, fmeta))
     }
 }
 
-fn path_exist(args: &mut Vec<OsString>, setting: &mut Setting) -> bool {
+fn xpath_exist(args: &mut Vec<OsString>, gcx: &mut GlobalCtxt) -> bool {
     let mut delete_index = None;
 
     for (index, arg) in args.iter().skip(1).enumerate() {
         if let Some(arg_path) = valid_path(arg) {
-            setting.path = arg_path;
+            gcx.rpath.fpath = arg_path.clone();
+            gcx.rpath.fname = arg_path.into_os_string();
             delete_index = Some(index + 1);
             break;
         }
