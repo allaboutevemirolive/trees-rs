@@ -39,13 +39,43 @@ impl Tail {
 impl fmt::Display for Tail {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let gigabytes = self.size as f64 / 1_073_741_824.0;
-        let gigabytes = format!("{:.2}", gigabytes);
+        let gigabytes = format!("{:.3}", gigabytes);
 
-        write!(
-            f,
-            "{} directories, {} files, {} hidden, {} gigabytes",
-            self.directories, self.files, self.hidden_files, gigabytes
-        )
+        #[allow(unused_assignments)]
+        let mut dirr = String::new();
+
+        #[allow(unused_assignments)]
+        let mut filee = String::new();
+
+        let hiddenn = String::from("hidden");
+
+        #[allow(unused_assignments)]
+        let mut gbyte = String::new();
+
+        if self.directories <= 1 {
+            dirr = "directory".to_string();
+        } else {
+            dirr = "directories".to_string();
+        }
+
+        if self.files <= 1 {
+            filee = "file".to_string();
+        } else {
+            filee = "files".to_string();
+        }
+
+        if gigabytes.parse::<f64>().unwrap_or_default() <= 0.000 {
+            gbyte = "gigabyte".to_string();
+        } else {
+            gbyte = "gigabytes".to_string();
+        }
+
+        let reportt = format!(
+            "{} {}, {} {}, {} {}, {} {}",
+            self.directories, dirr, self.files, filee, self.hidden_files, hiddenn, gigabytes, gbyte
+        );
+
+        write!(f, "{}", reportt)
     }
 }
 
