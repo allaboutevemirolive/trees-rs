@@ -35,7 +35,10 @@ impl RootPath {
 
         let mut fpath = PathBuf::new();
         fpath.push(path_dir);
-        let fname = fpath.file_name().unwrap().to_os_string();
+        let fname = fpath
+            .file_name()
+            .expect("Cannot retrieve file name for the starting point path.")
+            .to_os_string();
         let fdot = OsString::from(".");
 
         Ok(Self { fdot, fname, fpath })
@@ -54,20 +57,11 @@ pub struct GlobalCtxt<'gcx> {
 
 impl<'gcx> GlobalCtxt<'gcx> {
     pub fn new() -> TResult<Self> {
-        let stdout = io::stdout();
-        let buf = Buffer::new(stdout.lock())?;
-
-        let branch = Branch::initialize("└── ", "├── ", "    ", "│   ")
-            .map_err(|err| TSimpleError::new(1, format!("Failed to initialize branch: {}", err)))?;
-
-        let node_cap = 5_000;
-
-        let nod = Node::with_capacity(node_cap)
-            .map_err(|err| TSimpleError::new(1, format!("Failed to initialize node: {}", err)))?;
-
+        let buf = Buffer::new(io::stdout().lock())?;
+        let branch = Branch::default();
+        let nod = Node::default();
         let tail = Tail::default();
-
-        let level = Level::with_lvl_and_cap(1, 10_000);
+        let level = Level::default();
         let rg = Registry::new()?;
         let rpath = RootPath::abs_curr_shell()?;
 

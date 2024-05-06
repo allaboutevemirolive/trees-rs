@@ -58,9 +58,9 @@ impl<'a> TArgs {
             fpath = gcx.rpath.fpath.clone();
             fname = <PathBuf as Clone>::clone(&gcx.rpath.fpath).into();
         } else {
-            fpath = gcx.rpath.fpath.clone();
-            gcx.rpath.fname = OsString::from("."); // relative-path for entries in the absence of provided path by user
-            fname = gcx.rpath.fname.clone(); // header relative-path
+            fpath = gcx.rpath.fpath.clone(); // header pathbuf
+            fname = gcx.rpath.fdot.clone(); // header relative-path
+            gcx.rpath.fname = gcx.rpath.fdot.clone(); // relative-path for entries in the absence of provided path by user
         }
 
         let matches = tree_app()
@@ -133,8 +133,7 @@ impl<'a> TArgs {
 
         // This statement should revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
-            // Default entries state
-            gcx.rg.with_colorless_entry()?;
+            gcx.rg.with_colorless_entry()?; // Default entries state
 
             if matches.get_flag(options::meta::SIZE) {
                 gcx.rg.with_size()?;

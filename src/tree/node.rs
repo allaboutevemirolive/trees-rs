@@ -9,6 +9,14 @@ pub struct Node {
     pub nod: Vec<i32>,
 }
 
+impl Default for Node {
+    fn default() -> Self {
+        Node {
+            nod: Vec::with_capacity(5_000 as usize),
+        }
+    }
+}
+
 impl Node {
     /// For testing and not intended to be use in production as this will initialize default capacity.
     #[allow(dead_code)]

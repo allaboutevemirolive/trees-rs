@@ -5,6 +5,15 @@ pub struct Level {
     pub cap: i32,
 }
 
+impl Default for Level {
+    fn default() -> Self {
+        Level {
+            lvl: 1,
+            cap: 10_000,
+        }
+    }
+}
+
 impl Level {
     pub fn with_lvl_and_cap(lvl: i32, cap: i32) -> Self {
         Level { lvl, cap }

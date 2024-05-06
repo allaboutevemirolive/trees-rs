@@ -14,6 +14,18 @@ pub struct Branch {
     pub structural: &'static str,
 }
 
+impl Default for Branch {
+    #[rustfmt::skip]
+    fn default() -> Self {
+        Branch {
+            end       : "└── ",
+            middle    : "├── ",
+            space     : "    ",
+            structural: "│   ",
+        }
+    }
+}
+
 impl Branch {
     pub fn initialize(
         end: &'static str,
