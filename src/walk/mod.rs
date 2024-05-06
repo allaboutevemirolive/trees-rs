@@ -65,12 +65,7 @@ impl<'gcx> GlobalCtxt<'gcx> {
         let nod = Node::with_capacity(node_cap)
             .map_err(|err| TSimpleError::new(1, format!("Failed to initialize node: {}", err)))?;
 
-        let tail = Tail {
-            directories: 1,
-            files: 0,
-            size: 0,
-            hidden_files: 0,
-        };
+        let tail = Tail::default();
 
         let level = Level::with_lvl_and_cap(1, 10_000);
         let rg = Registry::new()?;

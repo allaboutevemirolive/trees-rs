@@ -8,6 +8,17 @@ pub struct Tail {
     pub hidden_files: usize,
 }
 
+impl Default for Tail {
+    fn default() -> Self {
+        Tail {
+            directories: 1,
+            files: 0,
+            size: 0,
+            hidden_files: 0,
+        }
+    }
+}
+
 impl Tail {
     #[allow(dead_code)]
     pub fn initialize(directories: usize, files: usize, size: u64, hidden_files: usize) -> Self {
