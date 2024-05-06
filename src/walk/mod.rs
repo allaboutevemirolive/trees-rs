@@ -77,7 +77,7 @@ impl<'gcx> GlobalCtxt<'gcx> {
         let enumerated_entries: Vec<(usize, std::fs::DirEntry)> =
             entries.into_iter().enumerate().collect();
 
-        let idxs_entries = enumerated_entries.len() - 1;
+        let entries_len = enumerated_entries.len();
 
         for (idx, entry) in enumerated_entries {
             let visitor = Visitor::new(entry, &self.level)?;
@@ -85,7 +85,7 @@ impl<'gcx> GlobalCtxt<'gcx> {
             self.tail.add_size(visitor.size);
             self.print_meta(&visitor.meta)?;
 
-            self.nod.push_if(idx, idxs_entries);
+            self.nod.push_if(idx, entries_len);
             self.nod.to_branches(&self.branch, &mut self.buf)?;
 
             if visitor.filety.is_dir() {

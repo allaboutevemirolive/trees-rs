@@ -46,7 +46,7 @@ impl<'a> TArgs {
         }
     }
 
-    pub fn xmatch_app(&mut self, gcx: &mut GlobalCtxt) -> TResult<(PathBuf, OsString, Metadata)> {
+    pub fn match_app(&mut self, gcx: &mut GlobalCtxt) -> TResult<(PathBuf, OsString, Metadata)> {
         let path_exist = xpath_exist(&mut self.args, gcx);
 
         #[allow(unused_assignments)]
@@ -60,7 +60,7 @@ impl<'a> TArgs {
         } else {
             fpath = gcx.rpath.fpath.clone();
             gcx.rpath.fname = OsString::from("."); // relative-path for entries in the absence of provided path by user
-            fname = OsString::from("."); // header
+            fname = gcx.rpath.fname.clone(); // header
         }
 
         let matches = tree_app()

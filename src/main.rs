@@ -1,7 +1,5 @@
 mod canva;
 
-use walk::GlobalCtxt;
-
 mod cli;
 use crate::cli::arg::TArgs;
 
@@ -19,6 +17,7 @@ mod tree;
 mod util;
 
 mod walk;
+use walk::GlobalCtxt;
 
 use std::os::unix::fs::MetadataExt;
 
@@ -26,7 +25,7 @@ fn main() -> TResult<()> {
     let mut args = TArgs::new();
     let mut gcx = GlobalCtxt::new()?;
 
-    let (fpath, fname, fmeta) = args.xmatch_app(&mut gcx)?;
+    let (fpath, fname, fmeta) = args.match_app(&mut gcx)?;
 
     gcx.tail.add_size(fmeta.size());
     gcx.print_meta(&fmeta)?;

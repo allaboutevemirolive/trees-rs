@@ -51,8 +51,8 @@ impl Node {
     }
 
     /// If there is remaining folder needs to be traverse
-    pub fn push_if(&mut self, curr_index: usize, idxs_entries: usize) {
-        if curr_index < idxs_entries {
+    pub fn push_if(&mut self, curr_index: usize, entries_len: usize) {
+        if curr_index < entries_len - 1 {
             self.push(1);
         } else {
             self.push(2);
