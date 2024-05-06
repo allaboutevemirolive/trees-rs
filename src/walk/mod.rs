@@ -20,6 +20,28 @@ use std::io;
 use std::io::StdoutLock;
 use std::path::PathBuf;
 
+/// Struct that store the path where we needs to start traverse
+pub struct RootPath {
+    pub fdot: OsString,
+    pub fname: OsString,
+    pub fpath: PathBuf,
+}
+
+impl RootPath {
+    pub fn abs_curr_shell() -> TResult<Self> {
+        let path_dir = get_absolute_current_shell().map_err(|err| {
+            TSimpleError::new(1, format!("Failed to get absolute current shell: {}", err))
+        })?;
+
+        let mut fpath = PathBuf::new();
+        fpath.push(path_dir);
+        let fname = fpath.file_name().unwrap().to_os_string();
+        let fdot = OsString::from(".");
+
+        Ok(Self { fdot, fname, fpath })
+    }
+}
+
 pub struct GlobalCtxt<'gcx> {
     pub branch: Branch,
     pub buf: Buffer<StdoutLock<'gcx>>,
@@ -125,27 +147,5 @@ impl<'gcx> GlobalCtxt<'gcx> {
         self.buf.paint_atime(&meta, self.rg.atime)?;
         self.buf.paint_size(&meta, self.rg.size)?;
         Ok(())
-    }
-}
-
-/// Struct that store the path where we needs to start traverse
-pub struct RootPath {
-    pub fdot: OsString,
-    pub fname: OsString,
-    pub fpath: PathBuf,
-}
-
-impl RootPath {
-    pub fn abs_curr_shell() -> TResult<Self> {
-        let path_dir = get_absolute_current_shell().map_err(|err| {
-            TSimpleError::new(1, format!("Failed to get absolute current shell: {}", err))
-        })?;
-
-        let mut fpath = PathBuf::new();
-        fpath.push(path_dir);
-        let fname = fpath.file_name().unwrap().to_os_string();
-        let fdot = OsString::from(".");
-
-        Ok(Self { fdot, fname, fpath })
     }
 }

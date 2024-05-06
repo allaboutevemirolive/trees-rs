@@ -60,7 +60,7 @@ impl<'a> TArgs {
         } else {
             fpath = gcx.rpath.fpath.clone();
             gcx.rpath.fname = OsString::from("."); // relative-path for entries in the absence of provided path by user
-            fname = gcx.rpath.fname.clone(); // header
+            fname = gcx.rpath.fname.clone(); // header relative-path
         }
 
         let matches = tree_app()
