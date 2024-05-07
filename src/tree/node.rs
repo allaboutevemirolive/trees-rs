@@ -12,7 +12,7 @@ pub struct Node {
 impl Default for Node {
     fn default() -> Self {
         Node {
-            nod: Vec::with_capacity(5_000 as usize),
+            nod: Vec::with_capacity(5_000_usize),
         }
     }
 }
@@ -67,7 +67,7 @@ impl Node {
         }
     }
 
-    pub fn to_branches<T>(&mut self, br: &T, buf: &mut Buffer<StdoutLock>) -> TResult<()>
+    pub fn to_branches<T>(&self, br: &T, buf: &mut Buffer<StdoutLock>) -> TResult<()>
     where
         T: PaintBranch,
     {

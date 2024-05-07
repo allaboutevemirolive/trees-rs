@@ -16,7 +16,7 @@ pub struct TArgs {
 }
 
 #[allow(dead_code)]
-impl<'a> TArgs {
+impl TArgs {
     pub fn new() -> Self {
         let args: Vec<OsString> = env::args_os().collect();
         TArgs { args }

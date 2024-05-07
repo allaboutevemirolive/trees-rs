@@ -84,14 +84,14 @@ pub trait Printer<'gcx> {
     // │   ├── entry
     fn print_head(&mut self, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()>;
 
+    fn print_meta(&mut self, meta: &Metadata) -> TResult<()>;
+
     // └── dir
     //     ├── entry1
     //     └── entry2
     //
     // 13 directories, 36 files, 0 hidden, 0.00 gigabytes
     fn print_report(&mut self) -> TResult<()>;
-
-    fn print_meta(&mut self, meta: &Metadata) -> TResult<()>;
 }
 
 impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
@@ -105,20 +105,20 @@ impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
         Ok(())
     }
 
+    fn print_meta(&mut self, meta: &Metadata) -> TResult<()> {
+        self.buf.paint_permission(meta, self.rg.pms)?;
+        self.buf.paint_btime(meta, self.rg.btime)?;
+        self.buf.paint_mtime(meta, self.rg.mtime)?;
+        self.buf.paint_atime(meta, self.rg.atime)?;
+        self.buf.paint_size(meta, self.rg.size)?;
+        Ok(())
+    }
+
     fn print_report(&mut self) -> TResult<()> {
         self.buf.write_newline()?;
         self.buf.write_message(&self.tail.to_string())?;
         self.buf.write_newline()?;
 
-        Ok(())
-    }
-
-    fn print_meta(&mut self, meta: &Metadata) -> TResult<()> {
-        self.buf.paint_permission(&meta, self.rg.pms)?;
-        self.buf.paint_btime(&meta, self.rg.btime)?;
-        self.buf.paint_mtime(&meta, self.rg.mtime)?;
-        self.buf.paint_atime(&meta, self.rg.atime)?;
-        self.buf.paint_size(&meta, self.rg.size)?;
         Ok(())
     }
 }
