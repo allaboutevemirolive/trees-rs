@@ -1,8 +1,8 @@
+use super::branch::PaintBranch;
+use crate::canva::buffer::Buffer;
+use crate::error::simple::TResult;
+
 use std::io::StdoutLock;
-
-use crate::{canva::buffer::Buffer, error::simple::TResult};
-
-use super::branch::Branch;
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -67,7 +67,10 @@ impl Node {
         }
     }
 
-    pub fn to_branches(&mut self, br: &Branch, buf: &mut Buffer<StdoutLock>) -> TResult<()> {
+    pub fn to_branches<T>(&mut self, br: &T, buf: &mut Buffer<StdoutLock>) -> TResult<()>
+    where
+        T: PaintBranch,
+    {
         self.into_iter().for_each(|(is_one, has_next)| {
             br.paint_branch(is_one, has_next, buf)
                 .expect("Cannot print branch");

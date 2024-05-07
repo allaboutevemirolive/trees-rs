@@ -7,6 +7,16 @@ pub struct Buffer<W: Write> {
     pub buf_writer: io::BufWriter<W>,
 }
 
+pub trait IntoBranch<W: Write> {
+    fn write_branch(&mut self, message: &str) -> io::Result<()>;
+}
+
+impl<W: Write> IntoBranch<W> for Buffer<W> {
+    fn write_branch(&mut self, message: &str) -> io::Result<()> {
+        self.buf_writer.write_all(message.as_bytes())
+    }
+}
+
 impl<W: Write> Buffer<W> {
     pub fn new(writer: W) -> TResult<Self> {
         let buf_writer = io::BufWriter::new(writer);
@@ -16,45 +26,9 @@ impl<W: Write> Buffer<W> {
     pub fn write_message(&mut self, message: &str) -> io::Result<()> {
         self.buf_writer.write_all(message.as_bytes())
     }
-
-    pub fn write_branch(&mut self, message: &str) -> io::Result<()> {
-        self.buf_writer.write_all(message.as_bytes())
-    }
-
-    /// 41 directories, 480 files, 0 size, 0 hidden
-    pub fn write_report(
-        &mut self,
-        message: (String, String, String, String, String),
-    ) -> io::Result<()> {
-        self.write_message(&message.0)?;
-        self.write_space()?;
-        self.write_message("directories,")?;
-        self.write_space()?;
-        self.write_message(&message.1)?;
-        self.write_space()?;
-        self.write_message("files,")?;
-        self.write_space()?;
-        self.write_message(&message.2)?;
-        self.write_space()?;
-        self.write_message("hidden,")?;
-        self.write_space()?;
-        self.write_message(&message.3)?;
-        self.write_space()?;
-        self.write_message("gigabytes")?;
-        // self.write_space()?;
-        // self.write_message(&message.4)?;
-        // self.write_space()?;
-        // self.write_message("bytes")?;
-        Ok(())
-    }
 }
 
 impl<W: Write> Buffer<W> {
-    #[allow(dead_code)]
-    pub fn write_separator(&mut self) -> io::Result<()> {
-        self.buf_writer.write_all(", ".as_bytes())
-    }
-
     pub fn write_newline(&mut self) -> io::Result<()> {
         self.buf_writer.write_all("\n".as_bytes())
     }

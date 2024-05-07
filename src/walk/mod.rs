@@ -18,6 +18,7 @@ use std::ffi::OsString;
 use std::fs::Metadata;
 use std::io;
 use std::io::StdoutLock;
+use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 
 /// Struct that store the path where we needs to start traverse
@@ -75,8 +76,61 @@ impl<'gcx> GlobalCtxt<'gcx> {
             tail,
         })
     }
+}
 
-    pub fn walk_dir<T>(&mut self, path: T) -> TResult<()>
+pub trait Printer<'gcx> {
+    // head
+    // ├── dir
+    // │   ├── entry
+    fn print_head(&mut self, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()>;
+
+    // └── dir
+    //     ├── entry1
+    //     └── entry2
+    //
+    // 13 directories, 36 files, 0 hidden, 0.00 gigabytes
+    fn print_report(&mut self) -> TResult<()>;
+
+    fn print_meta(&mut self, meta: &Metadata) -> TResult<()>;
+}
+
+impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
+    fn print_head(&mut self, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()> {
+        self.tail.add_size(fmeta.size());
+        self.print_meta(&fmeta)?;
+        self.buf
+            .paint_header(&fmeta, &fpath.clone(), &fname, self.rg.head)?;
+        self.buf.write_newline()?;
+
+        Ok(())
+    }
+
+    fn print_report(&mut self) -> TResult<()> {
+        self.buf.write_newline()?;
+        self.buf.write_message(&self.tail.to_string())?;
+        self.buf.write_newline()?;
+
+        Ok(())
+    }
+
+    fn print_meta(&mut self, meta: &Metadata) -> TResult<()> {
+        self.buf.paint_permission(&meta, self.rg.pms)?;
+        self.buf.paint_btime(&meta, self.rg.btime)?;
+        self.buf.paint_mtime(&meta, self.rg.mtime)?;
+        self.buf.paint_atime(&meta, self.rg.atime)?;
+        self.buf.paint_size(&meta, self.rg.size)?;
+        Ok(())
+    }
+}
+
+pub trait Walker<'gcx> {
+    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
+    where
+        T: Into<PathBuf>;
+}
+
+impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
+    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
     where
         T: Into<PathBuf>,
     {
@@ -126,15 +180,6 @@ impl<'gcx> GlobalCtxt<'gcx> {
             self.nod.pop();
         }
 
-        Ok(())
-    }
-
-    pub fn print_meta(&mut self, meta: &Metadata) -> TResult<()> {
-        self.buf.paint_permission(&meta, self.rg.pms)?;
-        self.buf.paint_btime(&meta, self.rg.btime)?;
-        self.buf.paint_mtime(&meta, self.rg.mtime)?;
-        self.buf.paint_atime(&meta, self.rg.atime)?;
-        self.buf.paint_size(&meta, self.rg.size)?;
         Ok(())
     }
 }

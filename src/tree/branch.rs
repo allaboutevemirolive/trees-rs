@@ -1,4 +1,4 @@
-use crate::canva::buffer::Buffer;
+use crate::canva::buffer::IntoBranch;
 use crate::error::simple::TResult;
 use std::io::StdoutLock;
 
@@ -26,27 +26,22 @@ impl Default for Branch {
     }
 }
 
-impl Branch {
-    pub fn initialize(
-        end: &'static str,
-        middle: &'static str,
-        space: &'static str,
-        structural: &'static str,
-    ) -> TResult<Self> {
-        Ok(Branch {
-            end,
-            middle,
-            space,
-            structural,
-        })
-    }
-
-    pub fn paint_branch(
+pub trait PaintBranch {
+    fn paint_branch<'a, T>(
         &self,
         value_is_one: bool,
         has_next: bool,
-        buffer: &mut Buffer<StdoutLock>,
-    ) -> TResult<()> {
+        buffer: &mut T,
+    ) -> TResult<()>
+    where
+        T: IntoBranch<StdoutLock<'a>>;
+}
+
+impl PaintBranch for Branch {
+    fn paint_branch<'a, T>(&self, value_is_one: bool, has_next: bool, buffer: &mut T) -> TResult<()>
+    where
+        T: IntoBranch<StdoutLock<'a>>,
+    {
         if has_next {
             if value_is_one {
                 buffer.write_branch(self.structural)?;
