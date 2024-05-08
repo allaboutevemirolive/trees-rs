@@ -106,11 +106,16 @@ impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
     }
 
     fn print_meta(&mut self, meta: &Metadata) -> TResult<()> {
-        self.buf.paint_permission(meta, self.rg.pms)?;
-        self.buf.paint_btime(meta, self.rg.btime)?;
-        self.buf.paint_mtime(meta, self.rg.mtime)?;
-        self.buf.paint_atime(meta, self.rg.atime)?;
-        self.buf.paint_size(meta, self.rg.size)?;
+        (self.rg.pms)(&mut self.buf, meta)?;
+        (self.rg.btime)(&mut self.buf, meta)?;
+        (self.rg.mtime)(&mut self.buf, meta)?;
+        (self.rg.atime)(&mut self.buf, meta)?;
+        (self.rg.size)(&mut self.buf, meta)?;
+        // self.rg.print_permission(&mut self.buf, meta)?;
+        // self.buf.paint_btime(meta, self.rg.btime)?;
+        // self.buf.paint_mtime(meta, self.rg.mtime)?;
+        // self.buf.paint_atime(meta, self.rg.atime)?;
+        // self.buf.paint_size(meta, self.rg.size)?;
         Ok(())
     }
 
@@ -124,20 +129,19 @@ impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
 }
 
 pub trait Walker<'gcx> {
-    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
-    where
-        T: Into<PathBuf>;
+    fn walk_dir<T>(&mut self, path: PathBuf) -> TResult<()>;
+    // where
+    //     T: Into<PathBuf>;
 }
 
 impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
-    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
-    where
-        T: Into<PathBuf>,
+    fn walk_dir<T>(&mut self, path: PathBuf) -> TResult<()>
+// where
+    //     T: Into<PathBuf>,
     {
-        let mut entries: Vec<std::fs::DirEntry> =
-            Directory::new(path)?.inspect_entries(&mut self.tail, self.rg.read)?;
+        let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, self.tail)?;
 
-        ty_sort(self.rg.sort, &mut entries);
+        self.rg.sort_dents(&mut entries);
 
         let enumerated_entries: Vec<(usize, std::fs::DirEntry)> =
             entries.into_iter().enumerate().collect();
@@ -164,7 +168,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
                 self.buf.write_newline()?;
                 if self.level.lvl < self.level.cap {
                     self.level.plus_one();
-                    self.walk_dir(visitor.abs)?; // Traverse
+                    self.walk_dir::<PathBuf>(visitor.abs)?; // Traverse
                     self.level.minus_one();
                 }
             } else {

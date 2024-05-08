@@ -21,6 +21,7 @@ use walk::{GlobalCtxt, Printer, Walker};
 
 use std::ffi::OsString;
 use std::fs::Metadata;
+use std::io::Write;
 use std::path::PathBuf;
 
 fn main() -> TResult<()> {
@@ -32,6 +33,9 @@ fn main() -> TResult<()> {
 
     run_tree(&mut gcx, fname, fpath, fmeta)?;
 
+    // Make sure standard output is flushed before we exit.
+    std::io::stdout().flush().unwrap();
+
     Ok(())
 }
 
@@ -41,7 +45,7 @@ where
 {
     gcx.print_head(fname, fpath.clone(), fmeta)?;
 
-    gcx.walk_dir(fpath)?;
+    gcx.walk_dir::<PathBuf>(fpath)?;
 
     gcx.print_report()?;
 

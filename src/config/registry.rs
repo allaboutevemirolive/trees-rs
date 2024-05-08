@@ -1,20 +1,40 @@
+use super::path::read_all_entries;
+use super::path::read_visible_entries;
+use super::path::read_visible_folders;
 use super::path::Directory;
 use crate::canva::buffer::Buffer;
+use crate::canva::which::attr::atime::write_atime;
+use crate::canva::which::attr::atime::write_no_atime;
 use crate::canva::which::attr::atime::FnExtAccessTime;
+use crate::canva::which::attr::btime::write_btime;
+use crate::canva::which::attr::btime::write_no_btime;
 use crate::canva::which::attr::btime::FnExtBTime;
+use crate::canva::which::attr::mtime::write_mtime;
+use crate::canva::which::attr::mtime::write_no_mtime;
 use crate::canva::which::attr::mtime::FnExtModTime;
+use crate::canva::which::attr::pms::write_no_permission;
+use crate::canva::which::attr::pms::write_permission;
 use crate::canva::which::attr::pms::FnExtPermission;
+use crate::canva::which::attr::size::write_no_size;
+use crate::canva::which::attr::size::write_size;
+use crate::canva::which::attr::size::write_size_color;
 use crate::canva::which::attr::size::FnExtSize;
 use crate::canva::which::entree::filee::FnOutFile;
 use crate::canva::which::entree::headd::FnOutHead;
 use crate::config::path::FnReadDir;
 use crate::error::simple::TResult;
+use crate::report::tail;
+use crate::report::tail::Tail;
 use crate::sort::dent::reverse_sort_by_name;
 use crate::sort::dent::sort_by_file_first;
 use crate::sort::dent::sort_by_name;
 use crate::sort::dent::FnSortEntries;
 
+use std::fs::DirEntry;
+use std::fs::Metadata;
+use std::io;
 use std::io::StdoutLock;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Registry<'a> {
@@ -33,8 +53,30 @@ pub struct Registry<'a> {
 }
 
 impl<'a> Registry<'a> {
+    pub fn sort_dents(&self, entries: &mut Vec<DirEntry>) {
+        (self.sort)(entries)
+    }
+
+    pub fn inspt_dents(&self, path: PathBuf, mut tail: Tail) -> TResult<Vec<DirEntry>> {
+        (self.read)(path, &mut tail)
+    }
+
+    pub fn print_permission(
+        &self,
+        buf: &'a mut Buffer<StdoutLock<'a>>,
+        meta: &Metadata,
+    ) -> io::Result<()> {
+        (self.pms)(buf, meta)
+    }
+
+    //     pub fn paint_permission(&mut self, meta: &Metadata, f: FnExtPermission<W>) -> io::Result<()> {
+    //         f(self, meta)
+    //     }
+}
+
+impl<'a> Registry<'a> {
     pub fn new() -> TResult<Self> {
-        let read: FnReadDir = Directory::read_visible_entries;
+        let read: FnReadDir = read_visible_entries;
         let sort: FnSortEntries = sort_by_name;
 
         // Entry
@@ -43,11 +85,11 @@ impl<'a> Registry<'a> {
         let head: FnOutHead<StdoutLock> = Buffer::write_color_header_name;
 
         // Entry's metadata
-        let pms: FnExtPermission<StdoutLock> = Buffer::write_no_permission;
-        let btime: FnExtBTime<StdoutLock> = Buffer::write_no_btime;
-        let mtime: FnExtModTime<StdoutLock> = Buffer::write_no_mtime;
-        let atime: FnExtAccessTime<StdoutLock> = Buffer::write_no_atime;
-        let size: FnExtSize<StdoutLock> = Buffer::write_no_size;
+        let pms: FnExtPermission<StdoutLock> = write_no_permission;
+        let btime: FnExtBTime<StdoutLock> = write_no_btime;
+        let mtime: FnExtModTime<StdoutLock> = write_no_mtime;
+        let atime: FnExtAccessTime<StdoutLock> = write_no_atime;
+        let size: FnExtSize<StdoutLock> = write_no_size;
 
         Ok(Self {
             read,
@@ -66,17 +108,17 @@ impl<'a> Registry<'a> {
 
 impl<'a> Registry<'a> {
     pub fn read_all_entries(&mut self) -> TResult<()> {
-        self.read = Directory::read_all_entries;
+        self.read = read_all_entries;
         Ok(())
     }
 
     pub fn read_visible_entries(&mut self) -> TResult<()> {
-        self.read = Directory::read_visible_entries;
+        self.read = read_visible_entries;
         Ok(())
     }
 
     pub fn read_visible_folders(&mut self) -> TResult<()> {
-        self.read = Directory::read_visible_folders;
+        self.read = read_visible_folders;
         Ok(())
     }
 }
@@ -102,12 +144,12 @@ impl<'a> Registry<'a> {
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_permission(&mut self) -> TResult<()> {
-        self.pms = Buffer::write_permission;
+        self.pms = write_permission;
         Ok(())
     }
 
     pub fn with_no_permission(&mut self) -> TResult<()> {
-        self.pms = Buffer::write_no_permission;
+        self.pms = write_no_permission;
         Ok(())
     }
 }
@@ -115,12 +157,12 @@ impl<'a> Registry<'a> {
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_btime(&mut self) -> TResult<()> {
-        self.btime = Buffer::write_btime;
+        self.btime = write_btime;
         Ok(())
     }
 
     pub fn with_no_btime(&mut self) -> TResult<()> {
-        self.btime = Buffer::write_no_btime;
+        self.btime = write_no_btime;
         Ok(())
     }
 }
@@ -128,12 +170,12 @@ impl<'a> Registry<'a> {
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_mtime(&mut self) -> TResult<()> {
-        self.mtime = Buffer::write_mtime;
+        self.mtime = write_mtime;
         Ok(())
     }
 
     pub fn with_no_mtime(&mut self) -> TResult<()> {
-        self.mtime = Buffer::write_no_mtime;
+        self.mtime = write_no_mtime;
         Ok(())
     }
 }
@@ -141,12 +183,12 @@ impl<'a> Registry<'a> {
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_atime(&mut self) -> TResult<()> {
-        self.atime = Buffer::write_atime;
+        self.atime = write_atime;
         Ok(())
     }
 
     pub fn with_no_atime(&mut self) -> TResult<()> {
-        self.atime = Buffer::write_no_atime;
+        self.atime = write_no_atime;
         Ok(())
     }
 }
@@ -181,17 +223,17 @@ impl<'a> Registry<'a> {
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_size(&mut self) -> TResult<()> {
-        self.size = Buffer::write_size;
+        self.size = write_size;
         Ok(())
     }
 
     pub fn with_size_color(&mut self) -> TResult<()> {
-        self.size = Buffer::write_size_color;
+        self.size = write_size_color;
         Ok(())
     }
 
     pub fn with_no_size(&mut self) -> TResult<()> {
-        self.size = Buffer::write_no_size;
+        self.size = write_no_size;
         Ok(())
     }
 }

@@ -8,10 +8,49 @@ use std::fs::DirEntry;
 use std::path::Path;
 use std::path::PathBuf;
 
-pub type FnReadDir = fn(&Directory, &mut Tail) -> TResult<Vec<DirEntry>>;
+pub type FnReadDir = fn(PathBuf, &mut Tail) -> TResult<Vec<DirEntry>>;
 
 pub struct Directory {
     pub path: PathBuf,
+}
+
+pub fn read_all_entries(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
+    let entries = fs::read_dir(&path)?.collect::<Result<Vec<DirEntry>, std::io::Error>>()?;
+
+    Ok(entries)
+}
+
+pub fn read_visible_entries(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
+    let entries = fs::read_dir(path)?
+        .filter_map(|entry_result| {
+            entry_result.ok().and_then(|entry| {
+                if !entry.file_name().to_string_lossy().starts_with('.') {
+                    Some(entry)
+                } else {
+                    tail.hid_plus_one();
+                    None
+                }
+            })
+        })
+        .collect();
+    Ok(entries)
+}
+
+pub fn read_visible_folders(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
+    let entries = fs::read_dir(path)?
+        .filter_map(|entry_result| {
+            entry_result.ok().and_then(|entry| {
+                let metadata = entry.metadata().ok()?;
+                if metadata.is_dir() && !entry.file_name().to_string_lossy().starts_with('.') {
+                    Some(entry)
+                } else {
+                    tail.hid_plus_one();
+                    None
+                }
+            })
+        })
+        .collect();
+    Ok(entries)
 }
 
 #[allow(unused_variables)]
@@ -124,9 +163,9 @@ impl Directory {
         Ok(entries)
     }
 
-    pub fn inspect_entries(&self, tail: &mut Tail, f: FnReadDir) -> TResult<Vec<DirEntry>> {
-        f(self, tail)
-    }
+    // pub fn inspect_entries(&self, tail: &mut Tail, f: FnReadDir) -> TResult<Vec<DirEntry>> {
+    //     f(self, tail)
+    // }
 }
 
 /// If no path where given, retrieve current path where shell executed
