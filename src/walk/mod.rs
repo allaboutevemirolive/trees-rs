@@ -1,11 +1,9 @@
 use crate::canva::buffer;
 use crate::config::path::get_absolute_current_shell;
-use crate::config::path::Directory;
 use crate::config::registry::Registry;
 use crate::error::simple::TResult;
 use crate::error::simple::TSimpleError;
 use crate::report::tail::Tail;
-use crate::sort::dent::ty_sort;
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
 use crate::tree::node::Node;
@@ -129,15 +127,15 @@ impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
 }
 
 pub trait Walker<'gcx> {
-    fn walk_dir<T>(&mut self, path: PathBuf) -> TResult<()>;
-    // where
-    //     T: Into<PathBuf>;
+    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
+    where
+        T: Into<PathBuf>;
 }
 
 impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
-    fn walk_dir<T>(&mut self, path: PathBuf) -> TResult<()>
-// where
-    //     T: Into<PathBuf>,
+    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
+    where
+        T: Into<PathBuf>,
     {
         let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, self.tail)?;
 
@@ -159,6 +157,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
 
             if visitor.filety.is_dir() {
                 self.tail.dir_plus_one();
+
                 self.buf.paint_entry(
                     &visitor,
                     &self.rpath.fpath,
@@ -168,7 +167,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
                 self.buf.write_newline()?;
                 if self.level.lvl < self.level.cap {
                     self.level.plus_one();
-                    self.walk_dir::<PathBuf>(visitor.abs)?; // Traverse
+                    self.walk_dir(visitor.abs)?; // Traverse
                     self.level.minus_one();
                 }
             } else {

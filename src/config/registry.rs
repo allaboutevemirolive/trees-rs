@@ -1,7 +1,6 @@
 use super::path::read_all_entries;
 use super::path::read_visible_entries;
 use super::path::read_visible_folders;
-use super::path::Directory;
 use crate::canva::buffer::Buffer;
 use crate::canva::which::attr::atime::write_atime;
 use crate::canva::which::attr::atime::write_no_atime;
@@ -23,7 +22,6 @@ use crate::canva::which::entree::filee::FnOutFile;
 use crate::canva::which::entree::headd::FnOutHead;
 use crate::config::path::FnReadDir;
 use crate::error::simple::TResult;
-use crate::report::tail;
 use crate::report::tail::Tail;
 use crate::sort::dent::reverse_sort_by_name;
 use crate::sort::dent::sort_by_file_first;
@@ -31,8 +29,6 @@ use crate::sort::dent::sort_by_name;
 use crate::sort::dent::FnSortEntries;
 
 use std::fs::DirEntry;
-use std::fs::Metadata;
-use std::io;
 use std::io::StdoutLock;
 use std::path::PathBuf;
 
@@ -57,21 +53,12 @@ impl<'a> Registry<'a> {
         (self.sort)(entries)
     }
 
-    pub fn inspt_dents(&self, path: PathBuf, mut tail: Tail) -> TResult<Vec<DirEntry>> {
-        (self.read)(path, &mut tail)
+    pub fn inspt_dents<T>(&self, path: T, mut tail: Tail) -> TResult<Vec<DirEntry>>
+    where
+        T: Into<PathBuf>,
+    {
+        (self.read)(path.into(), &mut tail)
     }
-
-    pub fn print_permission(
-        &self,
-        buf: &'a mut Buffer<StdoutLock<'a>>,
-        meta: &Metadata,
-    ) -> io::Result<()> {
-        (self.pms)(buf, meta)
-    }
-
-    //     pub fn paint_permission(&mut self, meta: &Metadata, f: FnExtPermission<W>) -> io::Result<()> {
-    //         f(self, meta)
-    //     }
 }
 
 impl<'a> Registry<'a> {

@@ -27,32 +27,6 @@ pub fn write_no_mtime(buf: &mut Buffer<StdoutLock>, _meta: &Metadata) -> io::Res
     Ok(())
 }
 
-impl<W: Write> Buffer<W> {
-    // Print entry's modification-time
-    // pub fn paint_mtime(&mut self, meta: &Metadata, f: FnExtModTime<W>) -> io::Result<()> {
-    //     f(self, meta)
-    // }
-
-    // pub fn write_mtime(&mut self, meta: &Metadata) -> io::Result<()> {
-    //     if let Ok(created) = meta.modified() {
-    //         let time = format_system_time(created);
-    //         self.write_space()?;
-    //         self.buf_writer.write_all(time.as_bytes())?;
-    //         self.write_space()?;
-    //     } else {
-    //         self.write_space()?;
-    //         self.buf_writer.write_all("─────".as_bytes())?;
-    //         self.write_space()?;
-    //     }
-
-    //     Ok(())
-    // }
-
-    // pub fn write_no_mtime(&mut self, _meta: &Metadata) -> io::Result<()> {
-    //     Ok(())
-    // }
-}
-
 fn format_system_time(time: std::time::SystemTime) -> String {
     let datetime: DateTime<Local> = time.into();
     datetime.format("%d-%m-%Y %H:%M").to_string()
