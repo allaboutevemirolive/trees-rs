@@ -1,19 +1,15 @@
-use crate::canva::buffer;
-use crate::config::path::get_absolute_current_shell;
-use crate::config::path::Directory;
+use crate::canva::buffer::Buffer;
 use crate::config::registry::Registry;
 use crate::error::simple::TResult;
-use crate::error::simple::TSimpleError;
 use crate::report::tail::Tail;
-use crate::sort::dent::ty_sort;
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
 use crate::tree::node::Node;
-use crate::walk::buffer::Buffer;
 
-pub mod metada;
-use self::metada::Visitor;
+pub mod visit;
+use self::visit::Visitor;
 
+use std::env;
 use std::ffi::OsString;
 use std::fs::Metadata;
 use std::io;
@@ -30,9 +26,9 @@ pub struct RootPath {
 
 impl RootPath {
     pub fn abs_curr_shell() -> TResult<Self> {
-        let path_dir = get_absolute_current_shell().map_err(|err| {
-            TSimpleError::new(1, format!("Failed to get absolute current shell: {}", err))
-        })?;
+        let path_dir = env::current_dir()
+            .expect("Failed to get current directory")
+            .into_os_string();
 
         let mut fpath = PathBuf::new();
         fpath.push(path_dir);
@@ -124,20 +120,14 @@ impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
 }
 
 pub trait Walker<'gcx> {
-    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
-    where
-        T: Into<PathBuf>;
+    fn walk_dir(&mut self, path: PathBuf) -> TResult<()>;
 }
 
 impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
-    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
-    where
-        T: Into<PathBuf>,
-    {
-        let mut entries: Vec<std::fs::DirEntry> =
-            Directory::new(path)?.inspect_entries(&mut self.tail, self.rg.read)?;
+    fn walk_dir(&mut self, path: PathBuf) -> TResult<()> {
+        let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.tail)?;
 
-        ty_sort(self.rg.sort, &mut entries);
+        self.rg.sort_dents(&mut entries);
 
         let enumerated_entries: Vec<(usize, std::fs::DirEntry)> =
             entries.into_iter().enumerate().collect();

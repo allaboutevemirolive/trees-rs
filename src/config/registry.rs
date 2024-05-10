@@ -1,20 +1,25 @@
-use super::path::Directory;
+use super::inspect::read_all_entries;
+use super::inspect::read_visible_entries;
+use super::inspect::read_visible_folders;
+use super::inspect::FnReadDir;
+use super::sortt::reverse_sort_by_name;
+use super::sortt::sort_by_file_first;
+use super::sortt::sort_by_name;
+use super::sortt::FnSortEntries;
+use crate::canva::attr::atime::FnExtAccessTime;
+use crate::canva::attr::btime::FnExtBTime;
+use crate::canva::attr::mtime::FnExtModTime;
+use crate::canva::attr::pms::FnExtPermission;
+use crate::canva::attr::size::FnExtSize;
 use crate::canva::buffer::Buffer;
-use crate::canva::which::attr::atime::FnExtAccessTime;
-use crate::canva::which::attr::btime::FnExtBTime;
-use crate::canva::which::attr::mtime::FnExtModTime;
-use crate::canva::which::attr::pms::FnExtPermission;
-use crate::canva::which::attr::size::FnExtSize;
-use crate::canva::which::entree::filee::FnOutFile;
-use crate::canva::which::entree::headd::FnOutHead;
-use crate::config::path::FnReadDir;
+use crate::canva::entree::filee::FnOutFile;
+use crate::canva::entree::headd::FnOutHead;
 use crate::error::simple::TResult;
-use crate::sort::dent::reverse_sort_by_name;
-use crate::sort::dent::sort_by_file_first;
-use crate::sort::dent::sort_by_name;
-use crate::sort::dent::FnSortEntries;
+use crate::report::tail::Tail;
 
+use std::fs::DirEntry;
 use std::io::StdoutLock;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Registry<'a> {
@@ -33,8 +38,18 @@ pub struct Registry<'a> {
 }
 
 impl<'a> Registry<'a> {
+    pub fn inspt_dents(&self, path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
+        (self.read)(path, tail)
+    }
+
+    pub fn sort_dents(&self, entries: &mut Vec<DirEntry>) {
+        (self.sort)(entries)
+    }
+}
+
+impl<'a> Registry<'a> {
     pub fn new() -> TResult<Self> {
-        let read: FnReadDir = Directory::read_visible_entries;
+        let read: FnReadDir = read_visible_entries;
         let sort: FnSortEntries = sort_by_name;
 
         // Entry
@@ -66,17 +81,17 @@ impl<'a> Registry<'a> {
 
 impl<'a> Registry<'a> {
     pub fn read_all_entries(&mut self) -> TResult<()> {
-        self.read = Directory::read_all_entries;
+        self.read = read_all_entries;
         Ok(())
     }
 
     pub fn read_visible_entries(&mut self) -> TResult<()> {
-        self.read = Directory::read_visible_entries;
+        self.read = read_visible_entries;
         Ok(())
     }
 
     pub fn read_visible_folders(&mut self) -> TResult<()> {
-        self.read = Directory::read_visible_folders;
+        self.read = read_visible_folders;
         Ok(())
     }
 }

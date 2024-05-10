@@ -1,4 +1,3 @@
-pub mod ansi;
+pub mod attr;
 pub mod buffer;
-mod mmap;
-pub mod which;
+pub mod entree;

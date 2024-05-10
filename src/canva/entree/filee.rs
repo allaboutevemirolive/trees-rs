@@ -1,5 +1,5 @@
 use crate::canva::buffer::Buffer;
-use crate::walk::metada::Visitor;
+use crate::walk::visit::Visitor;
 use std::ffi::OsString;
 use std::io;
 use std::io::Write;
