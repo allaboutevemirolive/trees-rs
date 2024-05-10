@@ -10,12 +10,12 @@ use crate::error::simple::TResult;
 
 mod report;
 
-mod sort;
-
 mod tree;
 
 mod walk;
-use walk::{GlobalCtxt, Printer, Walker};
+use walk::GlobalCtxt;
+use walk::Printer;
+use walk::Walker;
 
 use std::ffi::OsString;
 use std::fs::Metadata;

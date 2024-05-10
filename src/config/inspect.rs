@@ -1,8 +1,6 @@
 use crate::error::simple::TResult;
 use crate::report::tail::Tail;
 
-use std::env;
-use std::ffi::OsString;
 use std::fs;
 use std::fs::DirEntry;
 use std::path::PathBuf;
@@ -64,13 +62,6 @@ pub fn read_all_folders(path: PathBuf) -> TResult<Vec<DirEntry>> {
         })
         .collect();
     Ok(entries)
-}
-
-/// If no path where given, retrieve current path where shell executed
-pub fn get_absolute_current_shell() -> TResult<OsString> {
-    Ok(env::current_dir()
-        .expect("Failed to get current directory")
-        .into_os_string())
 }
 
 #[cfg(test)]

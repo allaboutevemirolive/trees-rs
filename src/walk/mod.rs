@@ -1,18 +1,15 @@
-use crate::canva::buffer;
-use crate::config::inspect::get_absolute_current_shell;
+use crate::canva::buffer::Buffer;
 use crate::config::registry::Registry;
 use crate::error::simple::TResult;
-use crate::error::simple::TSimpleError;
 use crate::report::tail::Tail;
-
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
 use crate::tree::node::Node;
-use crate::walk::buffer::Buffer;
 
 pub mod visit;
 use self::visit::Visitor;
 
+use std::env;
 use std::ffi::OsString;
 use std::fs::Metadata;
 use std::io;
@@ -29,9 +26,9 @@ pub struct RootPath {
 
 impl RootPath {
     pub fn abs_curr_shell() -> TResult<Self> {
-        let path_dir = get_absolute_current_shell().map_err(|err| {
-            TSimpleError::new(1, format!("Failed to get absolute current shell: {}", err))
-        })?;
+        let path_dir = env::current_dir()
+            .expect("Failed to get current directory")
+            .into_os_string();
 
         let mut fpath = PathBuf::new();
         fpath.push(path_dir);
