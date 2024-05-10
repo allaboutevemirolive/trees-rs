@@ -1,5 +1,5 @@
 use crate::canva::buffer;
-use crate::config::path::get_absolute_current_shell;
+use crate::config::inspect::get_absolute_current_shell;
 use crate::config::registry::Registry;
 use crate::error::simple::TResult;
 use crate::error::simple::TSimpleError;
@@ -10,8 +10,8 @@ use crate::tree::level::Level;
 use crate::tree::node::Node;
 use crate::walk::buffer::Buffer;
 
-pub mod metada;
-use self::metada::Visitor;
+pub mod visit;
+use self::visit::Visitor;
 
 use std::ffi::OsString;
 use std::fs::Metadata;

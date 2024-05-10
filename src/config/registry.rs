@@ -1,6 +1,7 @@
-use super::path::read_all_entries;
-use super::path::read_visible_entries;
-use super::path::read_visible_folders;
+use super::inspect::read_all_entries;
+use super::inspect::read_visible_entries;
+use super::inspect::read_visible_folders;
+use super::inspect::FnReadDir;
 use crate::canva::attr::atime::FnExtAccessTime;
 use crate::canva::attr::btime::FnExtBTime;
 use crate::canva::attr::mtime::FnExtModTime;
@@ -9,7 +10,6 @@ use crate::canva::attr::size::FnExtSize;
 use crate::canva::buffer::Buffer;
 use crate::canva::entree::filee::FnOutFile;
 use crate::canva::entree::headd::FnOutHead;
-use crate::config::path::FnReadDir;
 use crate::error::simple::TResult;
 use crate::report::tail::Tail;
 use crate::sort::dent::reverse_sort_by_name;

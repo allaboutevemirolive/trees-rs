@@ -75,7 +75,7 @@ impl fmt::Display for Tail {
             filee = "files".to_string();
         }
 
-        if gigabytes.parse::<f64>().unwrap_or_default() <= 0.000 {
+        if gigabytes.parse::<f64>().unwrap_or_default() <= 0.001 {
             gbyte = "gigabyte".to_string();
         } else {
             gbyte = "gigabytes".to_string();

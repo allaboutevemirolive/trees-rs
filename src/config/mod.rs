@@ -1,2 +1,2 @@
-pub mod path;
+pub mod inspect;
 pub mod registry;
