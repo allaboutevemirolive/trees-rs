@@ -14,8 +14,6 @@ mod sort;
 
 mod tree;
 
-mod util;
-
 mod walk;
 use walk::{GlobalCtxt, Printer, Walker};
 

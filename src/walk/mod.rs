@@ -1,11 +1,10 @@
 use crate::canva::buffer;
 use crate::config::path::get_absolute_current_shell;
-use crate::config::path::Directory;
 use crate::config::registry::Registry;
 use crate::error::simple::TResult;
 use crate::error::simple::TSimpleError;
 use crate::report::tail::Tail;
-use crate::sort::dent::ty_sort;
+
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
 use crate::tree::node::Node;
@@ -124,20 +123,14 @@ impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
 }
 
 pub trait Walker<'gcx> {
-    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
-    where
-        T: Into<PathBuf>;
+    fn walk_dir(&mut self, path: PathBuf) -> TResult<()>;
 }
 
 impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
-    fn walk_dir<T>(&mut self, path: T) -> TResult<()>
-    where
-        T: Into<PathBuf>,
-    {
-        let mut entries: Vec<std::fs::DirEntry> =
-            Directory::new(path)?.inspect_entries(&mut self.tail, self.rg.read)?;
+    fn walk_dir(&mut self, path: PathBuf) -> TResult<()> {
+        let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.tail)?;
 
-        ty_sort(self.rg.sort, &mut entries);
+        self.rg.sort_dents(&mut entries);
 
         let enumerated_entries: Vec<(usize, std::fs::DirEntry)> =
             entries.into_iter().enumerate().collect();

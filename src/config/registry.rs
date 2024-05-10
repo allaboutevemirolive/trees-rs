@@ -1,4 +1,6 @@
-use super::path::Directory;
+use super::path::read_all_entries;
+use super::path::read_visible_entries;
+use super::path::read_visible_folders;
 use crate::canva::buffer::Buffer;
 use crate::canva::which::attr::atime::FnExtAccessTime;
 use crate::canva::which::attr::btime::FnExtBTime;
@@ -9,12 +11,15 @@ use crate::canva::which::entree::filee::FnOutFile;
 use crate::canva::which::entree::headd::FnOutHead;
 use crate::config::path::FnReadDir;
 use crate::error::simple::TResult;
+use crate::report::tail::Tail;
 use crate::sort::dent::reverse_sort_by_name;
 use crate::sort::dent::sort_by_file_first;
 use crate::sort::dent::sort_by_name;
 use crate::sort::dent::FnSortEntries;
 
+use std::fs::DirEntry;
 use std::io::StdoutLock;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Registry<'a> {
@@ -33,8 +38,18 @@ pub struct Registry<'a> {
 }
 
 impl<'a> Registry<'a> {
+    pub fn inspt_dents(&self, path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
+        (self.read)(path, tail)
+    }
+
+    pub fn sort_dents(&self, entries: &mut Vec<DirEntry>) {
+        (self.sort)(entries)
+    }
+}
+
+impl<'a> Registry<'a> {
     pub fn new() -> TResult<Self> {
-        let read: FnReadDir = Directory::read_visible_entries;
+        let read: FnReadDir = read_visible_entries;
         let sort: FnSortEntries = sort_by_name;
 
         // Entry
@@ -66,17 +81,17 @@ impl<'a> Registry<'a> {
 
 impl<'a> Registry<'a> {
     pub fn read_all_entries(&mut self) -> TResult<()> {
-        self.read = Directory::read_all_entries;
+        self.read = read_all_entries;
         Ok(())
     }
 
     pub fn read_visible_entries(&mut self) -> TResult<()> {
-        self.read = Directory::read_visible_entries;
+        self.read = read_visible_entries;
         Ok(())
     }
 
     pub fn read_visible_folders(&mut self) -> TResult<()> {
-        self.read = Directory::read_visible_folders;
+        self.read = read_visible_folders;
         Ok(())
     }
 }
