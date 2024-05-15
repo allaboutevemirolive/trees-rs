@@ -83,10 +83,12 @@ impl TArgs {
             gcx.rg.with_size_color()?;
         }
 
+        // FIXME
         if matches.get_flag(options::sort::REVERSE) {
             gcx.rg.with_reverse_sort_entries()?;
         }
 
+        // FIXME
         if matches.get_flag(options::sort::FILEFIRST) {
             gcx.rg.with_sort_by_file_first()?;
         }

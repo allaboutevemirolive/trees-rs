@@ -15,6 +15,7 @@ impl Default for Level {
 }
 
 impl Level {
+    #[allow(dead_code)]
     pub fn with_lvl_and_cap(lvl: i32, cap: i32) -> Self {
         Level { lvl, cap }
     }

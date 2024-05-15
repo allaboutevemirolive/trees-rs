@@ -1,5 +1,4 @@
 use crate::error::simple::TResult;
-use crate::tree::level;
 
 use std::ffi::OsString;
 use std::fs::DirEntry;
@@ -8,19 +7,17 @@ use std::fs::Metadata;
 use std::path::PathBuf;
 
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct Visitor {
     pub abs: PathBuf,
     pub dent: DirEntry,
     pub meta: Metadata,
     pub name: OsString,
     pub filety: FileType,
-    pub lvl: level::Level,
     pub size: u64,
 }
 
 impl Visitor {
-    pub fn new(dent: DirEntry, level: &level::Level) -> TResult<Self> {
+    pub fn new(dent: DirEntry) -> TResult<Self> {
         let filety = dent.file_type()?;
         let abs = dent.path();
         let name = dent
@@ -39,7 +36,6 @@ impl Visitor {
             meta,
             filety,
             name,
-            lvl: *level,
             size,
         })
     }
