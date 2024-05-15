@@ -20,9 +20,9 @@ impl<W: Write> Buffer<W> {
         path.push(parent);
 
         let path = path.to_owned().into_os_string();
-        self.buf_writer.write_all("\x1b[0;34m".as_bytes())?;
-        self.buf_writer.write_all(path.as_encoded_bytes())?;
-        self.buf_writer.write_all("\x1b[0m".as_bytes())?;
+        self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
+        self.bufwr.write_all(path.as_encoded_bytes())?;
+        self.bufwr.write_all("\x1b[0m".as_bytes())?;
 
         Ok(())
     }
@@ -39,7 +39,7 @@ impl<W: Write> Buffer<W> {
         path.push(parent);
 
         let path = path.to_owned().into_os_string();
-        self.buf_writer.write_all(path.as_encoded_bytes())?;
+        self.bufwr.write_all(path.as_encoded_bytes())?;
 
         Ok(())
     }
@@ -56,17 +56,17 @@ impl<W: Write> Buffer<W> {
         //
         // thread 'main' panicked at src/canva/which/headd.rs:35:41:
         // called `Option::unwrap()` on a `None` value
-        // self.buf_writer
+        // self.bufwr
         //     .write_all(root.file_name().unwrap_or_default().as_encoded_bytes())?;
         if let Some(file_name) = root.file_name() {
-            self.buf_writer.write_all(file_name.as_encoded_bytes())?;
+            self.bufwr.write_all(file_name.as_encoded_bytes())?;
         } else if let Some(folder_name) = root.file_stem() {
-            self.buf_writer.write_all(folder_name.as_encoded_bytes())?;
+            self.bufwr.write_all(folder_name.as_encoded_bytes())?;
         } else {
             let path_buf = PathBuf::from(root);
             let filename: String = path_buf.to_string_lossy().to_string();
 
-            self.buf_writer.write_all(filename.as_bytes())?;
+            self.bufwr.write_all(filename.as_bytes())?;
         }
 
         Ok(())
@@ -84,22 +84,22 @@ impl<W: Write> Buffer<W> {
         //
         // thread 'main' panicked at src/canva/which/headd.rs:35:41:
         // called `Option::unwrap()` on a `None` value
-        // self.buf_writer
+        // self.bufwr
         //     .write_all(root.file_name().unwrap_or_default().as_encoded_bytes())?;
         if let Some(file_name) = root.file_name() {
-            self.buf_writer.write_all("\x1b[0;34m".as_bytes())?;
-            self.buf_writer.write_all(file_name.as_encoded_bytes())?;
-            self.buf_writer.write_all("\x1b[0m".as_bytes())?;
+            self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
+            self.bufwr.write_all(file_name.as_encoded_bytes())?;
+            self.bufwr.write_all("\x1b[0m".as_bytes())?;
         } else if let Some(folder_name) = root.file_stem() {
-            self.buf_writer.write_all("\x1b[0;34m".as_bytes())?;
-            self.buf_writer.write_all(folder_name.as_encoded_bytes())?;
-            self.buf_writer.write_all("\x1b[0m".as_bytes())?;
+            self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
+            self.bufwr.write_all(folder_name.as_encoded_bytes())?;
+            self.bufwr.write_all("\x1b[0m".as_bytes())?;
         } else {
             let path_buf = PathBuf::from(root);
             let filename: String = path_buf.to_string_lossy().to_string();
-            self.buf_writer.write_all("\x1b[0;34m".as_bytes())?;
-            self.buf_writer.write_all(filename.as_bytes())?;
-            self.buf_writer.write_all("\x1b[0m".as_bytes())?;
+            self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
+            self.bufwr.write_all(filename.as_bytes())?;
+            self.bufwr.write_all("\x1b[0m".as_bytes())?;
         }
 
         Ok(())

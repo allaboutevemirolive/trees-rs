@@ -21,7 +21,7 @@ impl<W: Write> Buffer<W> {
         path.push(relative_path);
 
         let path = path.to_owned().into_os_string();
-        self.buf_writer.write_all(path.as_encoded_bytes())?;
+        self.bufwr.write_all(path.as_encoded_bytes())?;
 
         Ok(())
     }
@@ -39,9 +39,9 @@ impl<W: Write> Buffer<W> {
         path.push(relative_path);
 
         let path = path.to_owned().into_os_string();
-        self.buf_writer.write_all("\x1b[0;34m".as_bytes())?;
-        self.buf_writer.write_all(path.as_encoded_bytes())?;
-        self.buf_writer.write_all("\x1b[0m".as_bytes())?;
+        self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
+        self.bufwr.write_all(path.as_encoded_bytes())?;
+        self.bufwr.write_all("\x1b[0m".as_bytes())?;
 
         Ok(())
     }
@@ -54,7 +54,7 @@ impl<W: Write> Buffer<W> {
         root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
-        self.buf_writer.write_all(meta.name.as_encoded_bytes())?;
+        self.bufwr.write_all(meta.name.as_encoded_bytes())?;
         Ok(())
     }
 
@@ -66,9 +66,9 @@ impl<W: Write> Buffer<W> {
         root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
-        self.buf_writer.write_all("\x1b[0;34m".as_bytes())?;
-        self.buf_writer.write_all(meta.name.as_encoded_bytes())?;
-        self.buf_writer.write_all("\x1b[0m".as_bytes())?;
+        self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
+        self.bufwr.write_all(meta.name.as_encoded_bytes())?;
+        self.bufwr.write_all("\x1b[0m".as_bytes())?;
         Ok(())
     }
 

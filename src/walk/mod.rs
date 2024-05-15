@@ -86,7 +86,7 @@ pub trait Printer<'gcx> {
     //     ├── entry1
     //     └── entry2
     //
-    // 13 directories, 36 files, 0 hidden, 0.00 gigabytes
+    // 13 directories, 36 files, 0 hidden, 0.00 gigabyte
     fn print_report(&mut self) -> TResult<()>;
 }
 
@@ -135,7 +135,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
         let entries_len = enumerated_entries.len();
 
         for (idx, entry) in enumerated_entries {
-            let visitor = Visitor::new(entry, &self.level)?;
+            let visitor = Visitor::new(entry)?;
 
             self.tail.add_size(visitor.size);
             self.print_meta(&visitor.meta)?;

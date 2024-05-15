@@ -22,63 +22,63 @@ impl<W: Write> Buffer<W> {
         self.write_space()?;
 
         if meta.is_dir() {
-            self.buf_writer.write_all("d".as_bytes())?;
+            self.bufwr.write_all("d".as_bytes())?;
         } else {
-            self.buf_writer.write_all(".".as_bytes())?;
+            self.bufwr.write_all(".".as_bytes())?;
         }
 
         if mode & 0o400 != 0 {
-            self.buf_writer.write_all("r".as_bytes())?;
+            self.bufwr.write_all("r".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         if mode & 0o200 != 0 {
-            self.buf_writer.write_all("w".as_bytes())?;
+            self.bufwr.write_all("w".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         if mode & 0o100 != 0 {
-            self.buf_writer.write_all("x".as_bytes())?;
+            self.bufwr.write_all("x".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         if mode & 0o40 != 0 {
-            self.buf_writer.write_all("r".as_bytes())?;
+            self.bufwr.write_all("r".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         if mode & 0o20 != 0 {
-            self.buf_writer.write_all("w".as_bytes())?;
+            self.bufwr.write_all("w".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         if mode & 0o10 != 0 {
-            self.buf_writer.write_all("x".as_bytes())?;
+            self.bufwr.write_all("x".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         if mode & 0o4 != 0 {
-            self.buf_writer.write_all("r".as_bytes())?;
+            self.bufwr.write_all("r".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         if mode & 0o2 != 0 {
-            self.buf_writer.write_all("w".as_bytes())?;
+            self.bufwr.write_all("w".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         if mode & 0o1 != 0 {
-            self.buf_writer.write_all("x".as_bytes())?;
+            self.bufwr.write_all("x".as_bytes())?;
         } else {
-            self.buf_writer.write_all("-".as_bytes())?;
+            self.bufwr.write_all("-".as_bytes())?;
         }
 
         self.write_space()

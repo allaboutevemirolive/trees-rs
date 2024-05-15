@@ -17,11 +17,11 @@ impl<W: Write> Buffer<W> {
         if let Ok(created) = meta.accessed() {
             let time = format_system_time(created);
             self.write_space()?;
-            self.buf_writer.write_all(time.as_bytes())?;
+            self.bufwr.write_all(time.as_bytes())?;
             self.write_space()?;
         } else {
             self.write_space()?;
-            self.buf_writer.write_all("─────".as_bytes())?;
+            self.bufwr.write_all("─────".as_bytes())?;
             self.write_space()?;
         }
 

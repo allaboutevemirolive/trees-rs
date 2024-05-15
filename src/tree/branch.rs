@@ -48,10 +48,12 @@ impl PaintBranch for Branch {
             } else {
                 buffer.write_branch(self.space)?;
             }
-        } else if value_is_one {
-            buffer.write_branch(self.middle)?;
         } else {
-            buffer.write_branch(self.end)?;
+            if value_is_one {
+                buffer.write_branch(self.middle)?;
+            } else {
+                buffer.write_branch(self.end)?;
+            }
         }
         Ok(())
     }
