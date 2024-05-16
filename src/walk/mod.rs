@@ -1,6 +1,6 @@
 use crate::canva::buffer::Buffer;
 use crate::config::registry::Registry;
-use crate::error::simple::{TResult, TSimpleError};
+use crate::error::simple::TResult;
 use crate::report::tail::Tail;
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
@@ -11,7 +11,6 @@ use self::visit::Visitor;
 
 use std::env;
 use std::ffi::OsString;
-use std::fs;
 use std::fs::Metadata;
 use std::io;
 use std::io::StdoutLock;
@@ -144,24 +143,15 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
             self.nod.push_if(idx, entries_len);
             self.nod.to_branches(&self.branch, &mut self.buf)?;
 
-            if visitor.is_symlink {
-                if let Ok(link_target) = fs::read_link(visitor.abs.clone()) {
-                    visitor.filename = visitor
-                        .abs
-                        .file_name()
-                        .expect("Cannot read filename")
-                        .to_os_string();
-                    visitor.filename.push(" -> ");
-                    visitor.filename.push(link_target.into_os_string());
-                }
-                self.buf.paint_entry(
-                    &visitor,
+            if visitor.is_symlink() {
+                self.buf.paint_symlink(
+                    &mut visitor,
                     &self.rpath.fpath,
                     &self.rpath.fname,
-                    self.rg.file,
+                    self.rg.symlink,
                 )?;
                 self.buf.write_newline()?;
-            } else if visitor.is_file {
+            } else if visitor.is_file() {
                 self.tail.file_plus_one();
                 self.buf.paint_entry(
                     &visitor,
@@ -170,7 +160,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
                     self.rg.file,
                 )?;
                 self.buf.write_newline()?;
-            } else if visitor.is_dir {
+            } else if visitor.is_dir() {
                 self.tail.dir_plus_one();
                 self.buf.paint_entry(
                     &visitor,
@@ -185,10 +175,6 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
                     self.level.minus_one();
                 }
             }
-            // } else {
-            //     return Err(TSimpleError{code: 1, "Unidentified file type"});
-            // }
-
             self.nod.pop();
         }
 

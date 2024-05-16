@@ -14,6 +14,7 @@ use crate::canva::attr::size::FnExtSize;
 use crate::canva::buffer::Buffer;
 use crate::canva::entree::filee::FnOutFile;
 use crate::canva::entree::headd::FnOutHead;
+use crate::canva::entree::symlinked::FnOutSymlink;
 use crate::error::simple::TResult;
 use crate::report::tail::Tail;
 
@@ -28,6 +29,7 @@ pub struct Registry<'a> {
     /// Entry  
     pub dir: FnOutFile<StdoutLock<'a>>,
     pub file: FnOutFile<StdoutLock<'a>>,
+    pub symlink: FnOutSymlink<StdoutLock<'a>>,
 
     pub head: FnOutHead<StdoutLock<'a>>,
     // Metadata
@@ -57,6 +59,7 @@ impl<'a> Registry<'a> {
         let dir: FnOutFile<StdoutLock> = Buffer::write_entry_color;
         let file: FnOutFile<StdoutLock> = Buffer::write_entry;
         let head: FnOutHead<StdoutLock> = Buffer::write_color_header_name;
+        let symlink: FnOutSymlink<StdoutLock> = Buffer::write_symlink;
 
         // Entry's metadata
         let pms: FnExtPermission<StdoutLock> = Buffer::write_no_permission;
@@ -71,6 +74,7 @@ impl<'a> Registry<'a> {
             dir,
             file,
             head,
+            symlink,
             pms,
             btime,
             mtime,
