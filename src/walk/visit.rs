@@ -10,9 +10,12 @@ use std::path::PathBuf;
 pub struct Visitor {
     pub abs: PathBuf,
     pub dent: DirEntry,
-    pub meta: Metadata,
-    pub name: OsString,
     pub filety: FileType,
+    pub is_symlink: bool,
+    pub is_dir: bool,
+    pub is_file: bool,
+    pub meta: Metadata,
+    pub filename: OsString,
     pub size: u64,
 }
 
@@ -20,7 +23,7 @@ impl Visitor {
     pub fn new(dent: DirEntry) -> TResult<Self> {
         let filety = dent.file_type()?;
         let abs = dent.path();
-        let name = dent
+        let filename = dent
             .path()
             .file_name()
             .map(|os_str| os_str.to_os_string())
@@ -30,12 +33,19 @@ impl Visitor {
 
         let size = meta.len();
 
+        let is_symlink = filety.is_symlink();
+        let is_dir = filety.is_dir();
+        let is_file = filety.is_file();
+
         Ok(Self {
             abs,
             dent,
-            meta,
             filety,
-            name,
+            is_symlink,
+            is_dir,
+            is_file,
+            meta,
+            filename,
             size,
         })
     }

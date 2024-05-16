@@ -54,7 +54,7 @@ impl<W: Write> Buffer<W> {
         root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
-        self.bufwr.write_all(meta.name.as_encoded_bytes())?;
+        self.bufwr.write_all(meta.filename.as_encoded_bytes())?;
         Ok(())
     }
 
@@ -67,7 +67,7 @@ impl<W: Write> Buffer<W> {
         parent: &OsString,
     ) -> io::Result<()> {
         self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
-        self.bufwr.write_all(meta.name.as_encoded_bytes())?;
+        self.bufwr.write_all(meta.filename.as_encoded_bytes())?;
         self.bufwr.write_all("\x1b[0m".as_bytes())?;
         Ok(())
     }

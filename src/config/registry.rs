@@ -28,6 +28,7 @@ pub struct Registry<'a> {
     /// Entry  
     pub dir: FnOutFile<StdoutLock<'a>>,
     pub file: FnOutFile<StdoutLock<'a>>,
+
     pub head: FnOutHead<StdoutLock<'a>>,
     // Metadata
     pub pms: FnExtPermission<StdoutLock<'a>>,
