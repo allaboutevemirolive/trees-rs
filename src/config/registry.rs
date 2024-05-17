@@ -59,7 +59,7 @@ impl<'a> Registry<'a> {
         let dir: FnOutFile<StdoutLock> = Buffer::write_entry_color;
         let file: FnOutFile<StdoutLock> = Buffer::write_entry;
         let head: FnOutHead<StdoutLock> = Buffer::write_color_header_name;
-        let symlink: FnOutSymlink<StdoutLock> = Buffer::write_symlink;
+        let symlink: FnOutSymlink<StdoutLock> = Buffer::write_symlink_color;
 
         // Entry's metadata
         let pms: FnExtPermission<StdoutLock> = Buffer::write_no_permission;

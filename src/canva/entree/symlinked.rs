@@ -72,13 +72,23 @@ impl<W: Write> Buffer<W> {
     #[allow(clippy::ptr_arg)]
     pub fn write_symlink_color(
         &mut self,
-        visit: &Visitor,
+        visit: &mut Visitor,
         root: &PathBuf,
         parent: &OsString,
     ) -> io::Result<()> {
-        self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
+        self.bufwr.write_all("\x1b[0;33m".as_bytes())?;
         self.bufwr.write_all(visit.filename.as_encoded_bytes())?;
         self.bufwr.write_all("\x1b[0m".as_bytes())?;
+
+        let target_link = visit
+            .get_target_symlink()
+            .expect("Cannot get target link.")
+            .into_os_string();
+
+        self.bufwr.write_all(" -> ".as_bytes())?;
+
+        self.bufwr.write_all(target_link.as_encoded_bytes())?;
+
         Ok(())
     }
 

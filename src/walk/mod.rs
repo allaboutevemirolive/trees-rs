@@ -144,6 +144,18 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
             self.nod.to_branches(&self.branch, &mut self.buf)?;
 
             if visitor.is_symlink() {
+                if visitor.is_dir() {
+                    self.tail.dir_plus_one();
+                }
+
+                if visitor.is_file() {
+                    self.tail.file_plus_one();
+                }
+
+                if visitor.is_symlink() {
+                    self.tail.sym_plus_one()
+                }
+
                 self.buf.paint_symlink(
                     &mut visitor,
                     &self.rpath.fpath,
