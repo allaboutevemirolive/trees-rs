@@ -9,7 +9,7 @@ pub type FnExtBTime<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
     /// Print entry's creation-date
-    pub fn paint_btime(&mut self, meta: &Metadata, f: FnExtBTime<W>) -> io::Result<()> {
+    pub fn print_btime(&mut self, meta: &Metadata, f: FnExtBTime<W>) -> io::Result<()> {
         f(self, meta)
     }
 

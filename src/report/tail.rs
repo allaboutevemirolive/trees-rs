@@ -39,11 +39,11 @@ impl Tail {
         }
     }
 
-    pub fn dir_plus_one(&mut self) {
+    pub fn dir_add_one(&mut self) {
         self.directories += 1
     }
 
-    pub fn file_plus_one(&mut self) {
+    pub fn file_add_one(&mut self) {
         self.files += 1
     }
 
@@ -51,7 +51,7 @@ impl Tail {
         self.hidden_files += 1
     }
 
-    pub fn sym_plus_one(&mut self) {
+    pub fn symlink_add_one(&mut self) {
         self.symlinks += 1
     }
 
@@ -137,14 +137,14 @@ mod tests {
     // #[test]
     // fn test_dir_plus_one() {
     //     let mut tail = Tail::initialize(10, 20, 100, 5, 0);
-    //     tail.dir_plus_one();
+    //     tail.dir_add_one();
     //     assert_eq!(tail.directories, 11);
     // }
 
     // #[test]
     // fn test_file_plus_one() {
     //     let mut tail = Tail::initialize(10, 20, 100, 5);
-    //     tail.file_plus_one();
+    //     tail.file_add_one();
     //     assert_eq!(tail.files, 21);
     // }
 

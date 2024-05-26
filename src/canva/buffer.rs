@@ -29,7 +29,7 @@ impl<W: Write> Buffer<W> {
 }
 
 impl<W: Write> Buffer<W> {
-    pub fn write_newline(&mut self) -> io::Result<()> {
+    pub fn newline(&mut self) -> io::Result<()> {
         self.bufwr.write_all("\n".as_bytes())
     }
 

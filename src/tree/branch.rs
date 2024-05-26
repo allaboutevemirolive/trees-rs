@@ -27,7 +27,7 @@ impl Default for Branch {
 }
 
 pub trait PaintBranch {
-    fn paint_branch<'a, T>(
+    fn print_branch<'a, T>(
         &self,
         value_is_one: bool,
         value_has_next: bool,
@@ -38,7 +38,7 @@ pub trait PaintBranch {
 }
 
 impl PaintBranch for Branch {
-    fn paint_branch<'a, T>(
+    fn print_branch<'a, T>(
         &self,
         value_is_one: bool,
         value_has_next: bool,

@@ -80,7 +80,7 @@ pub trait Printer<'gcx> {
     // │   ├── entry
     fn print_head(&mut self, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()>;
 
-    fn print_meta(&mut self, meta: &Metadata) -> TResult<()>;
+    fn print_info(&mut self, meta: &Metadata) -> TResult<()>;
 
     // └── dir
     //     ├── entry1
@@ -93,27 +93,27 @@ pub trait Printer<'gcx> {
 impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
     fn print_head(&mut self, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()> {
         self.tail.add_size(fmeta.size());
-        self.print_meta(&fmeta)?;
+        self.print_info(&fmeta)?;
         self.buf
-            .paint_header(&fmeta, &fpath.clone(), &fname, self.rg.head)?;
-        self.buf.write_newline()?;
+            .print_header(&fmeta, &fpath.clone(), &fname, self.rg.head)?;
+        self.buf.newline()?;
 
         Ok(())
     }
 
-    fn print_meta(&mut self, meta: &Metadata) -> TResult<()> {
-        self.buf.paint_permission(meta, self.rg.pms)?;
-        self.buf.paint_btime(meta, self.rg.btime)?;
-        self.buf.paint_mtime(meta, self.rg.mtime)?;
-        self.buf.paint_atime(meta, self.rg.atime)?;
-        self.buf.paint_size(meta, self.rg.size)?;
+    fn print_info(&mut self, meta: &Metadata) -> TResult<()> {
+        self.buf.print_permission(meta, self.rg.pms)?;
+        self.buf.print_btime(meta, self.rg.btime)?;
+        self.buf.print_mtime(meta, self.rg.mtime)?;
+        self.buf.print_atime(meta, self.rg.atime)?;
+        self.buf.print_size(meta, self.rg.size)?;
         Ok(())
     }
 
     fn print_report(&mut self) -> TResult<()> {
-        self.buf.write_newline()?;
+        self.buf.newline()?;
         self.buf.write_message(&self.tail.to_string())?;
-        self.buf.write_newline()?;
+        self.buf.newline()?;
 
         Ok(())
     }
@@ -125,6 +125,7 @@ pub trait Walker<'gcx> {
 
 impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
     fn walk_dir(&mut self, path: PathBuf) -> TResult<()> {
+        // Get entries in target path
         let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.tail)?;
 
         self.rg.sort_dents(&mut entries);
@@ -135,43 +136,46 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
         let entries_len = enumerated_entries.len();
 
         for (idx, entry) in enumerated_entries {
+            // Get entry's information
             let mut visitor = Visitor::new(entry)?;
-
+            // Accumulate entry's size
             self.tail.add_size(visitor.size);
-            self.print_meta(&visitor.meta)?;
-
+            // Print entry's information
+            self.print_info(&visitor.meta)?;
+            // If current entry is not the last entry in entries
             self.nod.push_if(idx, entries_len);
-            self.nod.to_branches(&self.branch, &mut self.buf)?;
+            // Convert node to branch's stick
+            self.nod.into_branch(&self.branch, &mut self.buf)?;
 
             if visitor.is_symlink() {
-                self.tail.sym_plus_one();
+                self.tail.symlink_add_one();
                 self.buf
                     .print_symlink(&mut visitor, &self.rpath, self.rg.symlink)?;
-                self.buf.write_newline()?;
+                self.buf.newline()?;
                 self.nod.pop();
                 continue;
             }
 
             if visitor.is_file() {
-                self.tail.file_plus_one();
+                self.tail.file_add_one();
                 self.buf.print_file(&visitor, &self.rpath, self.rg.file)?;
-                self.buf.write_newline()?;
+                self.buf.newline()?;
                 self.nod.pop();
                 continue;
             }
 
             if visitor.is_dir() {
-                self.tail.dir_plus_one();
+                self.tail.dir_add_one();
                 self.buf.print_dir(&visitor, &self.rpath, self.rg.dir)?;
-                self.buf.write_newline()?;
+                self.buf.newline()?;
 
                 if self.level.lvl < self.level.cap {
-                    self.level.plus_one();
+                    self.level.add_one();
                     self.walk_dir(visitor.abs)?; // DFS
-                    self.level.minus_one();
+                    self.level.subtract_one();
                 }
             }
-            // We handle the case where entry is not symlink or file or dir
+            // Handle the case where entry is not symlink or file or directory
             self.nod.pop();
         }
 

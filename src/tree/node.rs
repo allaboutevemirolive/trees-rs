@@ -67,12 +67,13 @@ impl Node {
         }
     }
 
-    pub fn to_branches<T>(&self, br: &T, buf: &mut Buffer<StdoutLock>) -> TResult<()>
+    /// Convert node into branch stick
+    pub fn into_branch<T>(&self, br: &T, buf: &mut Buffer<StdoutLock>) -> TResult<()>
     where
         T: PaintBranch,
     {
         self.into_iter().for_each(|(value_is_one, value_has_next)| {
-            br.paint_branch(value_is_one, value_has_next, buf)
+            br.print_branch(value_is_one, value_has_next, buf)
                 .expect("Cannot print branch");
         });
 

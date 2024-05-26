@@ -9,7 +9,7 @@ pub type FnExtAccessTime<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
     /// Print entry's access-time
-    pub fn paint_atime(&mut self, meta: &Metadata, f: FnExtAccessTime<W>) -> io::Result<()> {
+    pub fn print_atime(&mut self, meta: &Metadata, f: FnExtAccessTime<W>) -> io::Result<()> {
         f(self, meta)
     }
 

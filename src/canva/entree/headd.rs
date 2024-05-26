@@ -105,7 +105,7 @@ impl<W: Write> Buffer<W> {
         Ok(())
     }
 
-    pub fn paint_header(
+    pub fn print_header(
         &mut self,
         meta: &Metadata,
         root: &PathBuf,

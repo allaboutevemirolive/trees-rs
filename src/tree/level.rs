@@ -20,11 +20,11 @@ impl Level {
         Level { lvl, cap }
     }
 
-    pub fn plus_one(&mut self) {
+    pub fn add_one(&mut self) {
         self.lvl += 1;
     }
 
-    pub fn minus_one(&mut self) {
+    pub fn subtract_one(&mut self) {
         self.lvl -= 1;
     }
 }
@@ -36,14 +36,14 @@ mod tests {
     #[test]
     fn test_plus_one() {
         let mut level = Level::with_lvl_and_cap(0, 5000);
-        level.plus_one();
+        level.add_one();
         assert_eq!(level.lvl, 1);
     }
 
     #[test]
     fn test_minus_one() {
         let mut level = Level::with_lvl_and_cap(3, 5000);
-        level.minus_one();
+        level.subtract_one();
         assert_eq!(level.lvl, 2);
     }
 
@@ -51,7 +51,7 @@ mod tests {
     fn test_lvl_not_exceed_cap() {
         let mut level = Level::with_lvl_and_cap(1, 5000);
         while level.lvl < level.cap {
-            level.plus_one();
+            level.add_one();
         }
         assert_eq!(level.lvl, level.cap);
         assert_ne!(level.lvl, 5001)
