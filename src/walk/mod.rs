@@ -144,49 +144,34 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
             self.nod.to_branches(&self.branch, &mut self.buf)?;
 
             if visitor.is_symlink() {
-                if visitor.is_dir() {
-                    self.tail.dir_plus_one();
-                }
-
-                if visitor.is_file() {
-                    self.tail.file_plus_one();
-                }
-
-                if visitor.is_symlink() {
-                    self.tail.sym_plus_one()
-                }
-
-                self.buf.paint_symlink(
-                    &mut visitor,
-                    &self.rpath.fpath,
-                    &self.rpath.fname,
-                    self.rg.symlink,
-                )?;
+                self.tail.sym_plus_one();
+                self.buf
+                    .print_symlink(&mut visitor, &self.rpath, self.rg.symlink)?;
                 self.buf.write_newline()?;
-            } else if visitor.is_file() {
+                self.nod.pop();
+                continue;
+            }
+
+            if visitor.is_file() {
                 self.tail.file_plus_one();
-                self.buf.paint_entry(
-                    &visitor,
-                    &self.rpath.fpath,
-                    &self.rpath.fname,
-                    self.rg.file,
-                )?;
+                self.buf.print_file(&visitor, &self.rpath, self.rg.file)?;
                 self.buf.write_newline()?;
-            } else if visitor.is_dir() {
+                self.nod.pop();
+                continue;
+            }
+
+            if visitor.is_dir() {
                 self.tail.dir_plus_one();
-                self.buf.paint_entry(
-                    &visitor,
-                    &self.rpath.fpath,
-                    &self.rpath.fname,
-                    self.rg.dir,
-                )?;
+                self.buf.print_dir(&visitor, &self.rpath, self.rg.dir)?;
                 self.buf.write_newline()?;
+
                 if self.level.lvl < self.level.cap {
                     self.level.plus_one();
-                    self.walk_dir(visitor.abs)?; // Traverse
+                    self.walk_dir(visitor.abs)?; // DFS
                     self.level.minus_one();
                 }
             }
+            // We handle the case where entry is not symlink or file or dir
             self.nod.pop();
         }
 

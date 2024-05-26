@@ -12,6 +12,7 @@ use crate::canva::attr::mtime::FnExtModTime;
 use crate::canva::attr::pms::FnExtPermission;
 use crate::canva::attr::size::FnExtSize;
 use crate::canva::buffer::Buffer;
+use crate::canva::entree::dirr::FnOutDir;
 use crate::canva::entree::filee::FnOutFile;
 use crate::canva::entree::headd::FnOutHead;
 use crate::canva::entree::symlinked::FnOutSymlink;
@@ -27,7 +28,7 @@ pub struct Registry<'a> {
     pub read: FnReadDir,
     pub sort: FnSortEntries,
     /// Entry  
-    pub dir: FnOutFile<StdoutLock<'a>>,
+    pub dir: FnOutDir<StdoutLock<'a>>,
     pub file: FnOutFile<StdoutLock<'a>>,
     pub symlink: FnOutSymlink<StdoutLock<'a>>,
 
@@ -56,7 +57,7 @@ impl<'a> Registry<'a> {
         let sort: FnSortEntries = sort_by_name;
 
         // Entry
-        let dir: FnOutFile<StdoutLock> = Buffer::write_entry_color;
+        let dir: FnOutDir<StdoutLock> = Buffer::write_dir_color;
         let file: FnOutFile<StdoutLock> = Buffer::write_entry;
         let head: FnOutHead<StdoutLock> = Buffer::write_color_header_name;
         let symlink: FnOutSymlink<StdoutLock> = Buffer::write_symlink_color;
@@ -173,25 +174,25 @@ impl<'a> Registry<'a> {
 
 impl<'a> Registry<'a> {
     pub fn with_color_entry(&mut self) -> TResult<()> {
-        self.dir = Buffer::write_entry_color;
+        self.dir = Buffer::write_dir_color;
         Ok(())
     }
 
     pub fn with_colorless_entry(&mut self) -> TResult<()> {
         self.head = Buffer::write_header_name;
-        self.dir = Buffer::write_entry;
+        self.dir = Buffer::write_dir;
         Ok(())
     }
 
     pub fn with_color_relative_path(&mut self) -> TResult<()> {
-        self.dir = Buffer::write_color_entry_relative_path;
+        self.dir = Buffer::write_color_dir_relative_path;
         self.file = Buffer::write_entry_relative_path;
         self.head = Buffer::write_color_header_relative_path;
         Ok(())
     }
 
     pub fn with_relative_path(&mut self) -> TResult<()> {
-        self.dir = Buffer::write_entry_relative_path;
+        self.dir = Buffer::write_dir_relative_path;
         self.file = Buffer::write_entry_relative_path;
         self.head = Buffer::write_header_relative_path;
         Ok(())

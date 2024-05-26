@@ -63,10 +63,10 @@ impl Visitor {
         self.filety.is_file()
     }
 
-    pub fn get_target_symlink(&mut self) -> Result<PathBuf, TSimpleError> {
+    pub fn get_target_symlink(&self) -> Result<PathBuf, TSimpleError> {
         if !self.is_symlink() {
             return Err(TSimpleError {
-                code: 1,
+                code: 2,
                 message: "Visitor is not a symlink".to_string(),
             });
         }
@@ -74,7 +74,7 @@ impl Visitor {
         if let Ok(link_target) = fs::read_link(self.abs.clone()) {
             Ok(link_target)
         } else {
-            Err(TSimpleError::new(1, "Cannot read target link to symlink"))
+            Err(TSimpleError::new(2, "Cannot read target link to symlink"))
         }
     }
 }

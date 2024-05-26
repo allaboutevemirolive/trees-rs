@@ -30,7 +30,7 @@ pub trait PaintBranch {
     fn paint_branch<'a, T>(
         &self,
         value_is_one: bool,
-        has_next: bool,
+        value_has_next: bool,
         buffer: &mut T,
     ) -> TResult<()>
     where
@@ -38,11 +38,16 @@ pub trait PaintBranch {
 }
 
 impl PaintBranch for Branch {
-    fn paint_branch<'a, T>(&self, value_is_one: bool, has_next: bool, buffer: &mut T) -> TResult<()>
+    fn paint_branch<'a, T>(
+        &self,
+        value_is_one: bool,
+        value_has_next: bool,
+        buffer: &mut T,
+    ) -> TResult<()>
     where
         T: IntoBranch<StdoutLock<'a>>,
     {
-        if has_next {
+        if value_has_next {
             if value_is_one {
                 buffer.write_branch(self.structural)?;
             } else {

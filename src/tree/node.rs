@@ -71,8 +71,8 @@ impl Node {
     where
         T: PaintBranch,
     {
-        self.into_iter().for_each(|(is_one, has_next)| {
-            br.paint_branch(is_one, has_next, buf)
+        self.into_iter().for_each(|(value_is_one, value_has_next)| {
+            br.paint_branch(value_is_one, value_has_next, buf)
                 .expect("Cannot print branch");
         });
 
@@ -90,10 +90,10 @@ impl<'a> Iterator for NodeIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < self.node.nod.len() {
-            let curr_value_is_one = self.node.nod[self.index] == 1;
-            let has_next = self.node.next_ref(self.index).is_some();
+            let value_is_one = self.node.nod[self.index] == 1;
+            let value_has_next = self.node.next_ref(self.index).is_some();
             self.index += 1;
-            Some((curr_value_is_one, has_next))
+            Some((value_is_one, value_has_next))
         } else {
             None
         }
