@@ -8,11 +8,11 @@ pub struct Buffer<W: Write> {
 }
 
 pub trait IntoBranch<W: Write> {
-    fn write_branch(&mut self, message: &str) -> io::Result<()>;
+    fn print_branch(&mut self, message: &str) -> io::Result<()>;
 }
 
 impl<W: Write> IntoBranch<W> for Buffer<W> {
-    fn write_branch(&mut self, message: &str) -> io::Result<()> {
+    fn print_branch(&mut self, message: &str) -> io::Result<()> {
         self.bufwr.write_all(message.as_bytes())
     }
 }

@@ -2,6 +2,7 @@ use crate::canva::buffer::IntoBranch;
 use crate::error::simple::TResult;
 use std::io::StdoutLock;
 
+// TODO: We don't need this struct in the future
 #[derive(Debug, Clone)]
 pub struct Branch {
     /// Represents the end of a branch, e.g., `"└── "`
@@ -27,7 +28,7 @@ impl Default for Branch {
 }
 
 pub trait PaintBranch {
-    fn print_branch<'a, T>(
+    fn print_branch_if<'a, T>(
         &self,
         value_is_one: bool,
         value_has_next: bool,
@@ -38,7 +39,7 @@ pub trait PaintBranch {
 }
 
 impl PaintBranch for Branch {
-    fn print_branch<'a, T>(
+    fn print_branch_if<'a, T>(
         &self,
         value_is_one: bool,
         value_has_next: bool,
@@ -49,15 +50,15 @@ impl PaintBranch for Branch {
     {
         if value_has_next {
             if value_is_one {
-                buffer.write_branch(self.structural)?;
+                buffer.print_branch(self.structural)?;
             } else {
-                buffer.write_branch(self.space)?;
+                buffer.print_branch(self.space)?;
             }
         } else {
             if value_is_one {
-                buffer.write_branch(self.middle)?;
+                buffer.print_branch(self.middle)?;
             } else {
-                buffer.write_branch(self.end)?;
+                buffer.print_branch(self.end)?;
             }
         }
         Ok(())

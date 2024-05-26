@@ -1,6 +1,7 @@
 use crate::canva::buffer::Buffer;
+use crate::config::root::RootPath;
 use crate::walk::visit::Visitor;
-use crate::walk::RootPath;
+
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;

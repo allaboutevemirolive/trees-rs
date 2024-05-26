@@ -1,5 +1,6 @@
 use crate::canva::buffer::Buffer;
 use crate::config::registry::Registry;
+use crate::config::root::RootPath;
 use crate::error::simple::TResult;
 use crate::report::tail::Tail;
 use crate::tree::branch::Branch;
@@ -9,7 +10,6 @@ use crate::tree::node::Node;
 pub mod visit;
 use self::visit::Visitor;
 
-use std::env;
 use std::ffi::OsString;
 use std::fs::Metadata;
 use std::io;
@@ -17,33 +17,8 @@ use std::io::StdoutLock;
 use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 
-/// Struct that store the path where we needs to start traverse
-pub struct RootPath {
-    pub fdot: OsString,
-    pub fname: OsString,
-    pub fpath: PathBuf,
-}
-
-impl RootPath {
-    pub fn abs_curr_shell() -> TResult<Self> {
-        let path_dir = env::current_dir()
-            .expect("Failed to get current directory")
-            .into_os_string();
-
-        let mut fpath = PathBuf::new();
-        fpath.push(path_dir);
-        let fname = fpath
-            .file_name()
-            .expect("Cannot retrieve file name for the starting point path.")
-            .to_os_string();
-        let fdot = OsString::from(".");
-
-        Ok(Self { fdot, fname, fpath })
-    }
-}
-
 pub struct GlobalCtxt<'gcx> {
-    pub branch: Branch,
+    pub branch: Branch, // TODO:
     pub buf: Buffer<StdoutLock<'gcx>>,
     pub level: Level,
     pub nod: Node,
@@ -169,13 +144,14 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
                 self.buf.print_dir(&visitor, &self.rpath, self.rg.dir)?;
                 self.buf.newline()?;
 
+                // Check if we were allowed to traverse
                 if self.level.lvl < self.level.cap {
                     self.level.add_one();
                     self.walk_dir(visitor.abs)?; // DFS
                     self.level.subtract_one();
                 }
             }
-            // Handle the case where entry is not symlink or file or directory
+            // Handle case where entry is not symlink or file or directory
             self.nod.pop();
         }
 
