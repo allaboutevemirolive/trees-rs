@@ -144,15 +144,13 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
                 self.buf.print_dir(&visitor, &self.rpath, self.rg.dir)?;
                 self.buf.newline()?;
 
-                // Check if we were allowed to traverse
-                if self.level.lvl < self.level.cap {
+                if self.level.can_descend_further() {
                     self.level.add_one();
                     self.walk_dir(visitor.abs)?; // DFS
                     self.level.subtract_one();
                 }
             }
-            // Handle case where entry is not symlink or file or directory
-            self.nod.pop();
+            self.nod.pop(); // If entry is not dir, file or symlink
         }
 
         Ok(())

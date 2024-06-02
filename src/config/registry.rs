@@ -6,6 +6,7 @@ use super::sortt::reverse_sort_by_name;
 use super::sortt::sort_by_file_first;
 use super::sortt::sort_by_name;
 use super::sortt::FnSortEntries;
+
 use crate::canva::attr::atime::FnExtAccessTime;
 use crate::canva::attr::btime::FnExtBTime;
 use crate::canva::attr::mtime::FnExtModTime;
@@ -23,15 +24,16 @@ use std::fs::DirEntry;
 use std::io::StdoutLock;
 use std::path::PathBuf;
 
+// TODO: Rename to Callback
 #[derive(Debug, Clone, Copy)]
 pub struct Registry<'a> {
+    // Common util
     pub read: FnReadDir,
     pub sort: FnSortEntries,
     /// Entry  
     pub dir: FnOutDir<StdoutLock<'a>>,
     pub file: FnOutFile<StdoutLock<'a>>,
     pub symlink: FnOutSymlink<StdoutLock<'a>>,
-
     pub head: FnOutHead<StdoutLock<'a>>,
     // Metadata
     pub pms: FnExtPermission<StdoutLock<'a>>,
@@ -85,23 +87,31 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Read entries.
 impl<'a> Registry<'a> {
+    /// This method sets the internal `read` function to the implementation
+    /// that reads all entries, including hidden ones.
     pub fn read_all_entries(&mut self) -> TResult<()> {
         self.read = read_all_entries;
         Ok(())
     }
 
+    /// This sets the internal `read` function to the implementation
+    /// that filters out hidden entries during the read process.
     pub fn read_visible_entries(&mut self) -> TResult<()> {
         self.read = read_visible_entries;
         Ok(())
     }
 
+    /// This sets the internal `read` function to the implementation
+    /// that focuses on retrieving visible folders within the registry.
     pub fn read_visible_folders(&mut self) -> TResult<()> {
         self.read = read_visible_folders;
         Ok(())
     }
 }
 
+// Sort's kind.
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_sort_entries(&mut self) -> TResult<()> {
@@ -120,6 +130,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Permission
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_permission(&mut self) -> TResult<()> {
@@ -133,6 +144,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Read entry's btime.
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_btime(&mut self) -> TResult<()> {
@@ -146,6 +158,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Read's mtime
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_mtime(&mut self) -> TResult<()> {
@@ -159,6 +172,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Read atime
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_atime(&mut self) -> TResult<()> {
@@ -172,6 +186,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Kind's entry
 impl<'a> Registry<'a> {
     pub fn with_color_entry(&mut self) -> TResult<()> {
         self.dir = Buffer::write_dir_color;
@@ -199,6 +214,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Size
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_size(&mut self) -> TResult<()> {

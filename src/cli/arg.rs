@@ -133,6 +133,10 @@ impl TArgs {
             gcx.rg.with_size_color()?;
         }
 
+        if matches.get_flag(options::branch::NOBRANCH) {
+            gcx.branch.no_branch();
+        }
+
         // This statement should revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
             gcx.rg.with_colorless_entry()?; // Default entries state

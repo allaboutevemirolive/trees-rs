@@ -1,3 +1,4 @@
+// TODO: Inform user if directories's depth potentially exceed more than capacity
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct Level {
@@ -26,6 +27,10 @@ impl Level {
 
     pub fn subtract_one(&mut self) {
         self.lvl -= 1;
+    }
+
+    pub fn can_descend_further(&self) -> bool {
+        self.lvl < self.cap
     }
 }
 

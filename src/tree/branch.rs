@@ -2,7 +2,6 @@ use crate::canva::buffer::IntoBranch;
 use crate::error::simple::TResult;
 use std::io::StdoutLock;
 
-// TODO: We don't need this struct in the future
 #[derive(Debug, Clone)]
 pub struct Branch {
     /// Represents the end of a branch, e.g., `"└── "`
@@ -13,6 +12,15 @@ pub struct Branch {
     pub space: &'static str,
     /// Represents the main structural part of the tree, e.g., `"│   "`
     pub structural: &'static str,
+}
+
+impl Branch {
+    pub fn no_branch(&mut self) {
+        self.end = "";
+        self.middle = "";
+        self.space = "";
+        self.structural = "";
+    }
 }
 
 impl Default for Branch {

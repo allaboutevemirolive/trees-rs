@@ -19,8 +19,8 @@ impl<W: Write> Buffer<W> {
         let mut path = PathBuf::new();
         path.push(rpath.fname.clone());
         path.push(relative_path);
-
         let path = path.to_owned().into_os_string();
+
         self.bufwr.write_all(path.as_encoded_bytes())?;
 
         Ok(())
@@ -36,8 +36,8 @@ impl<W: Write> Buffer<W> {
         let mut path = PathBuf::new();
         path.push(rpath.fname.clone());
         path.push(relative_path);
-
         let path = path.to_owned().into_os_string();
+
         self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
         self.bufwr.write_all(path.as_encoded_bytes())?;
         self.bufwr.write_all("\x1b[0m".as_bytes())?;
