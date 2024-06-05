@@ -1,5 +1,5 @@
 use super::branch::PaintBranch;
-use crate::canva::buffer::Buffer;
+use crate::render::buffer::Buffer;
 use crate::error::simple::TResult;
 
 use std::io::StdoutLock;

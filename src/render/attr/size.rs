@@ -1,4 +1,4 @@
-use crate::canva::buffer::Buffer;
+use crate::render::buffer::Buffer;
 use std::fs::Metadata;
 use std::io;
 use std::io::Write;

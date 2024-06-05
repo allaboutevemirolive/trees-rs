@@ -21,7 +21,7 @@ pub fn read_visible_entries(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEn
                 if !entry.file_name().to_string_lossy().starts_with('.') {
                     Some(entry)
                 } else {
-                    tail.hid_plus_one();
+                    tail.hidden_add_one();
                     None
                 }
             })
@@ -38,7 +38,7 @@ pub fn read_visible_folders(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEn
                 if metadata.is_dir() && !entry.file_name().to_string_lossy().starts_with('.') {
                     Some(entry)
                 } else {
-                    tail.hid_plus_one();
+                    tail.hidden_add_one();
                     None
                 }
             })

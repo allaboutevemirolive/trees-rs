@@ -1,5 +1,6 @@
-use crate::canva::buffer::IntoBranch;
+use crate::render::buffer::IntoBranch;
 use crate::error::simple::TResult;
+
 use std::io::StdoutLock;
 
 #[derive(Debug, Clone)]

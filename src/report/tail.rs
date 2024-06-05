@@ -47,7 +47,7 @@ impl Tail {
         self.files += 1
     }
 
-    pub fn hid_plus_one(&mut self) {
+    pub fn hidden_add_one(&mut self) {
         self.hidden_files += 1
     }
 
@@ -61,22 +61,22 @@ impl Tail {
 }
 
 impl fmt::Display for Tail {
+    #[allow(unused_assignments)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let gigabytes = self.size as f64 / 1_073_741_824.0;
+
         let gigabytes = format!("{:.3}", gigabytes);
 
-        #[allow(unused_assignments)]
         let mut dirr = String::new();
 
-        #[allow(unused_assignments)]
         let mut filee = String::new();
 
-        #[allow(unused_assignments)]
         let mut sym_str = String::new();
 
         let hiddenn = String::from("hidden");
 
-        #[allow(unused_assignments)]
+        let mut reportt = String::new();
+
         let mut gbyte = String::new();
 
         if self.directories <= 1 {
@@ -103,19 +103,33 @@ impl fmt::Display for Tail {
             gbyte = "gigabytes".to_string();
         }
 
-        let reportt = format!(
-            "{} {}, {} {}, {} {}, {} {}, {} {}",
-            self.directories,
-            dirr,
-            self.files,
-            filee,
-            self.hidden_files,
-            hiddenn,
-            self.symlinks,
-            sym_str,
-            gigabytes,
-            gbyte
-        );
+        if gigabytes.parse::<f64>().unwrap_or_default() <= 0.000 {
+            reportt = format!(
+                "{} {}, {} {}, {} {}, {} {}",
+                self.directories,
+                dirr,
+                self.files,
+                filee,
+                self.hidden_files,
+                hiddenn,
+                self.symlinks,
+                sym_str,
+            )
+        } else {
+            reportt = format!(
+                "{} {}, {} {}, {} {}, {} {}, {} {}",
+                self.directories,
+                dirr,
+                self.files,
+                filee,
+                self.hidden_files,
+                hiddenn,
+                self.symlinks,
+                sym_str,
+                gigabytes,
+                gbyte
+            )
+        }
 
         write!(f, "{}", reportt)
     }
@@ -151,7 +165,7 @@ mod tests {
     // #[test]
     // fn test_hid_plus_one() {
     //     let mut tail = Tail::initialize(10, 20, 100, 5);
-    //     tail.hid_plus_one();
+    //     tail.hidden_add_one();
     //     assert_eq!(tail.hidden_files, 6);
     // }
 

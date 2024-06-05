@@ -1,4 +1,4 @@
-use crate::canva::buffer::Buffer;
+use crate::render::buffer::Buffer;
 use std::ffi::OsString;
 use std::fs::Metadata;
 use std::io;
@@ -54,7 +54,7 @@ impl<W: Write> Buffer<W> {
         // Passing "../../" will result in panick thus we will convert pathbuf to string directly
         // if we cannot retrieve the filename().
         //
-        // thread 'main' panicked at src/canva/which/headd.rs:35:41:
+        // thread 'main' panicked at src/render/which/headd.rs:35:41:
         // called `Option::unwrap()` on a `None` value
         // self.bufwr
         //     .write_all(root.file_name().unwrap_or_default().as_encoded_bytes())?;
@@ -82,7 +82,7 @@ impl<W: Write> Buffer<W> {
         // Passing "../../" will result in panick thus we will convert pathbuf to string directly
         // if we cannot retrieve the filename().
         //
-        // thread 'main' panicked at src/canva/which/headd.rs:35:41:
+        // thread 'main' panicked at src/render/which/headd.rs:35:41:
         // called `Option::unwrap()` on a `None` value
         // self.bufwr
         //     .write_all(root.file_name().unwrap_or_default().as_encoded_bytes())?;

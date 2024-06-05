@@ -1,0 +1,9 @@
+[package]
+name = "PathIterator"
+authors = ["allaboutevemirolive<akmal.fir010@gmail.com>"]
+version = "0.1.0"
+edition = "2021"
+description = "PathIterator is a core component of tree-rs, offering a flexible iterator interface for traversing directories and their contents."
+license = "MIT OR Apache-2.0"
+
+[dependencies]

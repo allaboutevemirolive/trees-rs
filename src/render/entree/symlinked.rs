@@ -1,4 +1,4 @@
-use crate::canva::buffer::Buffer;
+use crate::render::buffer::Buffer;
 use crate::config::root::RootPath;
 use crate::walk::visit::Visitor;
 

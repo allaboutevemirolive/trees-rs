@@ -12,9 +12,9 @@ use std::path::PathBuf;
 pub struct Visitor {
     pub abs: PathBuf,
     pub dent: DirEntry,
+    pub filename: OsString,
     pub filety: FileType,
     pub meta: Metadata,
-    pub filename: OsString,
     pub size: u64,
 }
 

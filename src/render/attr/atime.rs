@@ -1,4 +1,4 @@
-use crate::canva::buffer::Buffer;
+use crate::render::buffer::Buffer;
 use chrono::DateTime;
 use chrono::Local;
 use std::fs::Metadata;

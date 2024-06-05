@@ -1,4 +1,4 @@
-mod canva;
+mod render;
 
 mod cli;
 use crate::cli::arg::TArgs;
