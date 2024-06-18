@@ -1,7 +1,7 @@
 mod render;
 
 mod cli;
-use crate::cli::arg::TArgs;
+use crate::cli::arg::TreeArgs;
 
 mod config;
 
@@ -13,31 +13,29 @@ mod report;
 mod tree;
 
 mod walk;
-use walk::GlobalCtxt;
-use walk::Printer;
-use walk::Walker;
+use walk::TreeCtxt;
 
 fn main() -> TResult<()> {
-    let mut args = TArgs::new();
-    let mut gcx = GlobalCtxt::new()?;
+    let mut args = TreeArgs::new();
+    let mut tr = TreeCtxt::new()?;
 
-    args.match_app(&mut gcx)?;
+    args.match_app(&mut tr)?;
 
-    run_tree(&mut gcx)?;
+    run_tree(&mut tr)?;
 
     Ok(())
 }
 
-fn run_tree<'a>(gcx: &mut GlobalCtxt) -> TResult<()> {
-    gcx.print_head(
-        gcx.base_dir.filename(),
-        gcx.base_dir.base_path(),
-        gcx.base_dir.metadata()?,
+fn run_tree<'a>(tr: &mut TreeCtxt) -> TResult<()> {
+    tr.print_head(
+        tr.base_dir.filename(),
+        tr.base_dir.base_path(),
+        tr.base_dir.metadata()?,
     )?;
 
-    gcx.walk_dir(gcx.base_dir.base_path())?;
+    tr.walk_dir(tr.base_dir.base_path())?;
 
-    gcx.print_report()?;
+    tr.print_report()?;
 
     Ok(())
 }

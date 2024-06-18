@@ -105,7 +105,7 @@ impl fmt::Display for Tail {
 
         if gigabytes.parse::<f64>().unwrap_or_default() <= 0.000 {
             reportt = format!(
-                "{} {}, {} {}, {} {}, {} {}",
+                "{} {}, {} {}, {} {}, {} {}, {} {}",
                 self.directories,
                 dirr,
                 self.files,
@@ -114,6 +114,8 @@ impl fmt::Display for Tail {
                 hiddenn,
                 self.symlinks,
                 sym_str,
+                self.size,
+                "bytes".to_string()
             )
         } else {
             reportt = format!(

@@ -1,7 +1,7 @@
 use super::app::options;
 use super::app::tree_app;
 use crate::error::simple::TResult;
-use crate::walk::GlobalCtxt;
+use crate::walk::TreeCtxt;
 
 use std::env;
 use std::ffi::OsString;
@@ -9,15 +9,15 @@ use std::path::Path;
 use std::path::PathBuf;
 
 #[derive(Clone)]
-pub struct TArgs {
+pub struct TreeArgs {
     pub args: Vec<OsString>,
 }
 
 #[allow(dead_code)]
-impl TArgs {
+impl TreeArgs {
     pub fn new() -> Self {
         let args: Vec<OsString> = env::args_os().collect();
-        TArgs { args }
+        TreeArgs { args }
     }
 
     fn extract_paths(&self) -> (Vec<&OsString>, Vec<&OsString>) {
@@ -44,11 +44,11 @@ impl TArgs {
         }
     }
 
-    pub fn match_app(&mut self, gcx: &mut GlobalCtxt) -> TResult<()> {
-        let path_exist = extract_and_update_base_dir(&mut self.args, gcx);
+    pub fn match_app(&mut self, tr: &mut TreeCtxt) -> TResult<()> {
+        let path_exist = extract_and_update_base_dir(&mut self.args, tr);
 
         if !path_exist {
-            gcx.base_dir.set_file_name_to_current_dir();
+            tr.base_dir.set_file_name_to_current_dir();
         }
 
         let matches = tree_app()
@@ -60,93 +60,93 @@ impl TArgs {
                 .get_one(options::miscellaneous::LEVEL)
                 .expect("default");
 
-            gcx.level.with_level(level as i32);
+            tr.level.with_level(level as i32);
         }
 
         if matches.get_flag(options::meta::META) {
-            gcx.rg.with_permission()?;
-            gcx.rg.with_btime()?;
-            gcx.rg.with_mtime()?;
-            gcx.rg.with_atime()?;
-            gcx.rg.with_size_color()?;
+            tr.rg.with_permission()?;
+            tr.rg.with_btime()?;
+            tr.rg.with_mtime()?;
+            tr.rg.with_atime()?;
+            tr.rg.with_size_color()?;
         }
 
         // FIXME
         if matches.get_flag(options::sort::REVERSE) {
-            gcx.rg.with_reverse_sort_entries()?;
+            tr.rg.with_reverse_sort_entries()?;
         }
 
         // FIXME
         if matches.get_flag(options::sort::FILEFIRST) {
-            gcx.rg.with_sort_by_file_first()?;
+            tr.rg.with_sort_by_file_first()?;
         }
 
         if matches.get_flag(options::color::COLOR) {
-            gcx.rg.with_color_entry()?;
+            tr.rg.with_color_entry()?;
         }
 
         if matches.get_flag(options::path::RELATIVE) {
-            gcx.rg.with_color_relative_path()?;
+            tr.rg.with_color_relative_path()?;
         }
 
         if matches.get_flag(options::read::VISIBLE) {
-            gcx.rg.read_visible_entries()?;
+            tr.rg.read_visible_entries()?;
         }
 
         if matches.get_flag(options::read::ALL) {
-            gcx.rg.read_all_entries()?;
+            tr.rg.read_all_entries()?;
         }
 
         if matches.get_flag(options::read::FOLDER) {
-            gcx.rg.read_visible_folders()?;
+            tr.rg.read_visible_folders()?;
         }
 
         if matches.get_flag(options::meta::PERMISSION) {
-            gcx.rg.with_permission()?;
+            tr.rg.with_permission()?;
         }
 
         if matches.get_flag(options::meta::BTIME) {
-            gcx.rg.with_btime()?;
+            tr.rg.with_btime()?;
         }
 
         if matches.get_flag(options::meta::MTIME) {
-            gcx.rg.with_mtime()?;
+            tr.rg.with_mtime()?;
         }
 
         if matches.get_flag(options::meta::ATIME) {
-            gcx.rg.with_atime()?;
+            tr.rg.with_atime()?;
         }
 
         if matches.get_flag(options::meta::SIZE) {
-            gcx.rg.with_size_color()?;
+            tr.rg.with_size_color()?;
         }
 
         if matches.get_flag(options::branch::NOBRANCH) {
-            gcx.branch.no_branch();
+            tr.branch.no_branch();
         }
 
         // Revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
-            gcx.rg.with_colorless_entry()?; // Default entries state
+            tr.rg.with_colorless_entry()?; // Default entries state
 
             if matches.get_flag(options::meta::SIZE) {
-                gcx.rg.with_size()?;
+                tr.rg.with_size()?;
             }
 
             if matches.get_flag(options::meta::META) {
-                gcx.rg.with_permission()?;
-                gcx.rg.with_btime()?;
-                gcx.rg.with_mtime()?;
-                gcx.rg.with_atime()?;
-                gcx.rg.with_size()?; // no color
+                tr.rg.with_permission()?;
+                tr.rg.with_btime()?;
+                tr.rg.with_mtime()?;
+                tr.rg.with_atime()?;
+                tr.rg.with_size()?; // no color
             }
 
             if matches.get_flag(options::path::RELATIVE) {
-                gcx.rg.with_relative_path()?;
+                tr.rg.with_relative_path()?;
             }
 
             if matches.get_flag(options::path::RELATIVE) {
-                gcx.rg.with_relative_path()?;
+                tr.rg.with_relative_path()?;
             }
         }
 
@@ -157,13 +157,13 @@ impl TArgs {
 /// By default, Tree-rs detects the first path it finds in the argument.
 // TODO: Check if the path if after tree-rs argument, then we skip
 // since it maybe not the path we are looking for.
-fn extract_and_update_base_dir(args: &mut Vec<OsString>, gcx: &mut GlobalCtxt) -> bool {
+fn extract_and_update_base_dir(args: &mut Vec<OsString>, tr: &mut TreeCtxt) -> bool {
     let mut delete_index = None;
 
     for (index, arg) in args.iter().skip(1).enumerate() {
         if let Some(arg_path) = valid_path(arg) {
-            gcx.base_dir.with_base_path(arg_path.clone());
-            gcx.base_dir.with_filename(arg_path.into_os_string());
+            tr.base_dir.with_base_path(arg_path.clone());
+            tr.base_dir.with_filename(arg_path.into_os_string());
             delete_index = Some(index + 1);
             break;
         }
@@ -209,7 +209,7 @@ mod tests {
         writeln!(file2, "Some content").expect("Failed to write to file2");
 
         let args = vec![OsString::from(file2_path), OsString::from(file1_path)];
-        let tree_args = TArgs { args };
+        let tree_args = TreeArgs { args };
         let (remaining, paths) = tree_args.extract_paths();
 
         assert_eq!(remaining.len(), 0);
@@ -218,7 +218,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let tree_args = TArgs::new();
+        let tree_args = TreeArgs::new();
         assert!(tree_args.args.len() >= 1);
     }
 
@@ -232,14 +232,14 @@ mod tests {
         writeln!(file1, "Some content").expect("Failed to write to file1");
 
         let args = vec![OsString::from(file1_path.clone())];
-        let tree_args = TArgs { args };
+        let tree_args = TreeArgs { args };
         assert!(tree_args.assert_single_path().is_some());
 
         let args = vec![
             OsString::from(file1_path.clone()),
             OsString::from(file1_path),
         ];
-        let tree_args = TArgs { args };
+        let tree_args = TreeArgs { args };
         assert!(tree_args.assert_single_path().is_none());
     }
 }

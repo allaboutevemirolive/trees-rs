@@ -17,17 +17,17 @@ use std::io::StdoutLock;
 use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 
-pub struct GlobalCtxt<'gcx> {
+pub struct TreeCtxt<'tr> {
     pub branch: Branch,
-    pub buf: Buffer<StdoutLock<'gcx>>,
+    pub buf: Buffer<StdoutLock<'tr>>,
     pub level: Level,
     pub nod: Node,
-    pub rg: Registry<'gcx>,
+    pub rg: Registry<'tr>,
     pub base_dir: BaseDirectory,
     pub tail: Tail,
 }
 
-impl<'gcx> GlobalCtxt<'gcx> {
+impl<'tr> TreeCtxt<'tr> {
     pub fn new() -> TResult<Self> {
         let buf = Buffer::new(io::stdout().lock())?;
         let branch = Branch::default();
@@ -47,59 +47,8 @@ impl<'gcx> GlobalCtxt<'gcx> {
             tail,
         })
     }
-}
 
-pub trait Printer<'gcx> {
-    // head
-    // ├── dir
-    // │   ├── entry
-    fn print_head(&mut self, file_name: OsString, base_path: PathBuf, fmeta: Metadata) -> TResult<()>;
-
-    fn print_info(&mut self, meta: &Metadata) -> TResult<()>;
-
-    // └── dir
-    //     ├── entry1
-    //     └── entry2
-    //
-    // 13 directories, 36 files, 0 hidden, 0.00 gigabyte
-    fn print_report(&mut self) -> TResult<()>;
-}
-
-impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
-    fn print_head(&mut self, file_name: OsString, base_path: PathBuf, fmeta: Metadata) -> TResult<()> {
-        self.tail.add_size(fmeta.size());
-        self.print_info(&fmeta)?;
-        self.buf
-            .print_header(&fmeta, &base_path.clone(), &file_name, self.rg.head)?;
-        self.buf.newline()?;
-
-        Ok(())
-    }
-
-    fn print_info(&mut self, meta: &Metadata) -> TResult<()> {
-        self.buf.print_permission(meta, self.rg.pms)?;
-        self.buf.print_btime(meta, self.rg.btime)?;
-        self.buf.print_mtime(meta, self.rg.mtime)?;
-        self.buf.print_atime(meta, self.rg.atime)?;
-        self.buf.print_size(meta, self.rg.size)?;
-        Ok(())
-    }
-
-    fn print_report(&mut self) -> TResult<()> {
-        self.buf.newline()?;
-        self.buf.write_message(&self.tail.to_string())?;
-        self.buf.newline()?;
-
-        Ok(())
-    }
-}
-
-pub trait Walker<'gcx> {
-    fn walk_dir(&mut self, path: PathBuf) -> TResult<()>;
-}
-
-impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
-    fn walk_dir(&mut self, path: PathBuf) -> TResult<()> {
+    pub fn walk_dir(&mut self, path: PathBuf) -> TResult<()> {
         // Get entries in target path
         let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.tail)?;
 
@@ -153,6 +102,38 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
             }
             self.nod.pop(); // If entry is not dir, file or symlink
         }
+
+        Ok(())
+    }
+
+    pub fn print_head(
+        &mut self,
+        file_name: OsString,
+        base_path: PathBuf,
+        fmeta: Metadata,
+    ) -> TResult<()> {
+        self.tail.add_size(fmeta.size());
+        self.print_info(&fmeta)?;
+        self.buf
+            .print_header(&fmeta, &base_path.clone(), &file_name, self.rg.head)?;
+        self.buf.newline()?;
+
+        Ok(())
+    }
+
+    pub fn print_info(&mut self, meta: &Metadata) -> TResult<()> {
+        self.buf.print_permission(meta, self.rg.pms)?;
+        self.buf.print_btime(meta, self.rg.btime)?;
+        self.buf.print_mtime(meta, self.rg.mtime)?;
+        self.buf.print_atime(meta, self.rg.atime)?;
+        self.buf.print_size(meta, self.rg.size)?;
+        Ok(())
+    }
+
+    pub fn print_report(&mut self) -> TResult<()> {
+        self.buf.newline()?;
+        self.buf.write_message(&self.tail.to_string())?;
+        self.buf.newline()?;
 
         Ok(())
     }
