@@ -1,80 +1,52 @@
 use std::env;
 use std::ffi::OsString;
+use std::fs;
+use std::io;
 use std::path::PathBuf;
 
-use crate::error::simple::TResult;
-
 /// Struct that store the path where we needs to start traverse
-pub struct RootPath {
-    pub fdot: OsString,
-    pub fname: OsString,
-    pub fpath: PathBuf,
+pub struct BaseDirectory {
+    pub file_name: OsString,
+    // This is not always absolute path
+    pub base_path: PathBuf,
 }
 
-impl RootPath {
-    pub fn from_current_dir() -> TResult<Self> {
-        let path_dir = env::current_dir()
-            .expect("Failed to get current directory")
-            .into_os_string();
+impl BaseDirectory {
+    pub fn from_current_dir() -> io::Result<Self> {
+        let base_path = env::current_dir()?;
 
-        let mut fpath = PathBuf::new();
-        fpath.push(path_dir);
-        let fname = fpath
-            .file_name()
-            .expect("Cannot retrieve file name for the starting point path.")
-            .to_os_string();
-        let fdot = OsString::from(".");
-
-        Ok(Self { fdot, fname, fpath })
+        Ok(Self {
+            file_name: base_path
+                .file_name()
+                .map(OsString::from)
+                .unwrap_or_else(|| OsString::from(".")),
+            base_path,
+        })
     }
 
     pub fn filename(&self) -> OsString {
-        self.fname.clone()
+        self.file_name.clone()
     }
 
-    pub fn with_filename(&mut self, fname: OsString) {
-        self.fname = fname;
+    pub fn with_filename(&mut self, file_name: OsString) {
+        self.file_name = file_name;
     }
 
-    pub fn absolute_path(&self) -> PathBuf {
-        self.fpath.clone()
+    pub fn base_path(&self) -> PathBuf {
+        self.base_path.clone()
+    }
+
+    pub fn with_base_path(&mut self, base_path: PathBuf) {
+        self.base_path = base_path
+    }
+
+    /// Sets the file name to "." (dot), indicating the current directory.
+    pub fn set_file_name_to_current_dir(&mut self) {
+        self.file_name = ".".into()
+    }
+
+    /// Retrieves metadata for the base directory.
+    pub fn metadata(&self) -> io::Result<fs::Metadata> {
+        fs::metadata(&self.base_path)
     }
 }
-
-// pub struct BaseDirectory {
-//     base_path: PathBuf,
-//     relative_path: Option<OsString>,
-// }
-
-// impl BaseDirectory {
-//     pub fn new<P: AsRef<Path>>(path: P) -> Self {
-//         Self {
-//             base_path: path.as_ref().to_path_buf(),
-//             relative_path: None,
-//         }
-//     }
-
-//     pub fn from_current_dir() -> Result<Self, std::io::Error> {
-//         std::env::current_dir().map(Self::new)
-//     }
-
-//     pub fn current_path(&self) -> PathBuf {
-//         if let Some(entry) = &self.relative_path {
-//             self.base_path.join(entry)
-//         } else {
-//             self.base_path.clone()
-//         }
-//     }
-
-//     pub fn filename(&self) -> Option<&OsString> {
-//         self.relative_path.as_ref()
-//     }
-
-//     pub fn enter_dir(&mut self, dir_name: OsString) {
-//         self.relative_path = Some(dir_name);
-//     }
-
-//     pub fn exit_dir(&mut self) {
-//         self.relative_path = None;
-//     }
-// }

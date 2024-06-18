@@ -7,6 +7,7 @@ use super::sorting::sort_by_file_first;
 use super::sorting::sort_by_name;
 use super::sorting::FnSortEntries;
 
+use crate::error::simple::TResult;
 use crate::render::attr::atime::FnExtAccessTime;
 use crate::render::attr::btime::FnExtBTime;
 use crate::render::attr::mtime::FnExtModTime;
@@ -17,7 +18,6 @@ use crate::render::entree::dirr::FnOutDir;
 use crate::render::entree::filee::FnOutFile;
 use crate::render::entree::headd::FnOutHead;
 use crate::render::entree::symlinked::FnOutSymlink;
-use crate::error::simple::TResult;
 use crate::report::tail::Tail;
 
 use std::fs::DirEntry;

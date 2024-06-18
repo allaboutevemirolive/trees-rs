@@ -5,8 +5,6 @@ use crate::walk::GlobalCtxt;
 
 use std::env;
 use std::ffi::OsString;
-use std::fs;
-use std::fs::Metadata;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -46,21 +44,11 @@ impl TArgs {
         }
     }
 
-    pub fn match_app(&mut self, gcx: &mut GlobalCtxt) -> TResult<(PathBuf, OsString, Metadata)> {
-        let path_exist = xpath_exist(&mut self.args, gcx);
+    pub fn match_app(&mut self, gcx: &mut GlobalCtxt) -> TResult<()> {
+        let path_exist = extract_and_update_base_dir(&mut self.args, gcx);
 
-        #[allow(unused_assignments)]
-        let mut fpath = PathBuf::new();
-        #[allow(unused_assignments)]
-        let mut fname = OsString::new();
-
-        if path_exist {
-            fpath = gcx.rpath.fpath.clone();
-            fname = <PathBuf as Clone>::clone(&gcx.rpath.fpath).into();
-        } else {
-            fpath = gcx.rpath.fpath.clone(); // header pathbuf
-            fname = gcx.rpath.fdot.clone(); // header relative-path
-            gcx.rpath.fname = gcx.rpath.fdot.clone(); // relative-path for entries in the absence of provided path by user
+        if !path_exist {
+            gcx.base_dir.set_file_name_to_current_dir();
         }
 
         let matches = tree_app()
@@ -137,7 +125,7 @@ impl TArgs {
             gcx.branch.no_branch();
         }
 
-        // This statement should revert any color output into colorless
+        // Revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
             gcx.rg.with_colorless_entry()?; // Default entries state
 
@@ -162,19 +150,20 @@ impl TArgs {
             }
         }
 
-        let fmeta = fs::metadata(fpath.clone())?;
-
-        Ok((fpath.to_path_buf(), fname, fmeta))
+        Ok(())
     }
 }
 
-fn xpath_exist(args: &mut Vec<OsString>, gcx: &mut GlobalCtxt) -> bool {
+/// By default, Tree-rs detects the first path it finds in the argument.
+// TODO: Check if the path if after tree-rs argument, then we skip
+// since it maybe not the path we are looking for.
+fn extract_and_update_base_dir(args: &mut Vec<OsString>, gcx: &mut GlobalCtxt) -> bool {
     let mut delete_index = None;
 
     for (index, arg) in args.iter().skip(1).enumerate() {
         if let Some(arg_path) = valid_path(arg) {
-            gcx.rpath.fpath = arg_path.clone();
-            gcx.rpath.fname = arg_path.into_os_string();
+            gcx.base_dir.with_base_path(arg_path.clone());
+            gcx.base_dir.with_filename(arg_path.into_os_string());
             delete_index = Some(index + 1);
             break;
         }

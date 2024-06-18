@@ -1,5 +1,5 @@
-use crate::render::buffer::IntoBranch;
 use crate::error::simple::TResult;
+use crate::render::buffer::IntoBranch;
 
 use std::io::StdoutLock;
 

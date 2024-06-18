@@ -1,23 +1,23 @@
+use crate::config::root::BaseDirectory;
 use crate::render::buffer::Buffer;
-use crate::config::root::RootPath;
 use crate::walk::visit::Visitor;
 
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 
-pub type FnOutSymlink<W> = fn(&mut Buffer<W>, &Visitor, &RootPath) -> io::Result<()>;
+pub type FnOutSymlink<W> = fn(&mut Buffer<W>, &Visitor, &BaseDirectory) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
     pub fn write_symlink_relative_path(
         &mut self,
         visit: &Visitor,
-        rpath: &RootPath,
+        base_dir: &BaseDirectory,
     ) -> io::Result<()> {
-        let relative_path = visit.get_relative_path(&rpath.fpath).unwrap();
+        let relative_path = visit.get_relative_path(&base_dir.base_path).unwrap();
 
         let mut path = PathBuf::new();
-        path.push(rpath.fname.clone());
+        path.push(base_dir.file_name.clone());
         path.push(relative_path);
         let path = path.to_owned().into_os_string();
 
@@ -29,12 +29,12 @@ impl<W: Write> Buffer<W> {
     pub fn write_color_symlink_relative_path(
         &mut self,
         visit: &Visitor,
-        rpath: &RootPath,
+        base_dir: &BaseDirectory,
     ) -> io::Result<()> {
-        let relative_path = visit.get_relative_path(&rpath.fpath).unwrap();
+        let relative_path = visit.get_relative_path(&base_dir.base_path).unwrap();
 
         let mut path = PathBuf::new();
-        path.push(rpath.fname.clone());
+        path.push(base_dir.file_name.clone());
         path.push(relative_path);
         let path = path.to_owned().into_os_string();
 
@@ -47,7 +47,7 @@ impl<W: Write> Buffer<W> {
 
     #[allow(unused_variables)]
     #[allow(clippy::ptr_arg)]
-    pub fn write_symlink(&mut self, visit: &Visitor, rpath: &RootPath) -> io::Result<()> {
+    pub fn write_symlink(&mut self, visit: &Visitor, base_dir: &BaseDirectory) -> io::Result<()> {
         let target_link = visit
             .get_target_symlink()
             .expect("Cannot get target link.")
@@ -62,7 +62,11 @@ impl<W: Write> Buffer<W> {
 
     #[allow(unused_variables)]
     #[allow(clippy::ptr_arg)]
-    pub fn write_symlink_color(&mut self, visit: &Visitor, rpath: &RootPath) -> io::Result<()> {
+    pub fn write_symlink_color(
+        &mut self,
+        visit: &Visitor,
+        base_dir: &BaseDirectory,
+    ) -> io::Result<()> {
         self.bufwr.write_all("\x1b[0;33m".as_bytes())?;
         self.bufwr.write_all(visit.filename.as_encoded_bytes())?;
         self.bufwr.write_all("\x1b[0m".as_bytes())?;
@@ -82,9 +86,9 @@ impl<W: Write> Buffer<W> {
     pub fn print_symlink(
         &mut self,
         visit: &mut Visitor,
-        rpath: &RootPath,
+        base_dir: &BaseDirectory,
         f: FnOutSymlink<W>,
     ) -> io::Result<()> {
-        f(self, visit, rpath)
+        f(self, visit, base_dir)
     }
 }

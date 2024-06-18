@@ -1,5 +1,5 @@
 use crate::config::registry::Registry;
-use crate::config::root::RootPath;
+use crate::config::root::BaseDirectory;
 use crate::error::simple::TResult;
 use crate::render::buffer::Buffer;
 use crate::report::tail::Tail;
@@ -23,7 +23,7 @@ pub struct GlobalCtxt<'gcx> {
     pub level: Level,
     pub nod: Node,
     pub rg: Registry<'gcx>,
-    pub rpath: RootPath,
+    pub base_dir: BaseDirectory,
     pub tail: Tail,
 }
 
@@ -35,7 +35,7 @@ impl<'gcx> GlobalCtxt<'gcx> {
         let tail = Tail::default();
         let level = Level::default();
         let rg = Registry::new()?;
-        let rpath = RootPath::from_current_dir()?;
+        let base_dir = BaseDirectory::from_current_dir()?;
 
         Ok(Self {
             branch,
@@ -43,7 +43,7 @@ impl<'gcx> GlobalCtxt<'gcx> {
             level,
             nod,
             rg,
-            rpath,
+            base_dir,
             tail,
         })
     }
@@ -53,7 +53,7 @@ pub trait Printer<'gcx> {
     // head
     // ├── dir
     // │   ├── entry
-    fn print_head(&mut self, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()>;
+    fn print_head(&mut self, file_name: OsString, base_path: PathBuf, fmeta: Metadata) -> TResult<()>;
 
     fn print_info(&mut self, meta: &Metadata) -> TResult<()>;
 
@@ -66,11 +66,11 @@ pub trait Printer<'gcx> {
 }
 
 impl<'gcx> Printer<'gcx> for GlobalCtxt<'gcx> {
-    fn print_head(&mut self, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()> {
+    fn print_head(&mut self, file_name: OsString, base_path: PathBuf, fmeta: Metadata) -> TResult<()> {
         self.tail.add_size(fmeta.size());
         self.print_info(&fmeta)?;
         self.buf
-            .print_header(&fmeta, &fpath.clone(), &fname, self.rg.head)?;
+            .print_header(&fmeta, &base_path.clone(), &file_name, self.rg.head)?;
         self.buf.newline()?;
 
         Ok(())
@@ -125,7 +125,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
             if visitor.is_symlink() {
                 self.tail.symlink_add_one();
                 self.buf
-                    .print_symlink(&mut visitor, &self.rpath, self.rg.symlink)?;
+                    .print_symlink(&mut visitor, &self.base_dir, self.rg.symlink)?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -133,7 +133,8 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
 
             if visitor.is_file() {
                 self.tail.file_add_one();
-                self.buf.print_file(&visitor, &self.rpath, self.rg.file)?;
+                self.buf
+                    .print_file(&visitor, &self.base_dir, self.rg.file)?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -141,7 +142,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
 
             if visitor.is_dir() {
                 self.tail.dir_add_one();
-                self.buf.print_dir(&visitor, &self.rpath, self.rg.dir)?;
+                self.buf.print_dir(&visitor, &self.base_dir, self.rg.dir)?;
                 self.buf.newline()?;
 
                 if self.level.can_descend_further() {

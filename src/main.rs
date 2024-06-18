@@ -17,29 +17,25 @@ use walk::GlobalCtxt;
 use walk::Printer;
 use walk::Walker;
 
-use std::ffi::OsString;
-use std::fs::Metadata;
-use std::path::PathBuf;
-
 fn main() -> TResult<()> {
     let mut args = TArgs::new();
     let mut gcx = GlobalCtxt::new()?;
 
-    // Yield starting path which we needs to traverse
-    let (fpath, fname, fmeta) = args.match_app(&mut gcx)?;
+    args.match_app(&mut gcx)?;
 
-    run_tree(&mut gcx, fname, fpath, fmeta)?;
+    run_tree(&mut gcx)?;
 
     Ok(())
 }
 
-fn run_tree<'a, T>(gcx: &mut T, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()>
-where
-    T: Walker<'a> + Printer<'a>,
-{
-    gcx.print_head(fname, fpath.clone(), fmeta)?;
+fn run_tree<'a>(gcx: &mut GlobalCtxt) -> TResult<()> {
+    gcx.print_head(
+        gcx.base_dir.filename(),
+        gcx.base_dir.base_path(),
+        gcx.base_dir.metadata()?,
+    )?;
 
-    gcx.walk_dir(fpath)?;
+    gcx.walk_dir(gcx.base_dir.base_path())?;
 
     gcx.print_report()?;
 
