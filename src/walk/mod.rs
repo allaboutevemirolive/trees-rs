@@ -1,7 +1,7 @@
-use crate::render::buffer::Buffer;
 use crate::config::registry::Registry;
 use crate::config::root::RootPath;
 use crate::error::simple::TResult;
+use crate::render::buffer::Buffer;
 use crate::report::tail::Tail;
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
@@ -18,7 +18,7 @@ use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 
 pub struct GlobalCtxt<'gcx> {
-    pub branch: Branch, // TODO:
+    pub branch: Branch,
     pub buf: Buffer<StdoutLock<'gcx>>,
     pub level: Level,
     pub nod: Node,
@@ -35,7 +35,7 @@ impl<'gcx> GlobalCtxt<'gcx> {
         let tail = Tail::default();
         let level = Level::default();
         let rg = Registry::new()?;
-        let rpath = RootPath::abs_curr_shell()?;
+        let rpath = RootPath::from_current_dir()?;
 
         Ok(Self {
             branch,
@@ -114,7 +114,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
             // Get entry's information
             let mut visitor = Visitor::new(entry)?;
             // Accumulate entry's size
-            self.tail.add_size(visitor.size);
+            self.tail.add_size(visitor.size().expect("Invalid size."));
             // Print entry's information
             self.print_info(&visitor.meta)?;
             // If current entry is not the last entry in entries
@@ -146,7 +146,7 @@ impl<'gcx> Walker<'gcx> for GlobalCtxt<'gcx> {
 
                 if self.level.can_descend_further() {
                     self.level.add_one();
-                    self.walk_dir(visitor.abs)?; // DFS
+                    self.walk_dir(visitor.absolute_path().expect("Invalid absolute path."))?;
                     self.level.subtract_one();
                 }
             }

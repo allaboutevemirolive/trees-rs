@@ -72,7 +72,7 @@ impl TArgs {
                 .get_one(options::miscellaneous::LEVEL)
                 .expect("default");
 
-            gcx.level.cap = level as i32;
+            gcx.level.with_level(level as i32);
         }
 
         if matches.get_flag(options::meta::META) {

@@ -2,8 +2,8 @@
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct Level {
-    pub lvl: i32,
-    pub cap: i32,
+    lvl: i32,
+    cap: i32,
 }
 
 impl Default for Level {
@@ -19,6 +19,14 @@ impl Level {
     #[allow(dead_code)]
     pub fn with_lvl_and_cap(lvl: i32, cap: i32) -> Self {
         Level { lvl, cap }
+    }
+
+    pub fn with_level(&mut self, num: i32) {
+        self.lvl = num;
+    }
+
+    pub fn modify_capacity(&mut self, num: i32) {
+        self.lvl = num;
     }
 
     pub fn add_one(&mut self) {

@@ -1,6 +1,6 @@
 use super::branch::PaintBranch;
-use crate::render::buffer::Buffer;
 use crate::error::simple::TResult;
+use crate::render::buffer::Buffer;
 
 use std::io::StdoutLock;
 

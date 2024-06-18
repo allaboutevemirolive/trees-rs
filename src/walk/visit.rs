@@ -10,12 +10,12 @@ use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct Visitor {
-    pub abs: PathBuf,
+    abs: Option<PathBuf>,
     pub dent: DirEntry,
     pub filename: OsString,
     pub filety: FileType,
     pub meta: Metadata,
-    pub size: u64,
+    size: Option<u64>,
 }
 
 impl Visitor {
@@ -33,12 +33,12 @@ impl Visitor {
         let size = meta.len();
 
         Ok(Self {
-            abs,
+            abs: Some(abs),
             dent,
             filety,
             meta,
             filename,
-            size,
+            size: Some(size),
         })
     }
 
@@ -63,6 +63,18 @@ impl Visitor {
         self.filety.is_file()
     }
 
+    pub fn filename(&self) -> OsString {
+        self.filename.clone()
+    }
+
+    pub fn absolute_path(&self) -> Option<PathBuf> {
+        self.abs.clone()
+    }
+
+    pub fn size(&self) -> Option<u64> {
+        self.size
+    }
+
     pub fn get_target_symlink(&self) -> Result<PathBuf, TSimpleError> {
         if !self.is_symlink() {
             return Err(TSimpleError {
@@ -71,7 +83,9 @@ impl Visitor {
             });
         }
 
-        if let Ok(link_target) = fs::read_link(self.abs.clone()) {
+        if let Ok(link_target) =
+            fs::read_link(self.absolute_path().expect("Invalid absolute path."))
+        {
             Ok(link_target)
         } else {
             Err(TSimpleError::new(2, "Cannot read target link to symlink"))
