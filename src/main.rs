@@ -4,6 +4,7 @@ mod cli;
 use crate::cli::arg::TreeArgs;
 
 mod config;
+use config::root::BaseDirectory;
 
 mod error;
 use crate::error::simple::TResult;
@@ -13,8 +14,7 @@ mod report;
 mod tree;
 
 mod walk;
-use config::root::BaseDirectory;
-use walk::TreeCtxt;
+use crate::walk::trctxt::TreeCtxt;
 
 fn main() -> TResult<()> {
     let mut args = TreeArgs::new();

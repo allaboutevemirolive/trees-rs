@@ -2,7 +2,7 @@ use super::app::options;
 use super::app::tree_app;
 use crate::config::root::BaseDirectory;
 use crate::error::simple::TResult;
-use crate::walk::TreeCtxt;
+use crate::walk::trctxt::TreeCtxt;
 
 use std::env;
 use std::ffi::OsString;
@@ -46,7 +46,7 @@ impl TreeArgs {
     }
 
     pub fn match_app(&mut self, tr: &mut TreeCtxt, base_dir: &mut BaseDirectory) -> TResult<()> {
-        let path_exist = extract_and_update_base_dir(&mut self.args, tr, base_dir);
+        let path_exist = extract_and_update_base_dir(&mut self.args, base_dir);
 
         if !path_exist {
             base_dir.set_path_from_cwd();
@@ -127,7 +127,6 @@ impl TreeArgs {
             tr.branch.no_branch();
         }
 
-        // Revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
             tr.file_colors.disable_color();
 
@@ -151,11 +150,7 @@ impl TreeArgs {
 /// By default, Tree-rs detects the first path it finds in the argument.
 // TODO: Check if the path if after tree-rs argument, then we skip
 // since it maybe not the path we are looking for.
-fn extract_and_update_base_dir(
-    args: &mut Vec<OsString>,
-    tr: &mut TreeCtxt,
-    base_dir: &mut BaseDirectory,
-) -> bool {
+fn extract_and_update_base_dir(args: &mut Vec<OsString>, base_dir: &mut BaseDirectory) -> bool {
     let mut delete_index = None;
 
     for (index, arg) in args.iter().skip(1).enumerate() {
