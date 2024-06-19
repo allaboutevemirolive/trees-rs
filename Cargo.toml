@@ -1,6 +1,6 @@
 [package]
 name = "trees-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["allaboutevemirolive<akmal.fir010@gmail.com>"]
 description = "tree-rs is a drop-in replacement for the tree utility (ASCII tree view of folder directory), but written in Rust. The primary goal of this project is to provide a non-bloated and more functional alternative to the existing tree utility."
