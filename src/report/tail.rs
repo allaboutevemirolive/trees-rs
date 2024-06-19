@@ -35,27 +35,6 @@ impl Default for Tail {
 }
 
 impl Tail {
-    #[allow(dead_code)]
-    pub fn initialize(
-        directories: usize,
-        files: usize,
-        size: u64,
-        hidden_files: usize,
-        symlinks: usize,
-        total_items: usize,
-        special_files: usize,
-    ) -> Self {
-        Self {
-            directories,
-            files,
-            size,
-            hidden_files,
-            symlinks,
-            total_items,
-            special_files,
-        }
-    }
-
     pub fn dir_add_one(&mut self) {
         self.directories += 1
     }
@@ -80,7 +59,9 @@ impl Tail {
         self.special_files += 1
     }
 
-    /// Accumulate all items except hidden files
+    /// Accumulate all items except hidden files.
+    ///
+    /// If user want to include hidden files, pass `--all` in the arguments
     pub fn accumulate_items(&mut self) {
         self.total_items = self.directories + self.files + self.symlinks + self.special_files;
     }

@@ -17,7 +17,7 @@ impl<W: Write> Buffer<W> {
             path_builder
                 .clone()
                 .append_relative(visit)
-                .into_os_string()
+                .to_os_string()
                 .as_encoded_bytes(),
         )?;
         Ok(())

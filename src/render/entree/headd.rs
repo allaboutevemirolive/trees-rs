@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 pub type FnOutHead<W> = fn(&mut Buffer<W>, &Metadata, &PathBuf, &OsString) -> io::Result<()>;
 
+#[allow(clippy::ptr_arg)]
 impl<W: Write> Buffer<W> {
     pub fn write_header_relative_path(
         &mut self,

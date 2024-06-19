@@ -36,7 +36,7 @@ impl<'tr> TreeCtxt<'tr> {
         let level = Level::default();
         let rg = Registry::new()?;
         let file_colors = FileColors::new();
-        let path_builder = PathBuilder::new();
+        let path_builder = PathBuilder::default();
 
         Ok(Self {
             branch,
@@ -71,7 +71,7 @@ impl<'tr> TreeCtxt<'tr> {
             // If current entry is not the last entry in entries
             self.nod.push_if(idx, entries_len);
             // Convert node to branch's stick
-            self.nod.into_branch(&self.branch, &mut self.buf)?;
+            self.nod.to_branch(&self.branch, &mut self.buf)?;
 
             if visitor.is_symlink() {
                 self.tail.symlink_add_one();
@@ -132,10 +132,10 @@ impl<'tr> TreeCtxt<'tr> {
                 self.nod.pop();
                 continue;
             } else {
-                self.tail.special_add_one();
                 // If entry is not dir, file or symlink like:
                 // - Special File(Device File, Socket File, Named Pipe (FIFO))
                 // - Unix-Specific(Block Device, Character Device)
+                self.tail.special_add_one();
                 self.buf
                     .write_message(&self.file_colors.special_file.open_color())?;
                 self.buf.write_message(
@@ -195,8 +195,8 @@ impl<'tr> TreeCtxt<'tr> {
         let linear_output = serialized
             .trim_matches(|c| c == '{' || c == '}')
             .replace('"', "")
-            .replace(":", ": ")
-            .replace(",", ", ");
+            .replace(':', ": ")
+            .replace(',', ", ");
 
         self.buf.write_message(&linear_output)?;
         self.buf.newline()?;

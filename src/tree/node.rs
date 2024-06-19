@@ -68,7 +68,7 @@ impl Node {
     }
 
     /// Convert node into branch stick
-    pub fn into_branch<T>(&self, branch: &T, buf: &mut Buffer<StdoutLock>) -> TResult<()>
+    pub fn to_branch<T>(&self, branch: &T, buf: &mut Buffer<StdoutLock>) -> TResult<()>
     where
         T: PaintBranch,
     {

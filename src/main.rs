@@ -32,7 +32,7 @@ fn main() -> TResult<()> {
     Ok(())
 }
 
-fn run_tree<'a>(tr: &mut TreeCtxt) -> TResult<()> {
+fn run_tree(tr: &mut TreeCtxt) -> TResult<()> {
     tr.print_head(
         tr.path_builder.filename(),
         tr.path_builder.base_path(),

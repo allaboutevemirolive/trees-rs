@@ -25,7 +25,7 @@ impl Level {
         self.lvl = num;
     }
 
-    pub fn modify_capacity(&mut self, num: i32) {
+    pub fn _modify_capacity(&mut self, num: i32) {
         self.lvl = num;
     }
 

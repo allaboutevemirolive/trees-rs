@@ -94,6 +94,12 @@ pub struct PathBuilder {
     base_dir: BaseDirectory,
 }
 
+impl Default for PathBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PathBuilder {
     pub fn new() -> Self {
         PathBuilder {
@@ -173,7 +179,7 @@ impl PathBuilder {
         }
     }
 
-    pub fn into_os_string(&self) -> OsString {
+    pub fn to_os_string(&self) -> OsString {
         self.builder.clone().into_os_string()
     }
 

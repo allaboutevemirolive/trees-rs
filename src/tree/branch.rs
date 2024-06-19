@@ -48,6 +48,7 @@ pub trait PaintBranch {
 }
 
 impl PaintBranch for Branch {
+    #[allow(clippy::collapsible_else_if)]
     fn print_branch_if<'a, T>(
         &self,
         value_is_one: bool,
