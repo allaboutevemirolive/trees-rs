@@ -21,6 +21,10 @@ fn main() -> TResult<()> {
 
     args.match_app(&mut tr)?;
 
+    // Update path_builder based on base_dir
+    tr.path_builder = tr.base_dir.build().expect("Cannot build base directory.");
+    tr.path_builder.append_root();
+
     run_tree(&mut tr)?;
 
     Ok(())

@@ -59,10 +59,10 @@ impl<'a> Registry<'a> {
         let sort: FnSortEntries = sort_by_name;
 
         // Entry
-        let dir: FnOutDir<StdoutLock> = Buffer::write_dir_color;
+        let dir: FnOutDir<StdoutLock> = Buffer::write_dir;
         let file: FnOutFile<StdoutLock> = Buffer::write_entry;
-        let head: FnOutHead<StdoutLock> = Buffer::write_color_header_name;
-        let symlink: FnOutSymlink<StdoutLock> = Buffer::write_symlink_color;
+        let head: FnOutHead<StdoutLock> = Buffer::write_header_name;
+        let symlink: FnOutSymlink<StdoutLock> = Buffer::write_symlink;
 
         // Entry's metadata
         let pms: FnExtPermission<StdoutLock> = Buffer::write_no_permission;
@@ -189,20 +189,7 @@ impl<'a> Registry<'a> {
 // Kind's entry
 impl<'a> Registry<'a> {
     pub fn with_color_entry(&mut self) -> TResult<()> {
-        self.dir = Buffer::write_dir_color;
-        Ok(())
-    }
-
-    pub fn with_colorless_entry(&mut self) -> TResult<()> {
-        self.head = Buffer::write_header_name;
         self.dir = Buffer::write_dir;
-        Ok(())
-    }
-
-    pub fn with_color_relative_path(&mut self) -> TResult<()> {
-        self.dir = Buffer::write_color_dir_relative_path;
-        self.file = Buffer::write_entry_relative_path;
-        self.head = Buffer::write_color_header_relative_path;
         Ok(())
     }
 
@@ -210,6 +197,7 @@ impl<'a> Registry<'a> {
         self.dir = Buffer::write_dir_relative_path;
         self.file = Buffer::write_entry_relative_path;
         self.head = Buffer::write_header_relative_path;
+        self.symlink = Buffer::write_symlink_relative_path;
         Ok(())
     }
 }
@@ -219,11 +207,6 @@ impl<'a> Registry<'a> {
 impl<'a> Registry<'a> {
     pub fn with_size(&mut self) -> TResult<()> {
         self.size = Buffer::write_size;
-        Ok(())
-    }
-
-    pub fn with_size_color(&mut self) -> TResult<()> {
-        self.size = Buffer::write_size_color;
         Ok(())
     }
 

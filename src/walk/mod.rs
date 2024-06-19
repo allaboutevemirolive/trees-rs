@@ -1,5 +1,7 @@
+use crate::config::color::FileColors;
 use crate::config::registry::Registry;
 use crate::config::root::BaseDirectory;
+use crate::config::root::PathBuilder;
 use crate::error::simple::TResult;
 use crate::render::buffer::Buffer;
 use crate::report::tail::Tail;
@@ -25,6 +27,8 @@ pub struct TreeCtxt<'tr> {
     pub rg: Registry<'tr>,
     pub base_dir: BaseDirectory,
     pub tail: Tail,
+    pub file_colors: FileColors,
+    pub path_builder: PathBuilder,
 }
 
 impl<'tr> TreeCtxt<'tr> {
@@ -36,6 +40,8 @@ impl<'tr> TreeCtxt<'tr> {
         let level = Level::default();
         let rg = Registry::new()?;
         let base_dir = BaseDirectory::from_current_dir()?;
+        let file_colors = FileColors::new();
+        let path_builder = PathBuilder::new();
 
         Ok(Self {
             branch,
@@ -45,6 +51,8 @@ impl<'tr> TreeCtxt<'tr> {
             rg,
             base_dir,
             tail,
+            file_colors,
+            path_builder,
         })
     }
 
@@ -74,7 +82,25 @@ impl<'tr> TreeCtxt<'tr> {
             if visitor.is_symlink() {
                 self.tail.symlink_add_one();
                 self.buf
-                    .print_symlink(&mut visitor, &self.base_dir, self.rg.symlink)?;
+                    .write_message(&self.file_colors.symlink.open_color())?;
+                self.buf
+                    .print_symlink(&mut visitor, &self.path_builder, self.rg.symlink)?;
+                self.buf
+                    .write_message(&self.file_colors.symlink.closed_color())?;
+
+                self.buf.write_message(" @ ")?;
+
+                self.buf
+                    .write_message(&self.file_colors.target_symlink.open_color())?;
+                self.buf.write_message(
+                    visitor
+                        .get_target_symlink()
+                        .expect("Cannot get target link.")
+                        .to_str()
+                        .expect("Cannot convert target symlink to &str"),
+                )?;
+                self.buf
+                    .write_message(&self.file_colors.target_symlink.closed_color())?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -83,7 +109,11 @@ impl<'tr> TreeCtxt<'tr> {
             if visitor.is_file() {
                 self.tail.file_add_one();
                 self.buf
-                    .print_file(&visitor, &self.base_dir, self.rg.file)?;
+                    .write_message(&self.file_colors.file.open_color())?;
+                self.buf
+                    .print_file(&visitor, &self.path_builder, self.rg.file)?;
+                self.buf
+                    .write_message(&self.file_colors.file.closed_color())?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -91,7 +121,13 @@ impl<'tr> TreeCtxt<'tr> {
 
             if visitor.is_dir() {
                 self.tail.dir_add_one();
-                self.buf.print_dir(&visitor, &self.base_dir, self.rg.dir)?;
+                self.buf
+                    .write_message(&self.file_colors.directory.open_color())?;
+                self.buf
+                    .print_dir(&visitor, &self.path_builder, self.rg.dir)?;
+                self.buf
+                    .write_message(&self.file_colors.directory.closed_color())?;
+
                 self.buf.newline()?;
 
                 if self.level.can_descend_further() {
@@ -113,9 +149,15 @@ impl<'tr> TreeCtxt<'tr> {
         fmeta: Metadata,
     ) -> TResult<()> {
         self.tail.add_size(fmeta.size());
+
         self.print_info(&fmeta)?;
+
+        self.buf
+            .write_message(&self.file_colors.directory.open_color())?;
         self.buf
             .print_header(&fmeta, &base_path.clone(), &file_name, self.rg.head)?;
+        self.buf
+            .write_message(&self.file_colors.directory.closed_color())?;
         self.buf.newline()?;
 
         Ok(())
@@ -126,7 +168,11 @@ impl<'tr> TreeCtxt<'tr> {
         self.buf.print_btime(meta, self.rg.btime)?;
         self.buf.print_mtime(meta, self.rg.mtime)?;
         self.buf.print_atime(meta, self.rg.atime)?;
+        self.buf
+            .write_message(&self.file_colors.size.open_color())?;
         self.buf.print_size(meta, self.rg.size)?;
+        self.buf
+            .write_message(&self.file_colors.size.closed_color())?;
         Ok(())
     }
 

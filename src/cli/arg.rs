@@ -48,7 +48,10 @@ impl TreeArgs {
         let path_exist = extract_and_update_base_dir(&mut self.args, tr);
 
         if !path_exist {
+            tr.base_dir.set_path_from_cwd();
             tr.base_dir.set_file_name_to_current_dir();
+        } else {
+            tr.base_dir.set_path_from_args();
         }
 
         let matches = tree_app()
@@ -68,7 +71,7 @@ impl TreeArgs {
             tr.rg.with_btime()?;
             tr.rg.with_mtime()?;
             tr.rg.with_atime()?;
-            tr.rg.with_size_color()?;
+            tr.rg.with_size()?;
         }
 
         // FIXME
@@ -86,7 +89,7 @@ impl TreeArgs {
         }
 
         if matches.get_flag(options::path::RELATIVE) {
-            tr.rg.with_color_relative_path()?;
+            tr.rg.with_relative_path()?;
         }
 
         if matches.get_flag(options::read::VISIBLE) {
@@ -118,7 +121,7 @@ impl TreeArgs {
         }
 
         if matches.get_flag(options::meta::SIZE) {
-            tr.rg.with_size_color()?;
+            tr.rg.with_size()?;
         }
 
         if matches.get_flag(options::branch::NOBRANCH) {
@@ -127,7 +130,7 @@ impl TreeArgs {
 
         // Revert any color output into colorless
         if matches.get_flag(options::color::COLORLESS) {
-            tr.rg.with_colorless_entry()?; // Default entries state
+            tr.file_colors.disable_color();
 
             if matches.get_flag(options::meta::SIZE) {
                 tr.rg.with_size()?;
@@ -139,14 +142,6 @@ impl TreeArgs {
                 tr.rg.with_mtime()?;
                 tr.rg.with_atime()?;
                 tr.rg.with_size()?; // no color
-            }
-
-            if matches.get_flag(options::path::RELATIVE) {
-                tr.rg.with_relative_path()?;
-            }
-
-            if matches.get_flag(options::path::RELATIVE) {
-                tr.rg.with_relative_path()?;
             }
         }
 
