@@ -6,13 +6,13 @@ use std::io::StdoutLock;
 #[derive(Debug, Clone)]
 pub struct Branch {
     /// Represents the end of a branch, e.g., `"└── "`
-    pub end: &'static str,
+    end: &'static str,
     /// Represents the middle part of a branch, e.g., `"├── "`
-    pub middle: &'static str,
+    middle: &'static str,
     /// Represents empty space between branches, e.g., `"    "`
-    pub space: &'static str,
+    space: &'static str,
     /// Represents the main structural part of the tree, e.g., `"│   "`
-    pub structural: &'static str,
+    structural: &'static str,
 }
 
 impl Branch {

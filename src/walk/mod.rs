@@ -1,6 +1,10 @@
+pub mod trctxt;
+
+pub mod visit;
+use self::visit::Visitor;
+
 use crate::config::color::FileColors;
 use crate::config::registry::Registry;
-use crate::config::root::BaseDirectory;
 use crate::config::root::PathBuilder;
 use crate::error::simple::TResult;
 use crate::render::buffer::Buffer;
@@ -8,9 +12,6 @@ use crate::report::tail::Tail;
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
 use crate::tree::node::Node;
-
-pub mod visit;
-use self::visit::Visitor;
 
 use std::ffi::OsString;
 use std::fs::Metadata;
@@ -25,7 +26,7 @@ pub struct TreeCtxt<'tr> {
     pub level: Level,
     pub nod: Node,
     pub rg: Registry<'tr>,
-    pub base_dir: BaseDirectory,
+    // pub base_dir: BaseDirectory,
     pub tail: Tail,
     pub file_colors: FileColors,
     pub path_builder: PathBuilder,
@@ -39,7 +40,6 @@ impl<'tr> TreeCtxt<'tr> {
         let tail = Tail::default();
         let level = Level::default();
         let rg = Registry::new()?;
-        let base_dir = BaseDirectory::from_current_dir()?;
         let file_colors = FileColors::new();
         let path_builder = PathBuilder::new();
 
@@ -49,7 +49,6 @@ impl<'tr> TreeCtxt<'tr> {
             level,
             nod,
             rg,
-            base_dir,
             tail,
             file_colors,
             path_builder,
@@ -73,7 +72,7 @@ impl<'tr> TreeCtxt<'tr> {
             // Accumulate entry's size
             self.tail.add_size(visitor.size().expect("Invalid size."));
             // Print entry's information
-            self.print_info(&visitor.meta)?;
+            self.print_info(&visitor.metadata())?;
             // If current entry is not the last entry in entries
             self.nod.push_if(idx, entries_len);
             // Convert node to branch's stick
@@ -135,8 +134,25 @@ impl<'tr> TreeCtxt<'tr> {
                     self.walk_dir(visitor.absolute_path().expect("Invalid absolute path."))?;
                     self.level.subtract_one();
                 }
+                self.nod.pop();
+                continue;
+            } else {
+                // If entry is not dir, file or symlink like:
+                // - Special File(Device File, Socket File, Named Pipe (FIFO))
+                // - Unix-Specific(Block Device, Character Device)
+                self.buf
+                    .write_message(&self.file_colors.special_file.open_color())?;
+                self.buf.write_message(
+                    visitor
+                        .filename()
+                        .to_str()
+                        .expect("Cannot convert OsString to &str"),
+                )?;
+                self.buf
+                    .write_message(&self.file_colors.special_file.closed_color())?;
+                self.nod.pop();
+                continue;
             }
-            self.nod.pop(); // If entry is not dir, file or symlink
         }
 
         Ok(())

@@ -24,9 +24,7 @@ impl<W: Write> Buffer<W> {
         Ok(())
     }
 
-    #[allow(unused_variables)]
-    #[allow(clippy::ptr_arg)]
-    pub fn write_dir(&mut self, meta: &Visitor, path_builder: &PathBuilder) -> io::Result<()> {
+    pub fn write_dir(&mut self, meta: &Visitor, _path_builder: &PathBuilder) -> io::Result<()> {
         self.bufwr.write_all(meta.filename().as_encoded_bytes())?;
         Ok(())
     }

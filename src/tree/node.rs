@@ -6,7 +6,7 @@ use std::io::StdoutLock;
 
 #[derive(Debug, Clone)]
 pub struct Node {
-    pub nod: Vec<i32>,
+    nod: Vec<i32>,
 }
 
 impl Default for Node {

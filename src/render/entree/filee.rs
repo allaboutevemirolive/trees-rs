@@ -25,8 +25,8 @@ impl<W: Write> Buffer<W> {
         Ok(())
     }
 
-    pub fn write_entry(&mut self, visit: &Visitor, path_builder: &PathBuilder) -> io::Result<()> {
-        self.bufwr.write_all(visit.filename.as_encoded_bytes())?;
+    pub fn write_entry(&mut self, visit: &Visitor, _path_builder: &PathBuilder) -> io::Result<()> {
+        self.bufwr.write_all(visit.filename().as_encoded_bytes())?;
         Ok(())
     }
 

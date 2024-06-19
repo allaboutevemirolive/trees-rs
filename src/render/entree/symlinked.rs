@@ -28,7 +28,7 @@ impl<W: Write> Buffer<W> {
         visit: &Visitor,
         _path_builder: &PathBuilder,
     ) -> io::Result<()> {
-        self.bufwr.write_all(visit.filename.as_encoded_bytes())?;
+        self.bufwr.write_all(visit.filename().as_encoded_bytes())?;
         Ok(())
     }
 

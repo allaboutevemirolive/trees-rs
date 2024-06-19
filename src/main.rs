@@ -13,16 +13,18 @@ mod report;
 mod tree;
 
 mod walk;
+use config::root::BaseDirectory;
 use walk::TreeCtxt;
 
 fn main() -> TResult<()> {
     let mut args = TreeArgs::new();
     let mut tr = TreeCtxt::new()?;
+    let mut base_dir = BaseDirectory::from_current_dir()?;
 
-    args.match_app(&mut tr)?;
+    args.match_app(&mut tr, &mut base_dir)?;
 
     // Update path_builder based on base_dir
-    tr.path_builder = tr.base_dir.build().expect("Cannot build base directory.");
+    tr.path_builder = base_dir.build().expect("Cannot build base directory.");
     tr.path_builder.append_root();
 
     run_tree(&mut tr)?;
@@ -32,12 +34,12 @@ fn main() -> TResult<()> {
 
 fn run_tree<'a>(tr: &mut TreeCtxt) -> TResult<()> {
     tr.print_head(
-        tr.base_dir.filename(),
-        tr.base_dir.base_path(),
-        tr.base_dir.metadata()?,
+        tr.path_builder.filename(),
+        tr.path_builder.base_path(),
+        tr.path_builder.metadata()?,
     )?;
 
-    tr.walk_dir(tr.base_dir.base_path())?;
+    tr.walk_dir(tr.path_builder.base_path())?;
 
     tr.print_report()?;
 

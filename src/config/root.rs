@@ -1,13 +1,11 @@
+use crate::error::simple::TResult;
+use crate::walk::visit::Visitor;
+
 use std::env;
 use std::ffi::OsString;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
-
-// use once_cell::sync::OnceCell;
-
-use crate::error::simple::TResult;
-use crate::walk::visit::Visitor;
 
 /// Struct that store the path where we needs to start traverse
 #[derive(Debug, Clone)]
@@ -64,7 +62,7 @@ impl BaseDirectory {
 
     /// Returns `true` if the path was provided as a command-line argument,
     /// and `false` if it was derived from the current working directory.
-    pub fn is_path_from_args(&self) -> bool {
+    pub fn _is_path_from_args(&self) -> bool {
         self.is_path_from_args
     }
 
@@ -179,11 +177,15 @@ impl PathBuilder {
         self.builder.clone().into_os_string()
     }
 
-    // pub fn pop(&mut self) {
-    //     self.builder.pop();
-    // }
+    pub fn filename(&self) -> OsString {
+        self.base_dir.filename()
+    }
 
-    // pub fn clear(&mut self) {
-    //     self.builder.clear();
-    // }
+    pub fn base_path(&self) -> PathBuf {
+        self.base_dir.base_path()
+    }
+
+    pub fn metadata(&self) -> io::Result<fs::Metadata> {
+        self.base_dir.metadata()
+    }
 }

@@ -4,6 +4,7 @@ pub struct FileColors {
     pub file: FileColor,
     pub symlink: SymlinkColor,
     pub target_symlink: TargetSymlinkColor,
+    pub special_file: SpecialFile,
 
     // Attributes
     pub atime: AtimeColor, // Access time color
@@ -20,6 +21,7 @@ impl FileColors {
             file: FileColor::new(),
             symlink: SymlinkColor::new(),
             target_symlink: TargetSymlinkColor::new(),
+            special_file: SpecialFile::new(),
             atime: AtimeColor::new(),
             btime: BtimeColor::new(),
             mtime: MtimeColor::new(),
@@ -33,6 +35,7 @@ impl FileColors {
         self.file.disable_color();
         self.symlink.disable_color();
         self.target_symlink.disable_color();
+        self.special_file.disable_color();
         self.atime.disable_color();
         self.btime.disable_color();
         self.mtime.disable_color();
@@ -150,6 +153,32 @@ impl FileColor {
     }
 }
 
+pub struct SpecialFile {
+    open_color: String,
+    closed_color: String,
+}
+
+impl SpecialFile {
+    pub fn new() -> Self {
+        Self {
+            open_color: "\x1b[41m".to_string(), // Bold red
+            closed_color: "\x1b[0m".to_string(),
+        }
+    }
+
+    pub fn disable_color(&mut self) {
+        self.open_color = "".to_string();
+        self.closed_color = "".to_string();
+    }
+
+    pub fn open_color(&self) -> String {
+        self.open_color.clone()
+    }
+
+    pub fn closed_color(&self) -> String {
+        self.closed_color.clone()
+    }
+}
 pub struct AtimeColor {
     open_color: String,
     closed_color: String,

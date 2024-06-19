@@ -1,5 +1,6 @@
 use super::app::options;
 use super::app::tree_app;
+use crate::config::root::BaseDirectory;
 use crate::error::simple::TResult;
 use crate::walk::TreeCtxt;
 
@@ -44,14 +45,14 @@ impl TreeArgs {
         }
     }
 
-    pub fn match_app(&mut self, tr: &mut TreeCtxt) -> TResult<()> {
-        let path_exist = extract_and_update_base_dir(&mut self.args, tr);
+    pub fn match_app(&mut self, tr: &mut TreeCtxt, base_dir: &mut BaseDirectory) -> TResult<()> {
+        let path_exist = extract_and_update_base_dir(&mut self.args, tr, base_dir);
 
         if !path_exist {
-            tr.base_dir.set_path_from_cwd();
-            tr.base_dir.set_file_name_to_current_dir();
+            base_dir.set_path_from_cwd();
+            base_dir.set_file_name_to_current_dir();
         } else {
-            tr.base_dir.set_path_from_args();
+            base_dir.set_path_from_args();
         }
 
         let matches = tree_app()
@@ -74,12 +75,10 @@ impl TreeArgs {
             tr.rg.with_size()?;
         }
 
-        // FIXME
         if matches.get_flag(options::sort::REVERSE) {
             tr.rg.with_reverse_sort_entries()?;
         }
 
-        // FIXME
         if matches.get_flag(options::sort::FILEFIRST) {
             tr.rg.with_sort_by_file_first()?;
         }
@@ -152,13 +151,17 @@ impl TreeArgs {
 /// By default, Tree-rs detects the first path it finds in the argument.
 // TODO: Check if the path if after tree-rs argument, then we skip
 // since it maybe not the path we are looking for.
-fn extract_and_update_base_dir(args: &mut Vec<OsString>, tr: &mut TreeCtxt) -> bool {
+fn extract_and_update_base_dir(
+    args: &mut Vec<OsString>,
+    tr: &mut TreeCtxt,
+    base_dir: &mut BaseDirectory,
+) -> bool {
     let mut delete_index = None;
 
     for (index, arg) in args.iter().skip(1).enumerate() {
         if let Some(arg_path) = valid_path(arg) {
-            tr.base_dir.with_base_path(arg_path.clone());
-            tr.base_dir.with_filename(arg_path.into_os_string());
+            base_dir.with_base_path(arg_path.clone());
+            base_dir.with_filename(arg_path.into_os_string());
             delete_index = Some(index + 1);
             break;
         }

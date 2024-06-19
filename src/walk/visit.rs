@@ -11,10 +11,10 @@ use std::path::PathBuf;
 #[derive(Debug)]
 pub struct Visitor {
     abs: Option<PathBuf>,
-    pub dent: DirEntry,
-    pub filename: OsString,
-    pub filety: FileType,
-    pub meta: Metadata,
+    dent: DirEntry,
+    filename: OsString,
+    filety: FileType,
+    meta: Metadata,
     size: Option<u64>,
 }
 
@@ -73,6 +73,10 @@ impl Visitor {
 
     pub fn size(&self) -> Option<u64> {
         self.size
+    }
+
+    pub fn metadata(&self) -> Metadata {
+        self.meta.clone()
     }
 
     pub fn get_target_symlink(&self) -> Result<PathBuf, TSimpleError> {
