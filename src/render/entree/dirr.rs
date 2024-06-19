@@ -14,10 +14,10 @@ impl<W: Write> Buffer<W> {
         meta: &Visitor,
         base_dir: &BaseDirectory,
     ) -> io::Result<()> {
-        let relative_path = meta.get_relative_path(&base_dir.base_path).unwrap();
+        let relative_path = meta.get_relative_path(&base_dir.base_path()).unwrap();
 
         let mut path = PathBuf::new();
-        path.push(base_dir.file_name.clone());
+        path.push(base_dir.filename());
         path.push(relative_path);
 
         let path = path.to_owned().into_os_string();
@@ -31,11 +31,13 @@ impl<W: Write> Buffer<W> {
         meta: &Visitor,
         base_dir: &BaseDirectory,
     ) -> io::Result<()> {
-        let relative_path = meta.get_relative_path(&base_dir.base_path).unwrap();
+        let relative_path = meta.get_relative_path(&base_dir.base_path()).unwrap();
 
         let mut path = PathBuf::new();
-        path.push(base_dir.file_name.clone());
+        path.push(base_dir.filename());
         path.push(relative_path);
+
+        // path.pop()
 
         let path = path.to_owned().into_os_string();
         self.bufwr.write_all("\x1b[0;34m".as_bytes())?;
