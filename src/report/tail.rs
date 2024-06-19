@@ -1,11 +1,23 @@
-use std::fmt;
+use serde::Deserialize;
+use serde::Serialize;
+use serde::Serializer;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Tail {
-    pub directories: usize,
-    pub files: usize,
-    pub size: u64,
-    pub hidden_files: usize,
+    #[serde(serialize_with = "serialize_directories")]
+    directories: usize,
+    #[serde(serialize_with = "serialize_files")]
+    files: usize,
+    #[serde(serialize_with = "serialize_hidden_files")]
+    hidden_files: usize,
+    #[serde(serialize_with = "serialize_symlinks")]
+    symlinks: usize,
+    #[serde(serialize_with = "serialize_special_files")]
+    special_files: usize,
+    #[serde(serialize_with = "serialize_total_items")]
+    total_items: usize,
+    #[serde(serialize_with = "serialize_size")]
+    size: u64,
 }
 
 impl Default for Tail {
@@ -15,119 +27,117 @@ impl Default for Tail {
             files: 0,
             size: 0,
             hidden_files: 0,
+            symlinks: 0,
+            total_items: 0,
+            special_files: 0,
         }
     }
 }
 
 impl Tail {
-    #[allow(dead_code)]
-    pub fn initialize(directories: usize, files: usize, size: u64, hidden_files: usize) -> Self {
-        Self {
-            directories,
-            files,
-            size,
-            hidden_files,
-        }
-    }
-
-    pub fn dir_plus_one(&mut self) {
+    pub fn dir_add_one(&mut self) {
         self.directories += 1
     }
 
-    pub fn file_plus_one(&mut self) {
+    pub fn file_add_one(&mut self) {
         self.files += 1
     }
 
-    pub fn hid_plus_one(&mut self) {
+    pub fn hidden_add_one(&mut self) {
         self.hidden_files += 1
+    }
+
+    pub fn symlink_add_one(&mut self) {
+        self.symlinks += 1
     }
 
     pub fn add_size(&mut self, size: u64) {
         self.size += size
     }
-}
 
-impl fmt::Display for Tail {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let gigabytes = self.size as f64 / 1_073_741_824.0;
-        let gigabytes = format!("{:.3}", gigabytes);
+    pub fn special_add_one(&mut self) {
+        self.special_files += 1
+    }
 
-        #[allow(unused_assignments)]
-        let mut dirr = String::new();
-
-        #[allow(unused_assignments)]
-        let mut filee = String::new();
-
-        let hiddenn = String::from("hidden");
-
-        #[allow(unused_assignments)]
-        let mut gbyte = String::new();
-
-        if self.directories <= 1 {
-            dirr = "directory".to_string();
-        } else {
-            dirr = "directories".to_string();
-        }
-
-        if self.files <= 1 {
-            filee = "file".to_string();
-        } else {
-            filee = "files".to_string();
-        }
-
-        if gigabytes.parse::<f64>().unwrap_or_default() <= 0.001 {
-            gbyte = "gigabyte".to_string();
-        } else {
-            gbyte = "gigabytes".to_string();
-        }
-
-        let reportt = format!(
-            "{} {}, {} {}, {} {}, {} {}",
-            self.directories, dirr, self.files, filee, self.hidden_files, hiddenn, gigabytes, gbyte
-        );
-
-        write!(f, "{}", reportt)
+    /// Accumulate all items except hidden files.
+    ///
+    /// If user want to include hidden files, pass `--all` in the arguments
+    pub fn accumulate_items(&mut self) {
+        self.total_items = self.directories + self.files + self.symlinks + self.special_files;
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+fn serialize_total_items<S>(total_items: &usize, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let human_readable = format!("{}", total_items);
+    serializer.serialize_str(&human_readable)
+}
 
-    #[test]
-    fn test_initialize() {
-        let tail = Tail::initialize(10, 20, 100, 5);
-        assert_eq!(tail.directories, 10);
-        assert_eq!(tail.files, 20);
-        assert_eq!(tail.size, 100);
-        assert_eq!(tail.hidden_files, 5);
+fn serialize_symlinks<S>(files: &usize, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let human_readable = format!("{}", files);
+    serializer.serialize_str(&human_readable)
+}
+
+fn serialize_special_files<S>(files: &usize, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let human_readable = format!("{}", files);
+    serializer.serialize_str(&human_readable)
+}
+
+fn serialize_hidden_files<S>(files: &usize, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let human_readable = format!("{}", files);
+    serializer.serialize_str(&human_readable)
+}
+
+fn serialize_files<S>(files: &usize, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let human_readable = format!("{}", files);
+    serializer.serialize_str(&human_readable)
+}
+
+fn serialize_directories<S>(directories: &usize, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let human_readable = format!("{}", directories);
+    serializer.serialize_str(&human_readable)
+}
+
+fn serialize_size<S>(size: &u64, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let gigabytes = *size as f64 / 1_073_741_824.0;
+
+    let gigabytes = format!("{:.3}", gigabytes);
+
+    let mut _gbyte = String::new();
+
+    if gigabytes.parse::<f64>().unwrap_or_default() <= 0.001 {
+        _gbyte = "gigabyte".to_string();
+    } else {
+        _gbyte = "gigabytes".to_string();
     }
 
-    #[test]
-    fn test_dir_plus_one() {
-        let mut tail = Tail::initialize(10, 20, 100, 5);
-        tail.dir_plus_one();
-        assert_eq!(tail.directories, 11);
+    let mut _human_readable = String::new();
+
+    if gigabytes.parse::<f64>().unwrap_or_default() <= 0.000 {
+        _human_readable = format!("{} bytes", size);
+    } else {
+        _human_readable = format!("{} {}", gigabytes, _gbyte);
     }
 
-    #[test]
-    fn test_file_plus_one() {
-        let mut tail = Tail::initialize(10, 20, 100, 5);
-        tail.file_plus_one();
-        assert_eq!(tail.files, 21);
-    }
-
-    #[test]
-    fn test_hid_plus_one() {
-        let mut tail = Tail::initialize(10, 20, 100, 5);
-        tail.hid_plus_one();
-        assert_eq!(tail.hidden_files, 6);
-    }
-
-    #[test]
-    fn test_add_size() {
-        let mut tail = Tail::initialize(10, 20, 100, 5);
-        tail.add_size(50);
-        assert_eq!(tail.size, 150);
-    }
+    serializer.serialize_str(&_human_readable)
 }

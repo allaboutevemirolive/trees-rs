@@ -1,8 +1,9 @@
+// TODO: Inform user if directories's depth potentially exceed more than capacity
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct Level {
-    pub lvl: i32,
-    pub cap: i32,
+    lvl: i32,
+    cap: i32,
 }
 
 impl Default for Level {
@@ -20,12 +21,24 @@ impl Level {
         Level { lvl, cap }
     }
 
-    pub fn plus_one(&mut self) {
+    pub fn with_level(&mut self, num: i32) {
+        self.lvl = num;
+    }
+
+    pub fn _modify_capacity(&mut self, num: i32) {
+        self.lvl = num;
+    }
+
+    pub fn add_one(&mut self) {
         self.lvl += 1;
     }
 
-    pub fn minus_one(&mut self) {
+    pub fn subtract_one(&mut self) {
         self.lvl -= 1;
+    }
+
+    pub fn can_descend_further(&self) -> bool {
+        self.lvl < self.cap
     }
 }
 
@@ -36,14 +49,14 @@ mod tests {
     #[test]
     fn test_plus_one() {
         let mut level = Level::with_lvl_and_cap(0, 5000);
-        level.plus_one();
+        level.add_one();
         assert_eq!(level.lvl, 1);
     }
 
     #[test]
     fn test_minus_one() {
         let mut level = Level::with_lvl_and_cap(3, 5000);
-        level.minus_one();
+        level.subtract_one();
         assert_eq!(level.lvl, 2);
     }
 
@@ -51,7 +64,7 @@ mod tests {
     fn test_lvl_not_exceed_cap() {
         let mut level = Level::with_lvl_and_cap(1, 5000);
         while level.lvl < level.cap {
-            level.plus_one();
+            level.add_one();
         }
         assert_eq!(level.lvl, level.cap);
         assert_ne!(level.lvl, 5001)

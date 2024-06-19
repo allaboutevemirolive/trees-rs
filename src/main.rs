@@ -1,9 +1,10 @@
-mod canva;
+mod render;
 
 mod cli;
-use crate::cli::arg::TArgs;
+use crate::cli::arg::TreeArgs;
 
 mod config;
+use config::root::BaseDirectory;
 
 mod error;
 use crate::error::simple::TResult;
@@ -13,35 +14,34 @@ mod report;
 mod tree;
 
 mod walk;
-use walk::GlobalCtxt;
-use walk::Printer;
-use walk::Walker;
-
-use std::ffi::OsString;
-use std::fs::Metadata;
-use std::path::PathBuf;
+use crate::walk::trctxt::TreeCtxt;
 
 fn main() -> TResult<()> {
-    let mut args = TArgs::new();
-    let mut gcx = GlobalCtxt::new()?;
+    let mut args = TreeArgs::new();
+    let mut tr = TreeCtxt::new()?;
+    let mut base_dir = BaseDirectory::from_current_dir()?;
 
-    // Yield starting path which we needs to traverse
-    let (fpath, fname, fmeta) = args.match_app(&mut gcx)?;
+    args.match_app(&mut tr, &mut base_dir)?;
 
-    run_tree(&mut gcx, fname, fpath, fmeta)?;
+    // Update path_builder based on base_dir
+    tr.path_builder = base_dir.build().expect("Cannot build base directory.");
+    tr.path_builder.append_root();
+
+    run_tree(&mut tr)?;
 
     Ok(())
 }
 
-fn run_tree<'a, T>(gcx: &mut T, fname: OsString, fpath: PathBuf, fmeta: Metadata) -> TResult<()>
-where
-    T: Walker<'a> + Printer<'a>,
-{
-    gcx.print_head(fname, fpath.clone(), fmeta)?;
+fn run_tree(tr: &mut TreeCtxt) -> TResult<()> {
+    tr.print_head(
+        tr.path_builder.filename(),
+        tr.path_builder.base_path(),
+        tr.path_builder.metadata()?,
+    )?;
 
-    gcx.walk_dir(fpath)?;
+    tr.walk_dir(tr.path_builder.base_path())?;
 
-    gcx.print_report()?;
+    tr.print_report()?;
 
     Ok(())
 }

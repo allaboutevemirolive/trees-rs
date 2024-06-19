@@ -1,4 +1,4 @@
-use crate::canva::buffer::Buffer;
+use crate::render::buffer::Buffer;
 use std::fs::Metadata;
 use std::io;
 use std::io::Write;
@@ -7,7 +7,7 @@ pub type FnExtSize<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
     /// Print entry's size
-    pub fn paint_size(&mut self, meta: &Metadata, f: FnExtSize<W>) -> io::Result<()> {
+    pub fn print_size(&mut self, meta: &Metadata, f: FnExtSize<W>) -> io::Result<()> {
         f(self, meta)
     }
 
@@ -22,19 +22,6 @@ impl<W: Write> Buffer<W> {
         let padded_string = format!("{:^12}", size.to_string());
 
         self.bufwr.write_all(padded_string.as_bytes())?;
-
-        Ok(())
-    }
-
-    pub fn write_size_color(&mut self, meta: &Metadata) -> io::Result<()> {
-        let size = meta.len();
-        // Only 931.32 gigabytes, or 999999999999 bytes, can be supported at most by the padding.
-        // If the size is exceeded, the tree output will be distorted and not symmetrical.
-        let padded_string = format!("{:^12}", size.to_string());
-
-        self.bufwr.write_all("\x1B[1;32m".as_bytes())?;
-        self.bufwr.write_all(padded_string.as_bytes())?;
-        self.bufwr.write_all("\x1b[0m".as_bytes())?;
 
         Ok(())
     }

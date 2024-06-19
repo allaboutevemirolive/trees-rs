@@ -1,20 +1,20 @@
-use crate::canva::buffer::Buffer;
+use crate::render::buffer::Buffer;
 use chrono::DateTime;
 use chrono::Local;
 use std::fs::Metadata;
 use std::io;
 use std::io::Write;
 
-pub type FnExtBTime<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
+pub type FnExtAccessTime<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
 impl<W: Write> Buffer<W> {
-    /// Print entry's creation-date
-    pub fn paint_btime(&mut self, meta: &Metadata, f: FnExtBTime<W>) -> io::Result<()> {
+    /// Print entry's access-time
+    pub fn print_atime(&mut self, meta: &Metadata, f: FnExtAccessTime<W>) -> io::Result<()> {
         f(self, meta)
     }
 
-    pub fn write_btime(&mut self, meta: &Metadata) -> io::Result<()> {
-        if let Ok(created) = meta.created() {
+    pub fn write_atime(&mut self, meta: &Metadata) -> io::Result<()> {
+        if let Ok(created) = meta.accessed() {
             let time = format_system_time(created);
             self.write_space()?;
             self.bufwr.write_all(time.as_bytes())?;
@@ -28,7 +28,7 @@ impl<W: Write> Buffer<W> {
         Ok(())
     }
 
-    pub fn write_no_btime(&mut self, _meta: &Metadata) -> io::Result<()> {
+    pub fn write_no_atime(&mut self, _meta: &Metadata) -> io::Result<()> {
         Ok(())
     }
 }

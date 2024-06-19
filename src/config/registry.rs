@@ -2,32 +2,38 @@ use super::inspect::read_all_entries;
 use super::inspect::read_visible_entries;
 use super::inspect::read_visible_folders;
 use super::inspect::FnReadDir;
-use super::sortt::reverse_sort_by_name;
-use super::sortt::sort_by_file_first;
-use super::sortt::sort_by_name;
-use super::sortt::FnSortEntries;
-use crate::canva::attr::atime::FnExtAccessTime;
-use crate::canva::attr::btime::FnExtBTime;
-use crate::canva::attr::mtime::FnExtModTime;
-use crate::canva::attr::pms::FnExtPermission;
-use crate::canva::attr::size::FnExtSize;
-use crate::canva::buffer::Buffer;
-use crate::canva::entree::filee::FnOutFile;
-use crate::canva::entree::headd::FnOutHead;
+use super::sorting::reverse_sort_by_name;
+use super::sorting::sort_by_file_first;
+use super::sorting::sort_by_name;
+use super::sorting::FnSortEntries;
+
 use crate::error::simple::TResult;
+use crate::render::attr::atime::FnExtAccessTime;
+use crate::render::attr::btime::FnExtBTime;
+use crate::render::attr::mtime::FnExtModTime;
+use crate::render::attr::pms::FnExtPermission;
+use crate::render::attr::size::FnExtSize;
+use crate::render::buffer::Buffer;
+use crate::render::entree::dirr::FnOutDir;
+use crate::render::entree::filee::FnOutFile;
+use crate::render::entree::headd::FnOutHead;
+use crate::render::entree::symlinked::FnOutSymlink;
 use crate::report::tail::Tail;
 
 use std::fs::DirEntry;
 use std::io::StdoutLock;
 use std::path::PathBuf;
 
+// TODO: Rename to Callback
 #[derive(Debug, Clone, Copy)]
 pub struct Registry<'a> {
+    // Common util
     pub read: FnReadDir,
     pub sort: FnSortEntries,
     /// Entry  
-    pub dir: FnOutFile<StdoutLock<'a>>,
+    pub dir: FnOutDir<StdoutLock<'a>>,
     pub file: FnOutFile<StdoutLock<'a>>,
+    pub symlink: FnOutSymlink<StdoutLock<'a>>,
     pub head: FnOutHead<StdoutLock<'a>>,
     // Metadata
     pub pms: FnExtPermission<StdoutLock<'a>>,
@@ -53,9 +59,10 @@ impl<'a> Registry<'a> {
         let sort: FnSortEntries = sort_by_name;
 
         // Entry
-        let dir: FnOutFile<StdoutLock> = Buffer::write_entry_color;
+        let dir: FnOutDir<StdoutLock> = Buffer::write_dir;
         let file: FnOutFile<StdoutLock> = Buffer::write_entry;
-        let head: FnOutHead<StdoutLock> = Buffer::write_color_header_name;
+        let head: FnOutHead<StdoutLock> = Buffer::write_header_name;
+        let symlink: FnOutSymlink<StdoutLock> = Buffer::write_symlink;
 
         // Entry's metadata
         let pms: FnExtPermission<StdoutLock> = Buffer::write_no_permission;
@@ -70,6 +77,7 @@ impl<'a> Registry<'a> {
             dir,
             file,
             head,
+            symlink,
             pms,
             btime,
             mtime,
@@ -79,23 +87,31 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Read entries.
 impl<'a> Registry<'a> {
+    /// This method sets the internal `read` function to the implementation
+    /// that reads all entries, including hidden ones.
     pub fn read_all_entries(&mut self) -> TResult<()> {
         self.read = read_all_entries;
         Ok(())
     }
 
+    /// This sets the internal `read` function to the implementation
+    /// that filters out hidden entries during the read process.
     pub fn read_visible_entries(&mut self) -> TResult<()> {
         self.read = read_visible_entries;
         Ok(())
     }
 
+    /// This sets the internal `read` function to the implementation
+    /// that focuses on retrieving visible folders within the registry.
     pub fn read_visible_folders(&mut self) -> TResult<()> {
         self.read = read_visible_folders;
         Ok(())
     }
 }
 
+// Sort's kind.
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_sort_entries(&mut self) -> TResult<()> {
@@ -114,6 +130,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Permission
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_permission(&mut self) -> TResult<()> {
@@ -127,6 +144,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Read entry's btime.
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_btime(&mut self) -> TResult<()> {
@@ -140,6 +158,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Read's mtime
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_mtime(&mut self) -> TResult<()> {
@@ -153,6 +172,7 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Read atime
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_atime(&mut self) -> TResult<()> {
@@ -166,42 +186,27 @@ impl<'a> Registry<'a> {
     }
 }
 
+// Kind's entry
 impl<'a> Registry<'a> {
-    pub fn with_color_entry(&mut self) -> TResult<()> {
-        self.dir = Buffer::write_entry_color;
-        Ok(())
-    }
-
-    pub fn with_colorless_entry(&mut self) -> TResult<()> {
-        self.head = Buffer::write_header_name;
-        self.dir = Buffer::write_entry;
-        Ok(())
-    }
-
-    pub fn with_color_relative_path(&mut self) -> TResult<()> {
-        self.dir = Buffer::write_color_entry_relative_path;
-        self.file = Buffer::write_entry_relative_path;
-        self.head = Buffer::write_color_header_relative_path;
+    pub fn with_entry(&mut self) -> TResult<()> {
+        self.dir = Buffer::write_dir;
         Ok(())
     }
 
     pub fn with_relative_path(&mut self) -> TResult<()> {
-        self.dir = Buffer::write_entry_relative_path;
+        self.dir = Buffer::write_dir_relative_path;
         self.file = Buffer::write_entry_relative_path;
         self.head = Buffer::write_header_relative_path;
+        self.symlink = Buffer::write_symlink_relative_path;
         Ok(())
     }
 }
 
+// Size
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
     pub fn with_size(&mut self) -> TResult<()> {
         self.size = Buffer::write_size;
-        Ok(())
-    }
-
-    pub fn with_size_color(&mut self) -> TResult<()> {
-        self.size = Buffer::write_size_color;
         Ok(())
     }
 

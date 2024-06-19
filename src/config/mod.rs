@@ -1,3 +1,5 @@
+pub mod color;
 pub mod inspect;
 pub mod registry;
-pub mod sortt;
+pub mod root;
+pub mod sorting;

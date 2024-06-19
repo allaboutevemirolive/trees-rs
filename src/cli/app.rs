@@ -21,7 +21,7 @@ pub mod options {
     }
 
     pub mod color {
-        pub static COLOR: &str = "color-entries";
+        pub static COLOR: &str = "color-entries"; // TODO: Remove
         pub static COLORLESS: &str = "no-color-entries";
     }
 
@@ -37,7 +37,15 @@ pub mod options {
         pub static BTIME: &str = "show-entries-creation-time";
         pub static MTIME: &str = "show-entries-modification-time";
         pub static ATIME: &str = "show-entries-access-time";
-        pub static SIZE: &str = "Show-entries-size";
+        pub static SIZE: &str = "show-entries-size";
+    }
+
+    pub mod report {
+        pub static YIELD: &str = "show-exhaustive-report";
+    }
+
+    pub mod branch {
+        pub static NOBRANCH: &str = "discard-branch-stick-from-output";
     }
 }
 
@@ -172,6 +180,20 @@ pub fn tree_app() -> Command {
                 .help("Print tree until certain depth. Default depth: 5000")
                 .value_parser(clap::value_parser!(usize))
                 .action(clap::ArgAction::Set),
+        )
+        .arg(
+            Arg::new(options::report::YIELD)
+                .long("yield")
+                .short('y')
+                .help("Print exhaustive report")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new(options::branch::NOBRANCH)
+                .long("nobranch")
+                .short('B')
+                .help("Discard branch's stick from the output")
+                .action(ArgAction::SetTrue),
         )
 }
 
