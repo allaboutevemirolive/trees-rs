@@ -1,5 +1,5 @@
 [package]
-name = "tree-rs"
+name = "tree_rs"
 version = "0.1.0"
 edition = "2021"
 authors = ["allaboutevemirolive<akmal.fir010@gmail.com>"]
@@ -7,7 +7,7 @@ description = "tree-rs is a drop-in replacement for the tree utility (ASCII tree
 license = "MIT OR Apache-2.0"
 
 [[bin]]
-name = "tree-rs" 
+name = "tree_rs" 
 path = "src/main.rs" 
 
 [dependencies]
