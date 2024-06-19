@@ -64,7 +64,7 @@ impl TreeArgs {
                 .get_one(options::miscellaneous::LEVEL)
                 .expect("default");
 
-            tr.level.with_level(level as i32);
+            tr.level.with_cap(level as i32);
         }
 
         if matches.get_flag(options::meta::META) {

@@ -21,8 +21,8 @@ impl Level {
         Level { lvl, cap }
     }
 
-    pub fn with_level(&mut self, num: i32) {
-        self.lvl = num;
+    pub fn with_cap(&mut self, num: i32) {
+        self.cap = num;
     }
 
     pub fn _modify_capacity(&mut self, num: i32) {

@@ -1,13 +1,28 @@
 
-# Tree-rs
+# Trees-rs
 
-Tree-rs is a command-line tool developed in pure Rust, designed for displaying directory structures in ASCII format on the terminal or saving them to a text file. It serves as a seamless replacement for the [tree](https://github.com/Old-Man-Programmer/tree.git) utility written in C. The primary goal of this project is to provide a non-bloated and more functional alternative to the existing [tree](https://github.com/Old-Man-Programmer/tree.git).
+Trees-rs is a command-line tool developed in pure Rust, designed for displaying directory structures in ASCII format on the terminal or saving them to a text file. It serves as a seamless replacement for the [tree](https://github.com/Old-Man-Programmer/tree.git) utility written in C. The primary goal of this project is to provide a non-bloated and more functional alternative to the existing [tree](https://github.com/Old-Man-Programmer/tree.git).
+
+
+## Installation
+
+Run:
+
+```
+cargo install trees-rs
+```
+or you can build from source with:
+
+```
+cargo build --release
+```
 
 ## Command Line Options
 
 Tree-rs offers several command line options:
 
 ```
+$ trs -h
 Usage: tree-rs [OPTIONS]
 
 Options:
@@ -30,7 +45,10 @@ Options:
       --atime                 Print the date that the entry was last time accessed.
       --size                  Print entires's size.
   -L, --level <level-bounds>  Print tree until certain depth. Default depth: 5000
+  -y, --yield                 Print exhaustive report
+  -B, --nobranch              Discard branch's stick from the output
   -h, --help                  Print help
+
 
 ```
 
@@ -40,57 +58,55 @@ Options:
 ```
 $ trs src -m
 
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 12:42  01-05-2024 19:03     4096    src
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 14:25  01-05-2024 19:03     4096    ├── canva
- .rw-r--r--  25-04-2024 08:51  12-04-2024 09:05  01-05-2024 19:03      67     │   ├── ansi.rs
- .rw-r--r--  25-04-2024 08:51  01-05-2024 19:10  01-05-2024 19:10     2609    │   ├── buffer.rs
- .rw-r--r--  25-04-2024 08:51  28-03-2024 16:24  01-05-2024 19:03      0      │   ├── mmap.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 14:29  01-05-2024 19:03     417     │   ├── mod.rs
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 14:09  01-05-2024 19:03     4096    │   └── which
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 13:52  01-05-2024 19:03     4096    │       ├── attr
- .rw-r--r--  25-04-2024 08:51  01-05-2024 19:16  01-05-2024 19:16     1104    │       │   ├── atime.rs
- .rw-r--r--  25-04-2024 08:51  01-05-2024 19:17  01-05-2024 19:17     1093    │       │   ├── btime.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 14:13  01-05-2024 19:03      72     │       │   ├── mod.rs
- .rw-r--r--  25-04-2024 08:51  01-05-2024 19:17  01-05-2024 19:17     1098    │       │   ├── mtime.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 13:38  01-05-2024 19:03     2352    │       │   ├── pms.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 13:50  01-05-2024 19:03     1412    │       │   └── size.rs
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 14:25  01-05-2024 19:03     4096    │       ├── entree
- .rw-r--r--  25-04-2024 08:51  16-04-2024 14:14  01-05-2024 19:03      0      │       │   ├── dirr.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 14:16  01-05-2024 19:03     1659    │       │   ├── filee.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 14:25  01-05-2024 19:03     3419    │       │   ├── headd.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 14:14  01-05-2024 19:03      44     │       │   └── mod.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 14:11  01-05-2024 19:03      30     │       └── mod.rs
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 12:42  01-05-2024 19:03     4096    ├── cli
- .rw-r--r--  25-04-2024 08:51  02-05-2024 05:03  02-05-2024 05:03     6618    │   ├── app.rs
- .rw-r--r--  25-04-2024 08:51  02-05-2024 05:06  02-05-2024 05:06     6456    │   ├── arg.rs
- .rw-r--r--  25-04-2024 08:51  04-04-2024 18:20  01-05-2024 19:03      39     │   ├── mod.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 11:55  01-05-2024 19:03     651     │   └── opt.rs
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 14:25  01-05-2024 19:03     4096    ├── config
- .rw-r--r--  25-04-2024 08:51  01-04-2024 02:36  01-05-2024 19:03      32     │   ├── mod.rs
- .rw-r--r--  25-04-2024 08:51  02-05-2024 07:38  02-05-2024 07:38     6472    │   ├── path.rs
- .rw-r--r--  25-04-2024 08:51  02-05-2024 05:04  02-05-2024 05:04     5101    │   └── registry.rs
- drwxr-xr-x  25-04-2024 08:51  30-04-2024 07:41  01-05-2024 19:03     4096    ├── error
- .rw-r--r--  25-04-2024 08:51  03-04-2024 10:14  01-05-2024 19:03      16     │   ├── mod.rs
- .rw-r--r--  30-04-2024 07:41  30-04-2024 07:41  01-05-2024 19:03     1860    │   └── simple.rs
- .rw-r--r--  25-04-2024 08:51  02-05-2024 06:49  02-05-2024 06:49     2047    ├── main.rs
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 11:53  01-05-2024 19:03     4096    ├── report
- .rw-r--r--  25-04-2024 08:51  01-05-2024 19:11  01-05-2024 19:11     900     │   ├── mod.rs
- .rw-r--r--  25-04-2024 08:51  14-04-2024 03:30  01-05-2024 19:03     1675    │   └── tail.rs
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 13:35  01-05-2024 19:03     4096    ├── sort
- .rw-r--r--  25-04-2024 08:51  02-05-2024 07:34  02-05-2024 07:34     988     │   ├── dent.rs
- .rw-r--r--  25-04-2024 08:51  31-03-2024 19:42  01-05-2024 19:03      14     │   └── mod.rs
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 11:55  01-05-2024 19:03     4096    ├── tree
- .rw-r--r--  25-04-2024 08:51  16-04-2024 11:53  01-05-2024 19:03     1479    │   ├── branch.rs
- .rw-r--r--  25-04-2024 08:51  14-04-2024 03:34  01-05-2024 19:03     981     │   ├── level.rs
- .rw-r--r--  25-04-2024 08:51  16-04-2024 11:55  01-05-2024 19:03     1480    │   ├── mod.rs
- .rw-r--r--  25-04-2024 08:51  30-04-2024 12:48  01-05-2024 19:03     8999    │   └── node.rs
- drwxr-xr-x  25-04-2024 08:51  01-04-2024 22:16  01-05-2024 19:03     4096    ├── util
- .rw-r--r--  25-04-2024 08:51  01-04-2024 22:16  01-05-2024 19:03      0      │   └── mod.rs
- drwxr-xr-x  25-04-2024 08:51  16-04-2024 11:53  01-05-2024 19:03     4096    └── walk
- .rw-r--r--  25-04-2024 08:51  02-05-2024 07:26  02-05-2024 07:26     3149        ├── metada.rs
- .rw-r--r--  25-04-2024 08:51  02-05-2024 07:25  02-05-2024 07:25     4660        └── mod.rs
+ drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    src
+ drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    ├── cli
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     7286    │   ├── app.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 19:05  19-06-2024 19:05     6465    │   ├── arg.rs
+ .rw-r--r--  15-05-2024 18:19  15-05-2024 18:19  19-06-2024 11:58      26     │   └── mod.rs
+ drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    ├── config
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     7009    │   ├── color.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     2726    │   ├── inspect.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37      81     │   ├── mod.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     5970    │   ├── registry.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     6205    │   ├── root.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     871     │   └── sorting.rs
+ drwxr-xr-x  25-04-2024 08:51  30-04-2024 07:41  19-06-2024 13:16     4096    ├── error
+ .rw-r--r--  25-04-2024 08:51  03-04-2024 10:14  19-06-2024 11:58      16     │   ├── mod.rs
+ .rw-r--r--  30-04-2024 07:41  30-04-2024 07:41  19-06-2024 11:58     1860    │   └── simple.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     892     ├── main.rs
+ drwxr-xr-x  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:38     4096    ├── render
+ drwxr-xr-x  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:38     4096    │   ├── attr
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     1129    │   │   ├── atime.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     1120    │   │   ├── btime.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37      72     │   │   ├── mod.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     1129    │   │   ├── mtime.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     2286    │   │   ├── pms.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     869     │   │   └── size.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     1690    │   ├── buffer.rs
+ drwxr-xr-x  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:38     4096    │   ├── entree
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     993     │   │   ├── dirr.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     1056    │   │   ├── filee.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     3045    │   │   ├── headd.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37      63     │   │   ├── mod.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     1051    │   │   └── symlinked.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37      46     │   └── mod.rs
+ drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    ├── report
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     378     │   ├── depth.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37      59     │   ├── mod.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37      82     │   ├── size.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     3645    │   ├── tail.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     152     │   └── widest.rs
+ drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    ├── tree
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     1846    │   ├── branch.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 19:05  19-06-2024 19:05     1453    │   ├── level.rs
+ .rw-r--r--  25-04-2024 08:51  05-05-2024 13:50  19-06-2024 11:58      45     │   ├── mod.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     9747    │   └── node.rs
+ drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    └── walk
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37      31         ├── mod.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     6987        ├── trctxt.rs
+ .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     3017        └── visit.rs
 
-13 directories, 36 files, 0 hidden, 0.00 gigabytes 
+directories: 10, files: 37, hidden_files: 0, symlinks: 0, special_files: 0, total_items: 47, size: 122358 bytes
 
 ```
 
@@ -99,55 +115,53 @@ $ trs src -m
 $ trs src -f
 
 src
-├── src/canva
-│   ├── src/canva/ansi.rs
-│   ├── src/canva/buffer.rs
-│   ├── src/canva/mmap.rs
-│   ├── src/canva/mod.rs
-│   └── src/canva/which
-│       ├── src/canva/which/attr
-│       │   ├── src/canva/which/attr/atime.rs
-│       │   ├── src/canva/which/attr/btime.rs
-│       │   ├── src/canva/which/attr/mod.rs
-│       │   ├── src/canva/which/attr/mtime.rs
-│       │   ├── src/canva/which/attr/pms.rs
-│       │   └── src/canva/which/attr/size.rs
-│       ├── src/canva/which/entree
-│       │   ├── src/canva/which/entree/dirr.rs
-│       │   ├── src/canva/which/entree/filee.rs
-│       │   ├── src/canva/which/entree/headd.rs
-│       │   └── src/canva/which/entree/mod.rs
-│       └── src/canva/which/mod.rs
 ├── src/cli
 │   ├── src/cli/app.rs
 │   ├── src/cli/arg.rs
-│   ├── src/cli/mod.rs
-│   └── src/cli/opt.rs
+│   └── src/cli/mod.rs
 ├── src/config
+│   ├── src/config/color.rs
+│   ├── src/config/inspect.rs
 │   ├── src/config/mod.rs
-│   ├── src/config/path.rs
-│   └── src/config/registry.rs
+│   ├── src/config/registry.rs
+│   ├── src/config/root.rs
+│   └── src/config/sorting.rs
 ├── src/error
 │   ├── src/error/mod.rs
 │   └── src/error/simple.rs
 ├── src/main.rs
+├── src/render
+│   ├── src/render/attr
+│   │   ├── src/render/attr/atime.rs
+│   │   ├── src/render/attr/btime.rs
+│   │   ├── src/render/attr/mod.rs
+│   │   ├── src/render/attr/mtime.rs
+│   │   ├── src/render/attr/pms.rs
+│   │   └── src/render/attr/size.rs
+│   ├── src/render/buffer.rs
+│   ├── src/render/entree
+│   │   ├── src/render/entree/dirr.rs
+│   │   ├── src/render/entree/filee.rs
+│   │   ├── src/render/entree/headd.rs
+│   │   ├── src/render/entree/mod.rs
+│   │   └── src/render/entree/symlinked.rs
+│   └── src/render/mod.rs
 ├── src/report
+│   ├── src/report/depth.rs
 │   ├── src/report/mod.rs
-│   └── src/report/tail.rs
-├── src/sort
-│   ├── src/sort/dent.rs
-│   └── src/sort/mod.rs
+│   ├── src/report/size.rs
+│   ├── src/report/tail.rs
+│   └── src/report/widest.rs
 ├── src/tree
 │   ├── src/tree/branch.rs
 │   ├── src/tree/level.rs
 │   ├── src/tree/mod.rs
 │   └── src/tree/node.rs
-├── src/util
-│   └── src/util/mod.rs
 └── src/walk
-    ├── src/walk/metada.rs
-    └── src/walk/mod.rs
+    ├── src/walk/mod.rs
+    ├── src/walk/trctxt.rs
+    └── src/walk/visit.rs
 
-13 directories, 36 files, 0 hidden, 0.00 gigabytes 
+directories: 10, files: 37, hidden_files: 0, symlinks: 0, special_files: 0, total_items: 47, size: 122358 bytes
 
 ```
