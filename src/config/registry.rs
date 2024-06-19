@@ -188,7 +188,7 @@ impl<'a> Registry<'a> {
 
 // Kind's entry
 impl<'a> Registry<'a> {
-    pub fn with_color_entry(&mut self) -> TResult<()> {
+    pub fn with_entry(&mut self) -> TResult<()> {
         self.dir = Buffer::write_dir;
         Ok(())
     }

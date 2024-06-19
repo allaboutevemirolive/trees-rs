@@ -84,12 +84,15 @@ impl TreeArgs {
         }
 
         if matches.get_flag(options::color::COLOR) {
-            tr.rg.with_color_entry()?;
+            tr.rg.with_entry()?;
         }
 
         if matches.get_flag(options::path::RELATIVE) {
             tr.rg.with_relative_path()?;
         }
+
+        // TODO
+        // if matches.get_flag(options::path::ABSOLUTE) {}
 
         if matches.get_flag(options::read::VISIBLE) {
             tr.rg.read_visible_entries()?;
@@ -129,18 +132,6 @@ impl TreeArgs {
 
         if matches.get_flag(options::color::COLORLESS) {
             tr.file_colors.disable_color();
-
-            if matches.get_flag(options::meta::SIZE) {
-                tr.rg.with_size()?;
-            }
-
-            if matches.get_flag(options::meta::META) {
-                tr.rg.with_permission()?;
-                tr.rg.with_btime()?;
-                tr.rg.with_mtime()?;
-                tr.rg.with_atime()?;
-                tr.rg.with_size()?; // no color
-            }
         }
 
         Ok(())

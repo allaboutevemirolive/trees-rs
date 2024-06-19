@@ -132,6 +132,7 @@ impl<'tr> TreeCtxt<'tr> {
                 self.nod.pop();
                 continue;
             } else {
+                self.tail.special_add_one();
                 // If entry is not dir, file or symlink like:
                 // - Special File(Device File, Socket File, Named Pipe (FIFO))
                 // - Unix-Specific(Block Device, Character Device)
@@ -189,7 +190,15 @@ impl<'tr> TreeCtxt<'tr> {
 
     pub fn print_report(&mut self) -> TResult<()> {
         self.buf.newline()?;
-        self.buf.write_message(&self.tail.to_string())?;
+        self.tail.accumulate_items();
+        let serialized = serde_json::to_string(&self.tail).unwrap();
+        let linear_output = serialized
+            .trim_matches(|c| c == '{' || c == '}')
+            .replace('"', "")
+            .replace(":", ": ")
+            .replace(",", ", ");
+
+        self.buf.write_message(&linear_output)?;
         self.buf.newline()?;
 
         Ok(())
