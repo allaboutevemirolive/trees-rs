@@ -2,7 +2,7 @@ use super::app::options;
 use super::app::tree_app;
 use crate::config::root::BaseDirectory;
 use crate::error::simple::TResult;
-use crate::walk::trctxt::TreeCtxt;
+use crate::walk::tr::TreeCtxt;
 
 use std::env;
 use std::ffi::OsString;

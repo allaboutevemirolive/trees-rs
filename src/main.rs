@@ -14,7 +14,7 @@ mod report;
 mod tree;
 
 mod walk;
-use crate::walk::trctxt::TreeCtxt;
+use crate::walk::tr::TreeCtxt;
 
 fn main() -> TResult<()> {
     let mut args = TreeArgs::new();
