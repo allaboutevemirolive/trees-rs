@@ -30,7 +30,7 @@ SSD model: Samsung SSD 860 EVO 500GB
 Our benchmark focuses on a set of forks of the Rust compiler project:
 
 ```
-.../rustc_fork$ ls
+.../rust_fork$ ls
 cargo  miri  regex  rust  rust-analyzer  rust-clippy  rustfmt  rustup  wasmtime
 ```
 
@@ -41,7 +41,7 @@ directories: 7234, files: 76915, hidden_files: 198,
 symlinks: 117, special_files: 0, total_items: 84266, size: 4.203 gigabytes
 ```
 
-We will run a simple benchmark to compare the performance of the tools. To ensure accurate results, clear the system cache by running the following command:
+To accurately compare tool performance, the system cache will be cleared before each command is executed using the following command:
 
 
 ```bash
@@ -54,9 +54,13 @@ Run command :
 time eza --tree rustc_fork
 ```
 
+(Clear cache)
+
 ```
 time tree rustc_fork
 ```
+
+(Clear cache)
 
 ```
 time trees-rs rustc_fork
