@@ -18,7 +18,7 @@ Trees-rs is a command-line tool developed in pure Rust, designed for displaying 
 
 ```
 OS version: Debian GNU/Linux 12 (bookworm)
-RAM available: 14Gi (GiB, or gibibytes)
+RAM available: 14Gi (GiB, or gibibytes) (20 GB RAM available in current local machine)
 Hard disk: 28G (GiB)
 Intel version: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
 SSD model: Samsung SSD 860 EVO 500GB
