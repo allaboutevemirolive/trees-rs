@@ -4,6 +4,94 @@
 Trees-rs is a command-line tool developed in pure Rust, designed for displaying directory structures in ASCII format on the terminal or saving them to a text file. It serves as a seamless replacement for the [tree](https://github.com/Old-Man-Programmer/tree.git) utility written in C. The primary goal of this project is to provide a non-bloated and more functional alternative to the existing [tree](https://github.com/Old-Man-Programmer/tree.git).
 
 
+## Benchmark
+
+### System information for this benchmark
+
+<details>
+<summary>Click to expand!</summary>
+
+```
+OS version: Debian GNU/Linux 12 (bookworm)
+RAM available: 14Gi (GiB, or gibibytes)
+Hard disk: 28G (GiB)
+Intel version: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+SSD model: Samsung SSD 860 EVO 500GB
+```
+
+</details>
+
+
+Our benchmark focuses on a set of forks of the Rust compiler project:
+
+```
+.../rustc_fork$ ls
+cargo  miri  regex  rust  rust-analyzer  rust-clippy  rustfmt  rustup  wasmtime
+```
+
+This directory contains the following items (information gathered using our `Trees-rs` tool):
+
+```
+directories: 7234, files: 76915, hidden_files: 198, 
+symlinks: 117, special_files: 0, total_items: 84266, size: 4.203 gigabytes
+```
+
+We will run a simple benchmark to compare the performance of the tools. To ensure accurate results, clear the system cache by running the following command:
+
+
+```bash
+sudo sync && sudo echo 3 | sudo tee /proc/sys/vm/drop_caches  
+```
+
+Run command :
+
+```
+time eza --tree rustc_fork
+```
+
+```
+time tree rustc_fork
+```
+
+```
+time trees-rs rustc_fork
+```
+
+### Results
+
+| Tool | Run | Real Time | User Time | Sys Time |
+|------|-----|-----------|-----------|----------|
+| **[Eza](https://github.com/eza-community/eza)** | 1 | 0m6.433s | 0m4.703s | 0m2.665s |
+|      | 2 | 0m6.277s | 0m4.647s | 0m2.622s |
+|      | 3 | 0m6.701s | 0m5.041s | 0m2.713s |
+|      | 4 | 0m6.651s | 0m5.038s | 0m2.725s |
+|      | 5 | 0m6.312s | 0m4.440s | 0m2.611s |
+| **[Tree](https://github.com/Old-Man-Programmer/tree)** | 1 | 0m3.273s | 0m0.925s | 0m0.941s |
+|      | 2 | 0m3.229s | 0m0.881s | 0m0.980s |
+|      | 3 | 0m3.113s | 0m0.755s | 0m0.978s |
+|      | 4 | 0m4.349s | 0m0.836s | 0m0.992s |
+|      | 5 | 0m3.168s | 0m0.783s | 0m0.955s |
+| **[Trees-rs](https://github.com/allaboutevemirolive/trees-rs)** | 1 | 0m3.018s | 0m0.349s | 0m1.133s |
+|      | 2 | 0m3.088s | 0m0.388s | 0m1.133s |
+|      | 3 | 0m3.107s | 0m0.344s | 0m1.182s |
+|      | 4 | 0m3.095s | 0m0.352s | 0m1.172s |
+|      | 5 | 0m3.060s | 0m0.371s | 0m1.068s |
+
+
+Detailed percentages and time differences:
+
+| Comparison      | Real Time Difference | Real Time Percentage | User Time Difference | User Time Percentage | Sys Time Difference | Sys Time Percentage |
+|-----------------|-----------------------|----------------------|----------------------|----------------------|---------------------|---------------------|
+| Tree vs. Eza    | 3.049s                | 47.1% faster         | 3.938s               | 82.5% faster         | 1.698s              | 63.7% faster        |
+| Trees-rs vs. Eza| 3.401s                | 52.5% faster         | 4.413s               | 92.4% faster         | 1.529s              | 57.4% faster        |
+| Trees-rs vs. Tree| 0.352s               | 10.3% faster         | 0.475s               | 56.8% faster         | -0.169s             | -17.4% slower       |
+
+### Summary
+
+- **Overall, Trees-rs is the fastest in terms of real and user time but slightly slower than Tree in sys time.**
+- **Tree is significantly faster than Eza in all three categories.**
+
+
 ## Installation
 
 Run:
@@ -22,8 +110,8 @@ cargo build --release
 Tree-rs offers several command line options:
 
 ```
-$ trs -h
-Usage: tree-rs [OPTIONS]
+$ trees-rs -h
+Usage: trees-rs [OPTIONS]
 
 Options:
   -V, --version               Print current version of Tree-rs.
@@ -54,11 +142,15 @@ Options:
 
 ## Example Usage
 
+### $ trees-rs src -m
+
+<details>
+<summary>Click to expand!</summary>
 
 ```
-$ trs src -m
+$ trees-rs src -m
 
- drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    src
+drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    src
  drwxr-xr-x  25-04-2024 08:51  19-06-2024 18:37  19-06-2024 18:38     4096    ├── cli
  .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     7286    │   ├── app.rs
  .rw-r--r--  19-06-2024 18:37  19-06-2024 19:05  19-06-2024 19:05     6465    │   ├── arg.rs
@@ -107,12 +199,18 @@ $ trs src -m
  .rw-r--r--  19-06-2024 18:37  19-06-2024 18:37  19-06-2024 18:37     3017        └── visit.rs
 
 directories: 10, files: 37, hidden_files: 0, symlinks: 0, special_files: 0, total_items: 47, size: 122358 bytes
-
 ```
 
+</details>
+
+### $ trees-rs src -f
+
+<details>
+<summary>Click to expand!</summary>
+
 
 ```
-$ trs src -f
+$ trees-rs src -f
 
 src
 ├── src/cli
@@ -165,3 +263,16 @@ src
 directories: 10, files: 37, hidden_files: 0, symlinks: 0, special_files: 0, total_items: 47, size: 122358 bytes
 
 ```
+
+</details>
+
+
+## Code of Conduct
+
+See [CODE_OF_CONDUCT.md](https://github.com/allaboutevemirolive/trees-rs/blob/master/CODE_OF_CONDUCT.md).
+
+## Licensing
+
+TreeCraft is released under the [MIT License](https://github.com/allaboutevemirolive/trees-rs/blob/master/LICENSE.md). You are free to use, modify, and distribute this software in accordance with the terms of the license.
+
+
