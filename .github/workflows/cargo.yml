@@ -1,0 +1,46 @@
+name: Cargo check
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - '*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+
+    steps:
+    - uses: actions/checkout@v4.1.1
+    - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+
+    - name: Run tests
+      run: cargo test --verbose
+
+    - name: Audit Dependencies
+      run: cargo audit
+
+    - name: Install rustfmt
+      run: rustup component add rustfmt --toolchain ${{ matrix.toolchain }}
+
+    - name: Check formatting
+      run: cargo fmt -- --check
+
+    - name: Install clippy
+      run: rustup component add clippy --toolchain ${{ matrix.toolchain }}
+
+    - name: Run Clippy
+      run: cargo clippy --all --all-targets -- -D warnings
+
