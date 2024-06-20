@@ -1,6 +1,13 @@
 
 # Trees-rs
 
+https://github.com/allaboutevemirolive/trees-rs/blob/master/CODE_OF_CONDUCT.md
+
+<div>
+  <img src="https://github.com/allaboutevemirolive/trees-rs/blob/master/icon/trees.png" width="50%" />
+</div>
+
+
 Trees-rs is a command-line tool developed in pure Rust, designed for displaying directory structures in ASCII format on the terminal or saving them to a text file. It serves as a seamless replacement for the [tree](https://github.com/Old-Man-Programmer/tree.git) utility written in C. The primary goal of this project is to provide a non-bloated and more functional alternative to the existing [tree](https://github.com/Old-Man-Programmer/tree.git).
 
 
