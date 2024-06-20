@@ -114,6 +114,11 @@ cargo build --release
 
 Tree-rs offers several command line options:
 
+### $ trees-rs -h
+
+<details>
+<summary>Click to expand!</summary>
+
 ```
 $ trees-rs -h
 Usage: trees-rs [OPTIONS]
@@ -142,8 +147,10 @@ Options:
   -B, --nobranch              Discard branch's stick from the output
   -h, --help                  Print help
 
-
 ```
+
+</details>
+
 
 ## Example Usage
 
