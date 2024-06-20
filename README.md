@@ -4,7 +4,7 @@
 https://github.com/allaboutevemirolive/trees-rs/blob/master/CODE_OF_CONDUCT.md
 
 <div>
-  <img src="https://github.com/allaboutevemirolive/trees-rs/blob/master/icon/trees.png" width="50%" />
+  <img src="https://github.com/allaboutevemirolive/trees-rs/blob/master/icon/trees.png" width="100%" />
 </div>
 
 
