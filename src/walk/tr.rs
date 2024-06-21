@@ -3,7 +3,7 @@ use crate::config::registry::Registry;
 use crate::config::root::PathBuilder;
 use crate::error::simple::TResult;
 use crate::render::buffer::Buffer;
-use crate::report::tail::{ReportSummary, Tail};
+use crate::report::tail::{ReportMode, ReportSummary, Tail};
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
 use crate::tree::node::Node;
@@ -188,17 +188,13 @@ impl<'tr> TreeCtxt<'tr> {
         Ok(())
     }
 
-    pub fn print_report(&mut self) -> TResult<()> {
+    pub fn print_report(&mut self, report_mode: ReportMode) -> TResult<()> {
         self.buf.newline()?;
 
         self.tail.accumulate_items();
-
         let mut report_summary = ReportSummary::with_capacity(50).unwrap();
-
-        self.tail.parse_report(&mut report_summary);
-
+        self.tail.populate_report(&mut report_summary, report_mode);
         let summary = report_summary.join(", ");
-
         self.buf.write_message(&summary)?;
 
         self.buf.newline()?;
