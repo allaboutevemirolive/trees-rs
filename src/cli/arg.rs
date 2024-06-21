@@ -2,7 +2,7 @@ use super::app::options;
 use super::app::tree_app;
 use crate::config::root::BaseDirectory;
 use crate::error::simple::TResult;
-use crate::report::tail::ReportMode;
+use crate::report::stats::ReportMode;
 use crate::walk::tr::TreeCtxt;
 
 use std::env;

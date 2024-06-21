@@ -5,7 +5,7 @@ use crate::cli::arg::TreeArgs;
 
 mod config;
 use config::root::BaseDirectory;
-use report::tail::ReportMode;
+use report::stats::ReportMode;
 
 mod error;
 use crate::error::simple::TResult;

@@ -3,7 +3,9 @@ use crate::config::registry::Registry;
 use crate::config::root::PathBuilder;
 use crate::error::simple::TResult;
 use crate::render::buffer::Buffer;
-use crate::report::tail::{ReportMode, ReportSummary, Tail};
+use crate::report::stats::DirectoryStats;
+use crate::report::stats::ReportMode;
+use crate::report::stats::ReportSummary;
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
 use crate::tree::node::Node;
@@ -22,7 +24,7 @@ pub struct TreeCtxt<'tr> {
     pub level: Level,
     pub nod: Node,
     pub rg: Registry<'tr>,
-    pub tail: Tail,
+    pub tail: DirectoryStats,
     pub file_colors: FileColors,
     pub path_builder: PathBuilder,
 }
@@ -32,7 +34,7 @@ impl<'tr> TreeCtxt<'tr> {
         let buf = Buffer::new(io::stdout().lock())?;
         let branch = Branch::default();
         let nod = Node::default();
-        let tail = Tail::default();
+        let tail = DirectoryStats::default();
         let level = Level::default();
         let rg = Registry::new()?;
         let file_colors = FileColors::new();

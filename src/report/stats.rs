@@ -7,7 +7,7 @@ pub enum ReportMode {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Tail {
+pub struct DirectoryStats {
     directories: usize,
     files: usize,
     hidden_files: usize,
@@ -17,9 +17,9 @@ pub struct Tail {
     size: u64,
 }
 
-impl Default for Tail {
+impl Default for DirectoryStats {
     fn default() -> Self {
-        Tail {
+        DirectoryStats {
             directories: 1,
             files: 0,
             size: 0,
@@ -31,7 +31,7 @@ impl Default for Tail {
     }
 }
 
-impl Tail {
+impl DirectoryStats {
     pub fn dir_add_one(&mut self) {
         self.directories += 1
     }
@@ -85,7 +85,7 @@ impl ReportSummary {
     }
 }
 
-impl Tail {
+impl DirectoryStats {
     pub fn populate_report(&self, report_summary: &mut ReportSummary, report_mode: ReportMode) {
         let directories = self.directories_to_string().unwrap();
         let directories = format!("{}: {}", directories.1, directories.0);
@@ -126,7 +126,7 @@ impl Tail {
 }
 
 #[allow(unused_assignments, dead_code)]
-impl Tail {
+impl DirectoryStats {
     fn directories_to_string(&self) -> TResult<(String, String)> {
         let mut dir_str = String::new();
 
