@@ -1,22 +1,13 @@
-use serde::Deserialize;
-use serde::Serialize;
-use serde::Serializer;
+use crate::error::simple::TResult;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy)]
 pub struct Tail {
-    #[serde(serialize_with = "serialize_directories")]
     directories: usize,
-    #[serde(serialize_with = "serialize_files")]
     files: usize,
-    #[serde(serialize_with = "serialize_hidden_files")]
     hidden_files: usize,
-    #[serde(serialize_with = "serialize_symlinks")]
     symlinks: usize,
-    #[serde(serialize_with = "serialize_special_files")]
     special_files: usize,
-    #[serde(serialize_with = "serialize_total_items")]
     total_items: usize,
-    #[serde(serialize_with = "serialize_size")]
     size: u64,
 }
 
@@ -31,6 +22,187 @@ impl Default for Tail {
             total_items: 0,
             special_files: 0,
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReportSummary {
+    report: Vec<String>,
+}
+
+impl ReportSummary {
+    pub fn with_capacity(cap: i32) -> TResult<Self> {
+        Ok(ReportSummary {
+            report: Vec::with_capacity(cap as usize),
+        })
+    }
+
+    pub fn push(&mut self, str: String) {
+        self.report.push(str);
+    }
+
+    pub fn join(&self, str: &str) -> String {
+        self.report.join(str)
+    }
+}
+
+impl Tail {
+    pub fn parse_report(&self, report_summary: &mut ReportSummary) {
+        let dir = self.directories_to_string().unwrap();
+        let directories = format!("{}: {}", dir.1, dir.0);
+
+        let files = self.files_to_string().unwrap();
+        let files = format!("{}: {}", files.1, files.0);
+
+        let hidden_files = self.hidden_files_to_string().unwrap();
+        let hidden_files = format!("{}: {}", hidden_files.1, hidden_files.0);
+
+        let symlinks = self.symlinks_to_string().unwrap();
+        let symlinks = format!("{}: {}", symlinks.1, symlinks.0);
+
+        let special_files = self.special_files_to_string().unwrap();
+        let special_files = format!("{}: {}", special_files.1, special_files.0);
+
+        let total_items = self.total_items_to_string().unwrap();
+        let total_items = format!("{}: {}", total_items.1, total_items.0);
+
+        let size = self.size_to_string().unwrap();
+        let size = format!("{}: {}", size.1, size.0);
+
+        report_summary.push(directories);
+        report_summary.push(files);
+        report_summary.push(hidden_files);
+        report_summary.push(symlinks);
+        report_summary.push(special_files);
+        report_summary.push(total_items);
+        report_summary.push(size);
+    }
+}
+
+#[allow(unused_assignments, dead_code)]
+impl Tail {
+    pub fn directories_to_string(&self) -> TResult<(String, String)> {
+        let mut dir_str = String::new();
+
+        let directories = self.directories;
+
+        if directories > 1 {
+            dir_str = "Directories".to_string();
+        } else {
+            dir_str = "Directory".to_string();
+        }
+
+        let dir_count = format!("{}", directories);
+
+        Ok((dir_count, dir_str))
+    }
+
+    pub fn files_to_string(&self) -> TResult<(String, String)> {
+        let mut file_str = String::new();
+
+        let files = self.files;
+
+        if files > 1 {
+            file_str = "Files".to_string();
+        } else {
+            file_str = "File".to_string();
+        }
+
+        let file_count = format!("{}", files);
+
+        Ok((file_count, file_str))
+    }
+
+    pub fn hidden_files_to_string(&self) -> TResult<(String, String)> {
+        let mut hidden_files_str = String::new();
+
+        let hidden_files = self.hidden_files;
+
+        if hidden_files > 1 {
+            hidden_files_str = "Hidden Files".to_string();
+        } else {
+            hidden_files_str = "Hidden File".to_string();
+        }
+
+        let hidden_files_count = format!("{}", hidden_files);
+
+        Ok((hidden_files_count, hidden_files_str))
+    }
+
+    pub fn symlinks_to_string(&self) -> TResult<(String, String)> {
+        let mut symlinks_str = String::new();
+
+        let symlinks = self.symlinks;
+
+        if symlinks > 1 {
+            symlinks_str = "Symlinks".to_string();
+        } else {
+            symlinks_str = "Symlink".to_string();
+        }
+
+        let symlinks_count = format!("{}", symlinks);
+
+        Ok((symlinks_count, symlinks_str))
+    }
+
+    pub fn special_files_to_string(&self) -> TResult<(String, String)> {
+        let mut special_files_str = String::new();
+
+        let special_files = self.special_files;
+
+        if special_files > 1 {
+            special_files_str = "Special Files".to_string();
+        } else {
+            special_files_str = "Special File".to_string();
+        }
+
+        let special_files_count = format!("{}", special_files);
+
+        Ok((special_files_count, special_files_str))
+    }
+
+    pub fn total_items_to_string(&self) -> TResult<(String, String)> {
+        let mut total_items_str = String::new();
+
+        let total_items = self.total_items;
+
+        if total_items > 1 {
+            total_items_str = "Total Items".to_string();
+        } else {
+            total_items_str = "Total Item".to_string();
+        }
+
+        let total_items_count = format!("{}", total_items);
+
+        Ok((total_items_count, total_items_str))
+    }
+
+    pub fn size_to_string(&self) -> TResult<(String, String)> {
+        let size = self.size as f64;
+        let size_count: f64;
+
+        let mut unit_count = String::new();
+        let mut unit_str = String::new();
+
+        let two_gb_in_bytes = 2.0 * 1024.0 * 1024.0 * 1024.0; // 2147483648.0 @ 2 gigabytes
+
+        let one_gb_in_bytes = 1.0 * 1024.0 * 1024.0 * 1024.0; // 1073741824.0 @ 1 gigabyte
+
+        if size > two_gb_in_bytes {
+            unit_str = "Gigabytes".to_string();
+            size_count = size / 1_073_741_824.0;
+            unit_count = format!("{:.3}", size_count);
+        } else if size < two_gb_in_bytes && size > one_gb_in_bytes {
+            unit_str = "Gigabyte".to_string();
+            size_count = size / 1_073_741_824.0;
+            unit_count = format!("{:.3}", size_count);
+        } else if size < one_gb_in_bytes {
+            unit_str = "bytes".to_string();
+            size_count = size;
+            unit_count = format!("{}", size_count);
+        }
+
+        Ok((unit_count, unit_str))
     }
 }
 
@@ -65,79 +237,4 @@ impl Tail {
     pub fn accumulate_items(&mut self) {
         self.total_items = self.directories + self.files + self.symlinks + self.special_files;
     }
-}
-
-fn serialize_total_items<S>(total_items: &usize, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let human_readable = format!("{}", total_items);
-    serializer.serialize_str(&human_readable)
-}
-
-fn serialize_symlinks<S>(files: &usize, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let human_readable = format!("{}", files);
-    serializer.serialize_str(&human_readable)
-}
-
-fn serialize_special_files<S>(files: &usize, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let human_readable = format!("{}", files);
-    serializer.serialize_str(&human_readable)
-}
-
-fn serialize_hidden_files<S>(files: &usize, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let human_readable = format!("{}", files);
-    serializer.serialize_str(&human_readable)
-}
-
-fn serialize_files<S>(files: &usize, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let human_readable = format!("{}", files);
-    serializer.serialize_str(&human_readable)
-}
-
-fn serialize_directories<S>(directories: &usize, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let human_readable = format!("{}", directories);
-    serializer.serialize_str(&human_readable)
-}
-
-fn serialize_size<S>(size: &u64, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let gigabytes = *size as f64 / 1_073_741_824.0;
-
-    let gigabytes = format!("{:.3}", gigabytes);
-
-    let mut _gbyte = String::new();
-
-    if gigabytes.parse::<f64>().unwrap_or_default() <= 0.001 {
-        _gbyte = "gigabyte".to_string();
-    } else {
-        _gbyte = "gigabytes".to_string();
-    }
-
-    let mut _human_readable = String::new();
-
-    if gigabytes.parse::<f64>().unwrap_or_default() <= 0.000 {
-        _human_readable = format!("{} bytes", size);
-    } else {
-        _human_readable = format!("{} {}", gigabytes, _gbyte);
-    }
-
-    serializer.serialize_str(&_human_readable)
 }

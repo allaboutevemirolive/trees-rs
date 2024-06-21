@@ -30,7 +30,7 @@ pub struct Registry<'a> {
     // Common util
     pub read: FnReadDir,
     pub sort: FnSortEntries,
-    /// Entry  
+    // Entry
     pub dir: FnOutDir<StdoutLock<'a>>,
     pub file: FnOutFile<StdoutLock<'a>>,
     pub symlink: FnOutSymlink<StdoutLock<'a>>,

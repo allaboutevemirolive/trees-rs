@@ -3,7 +3,7 @@ use crate::config::registry::Registry;
 use crate::config::root::PathBuilder;
 use crate::error::simple::TResult;
 use crate::render::buffer::Buffer;
-use crate::report::tail::Tail;
+use crate::report::tail::{ReportSummary, Tail};
 use crate::tree::branch::Branch;
 use crate::tree::level::Level;
 use crate::tree::node::Node;
@@ -190,15 +190,17 @@ impl<'tr> TreeCtxt<'tr> {
 
     pub fn print_report(&mut self) -> TResult<()> {
         self.buf.newline()?;
-        self.tail.accumulate_items();
-        let serialized = serde_json::to_string(&self.tail).unwrap();
-        let linear_output = serialized
-            .trim_matches(|c| c == '{' || c == '}')
-            .replace('"', "")
-            .replace(':', ": ")
-            .replace(',', ", ");
 
-        self.buf.write_message(&linear_output)?;
+        self.tail.accumulate_items();
+
+        let mut report_summary = ReportSummary::with_capacity(50).unwrap();
+
+        self.tail.parse_report(&mut report_summary);
+
+        let summary = report_summary.join(", ");
+
+        self.buf.write_message(&summary)?;
+
         self.buf.newline()?;
 
         Ok(())
