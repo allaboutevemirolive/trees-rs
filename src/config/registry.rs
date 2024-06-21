@@ -18,7 +18,7 @@ use crate::render::entree::dirr::FnOutDir;
 use crate::render::entree::filee::FnOutFile;
 use crate::render::entree::headd::FnOutHead;
 use crate::render::entree::symlinked::FnOutSymlink;
-use crate::report::tail::Tail;
+use crate::report::stats::DirectoryStats;
 
 use std::fs::DirEntry;
 use std::io::StdoutLock;
@@ -30,7 +30,7 @@ pub struct Registry<'a> {
     // Common util
     pub read: FnReadDir,
     pub sort: FnSortEntries,
-    /// Entry  
+    // Entry
     pub dir: FnOutDir<StdoutLock<'a>>,
     pub file: FnOutFile<StdoutLock<'a>>,
     pub symlink: FnOutSymlink<StdoutLock<'a>>,
@@ -44,8 +44,8 @@ pub struct Registry<'a> {
 }
 
 impl<'a> Registry<'a> {
-    pub fn inspt_dents(&self, path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
-        (self.read)(path, tail)
+    pub fn inspt_dents(&self, path: PathBuf, dir_stats: &mut DirectoryStats) -> TResult<Vec<DirEntry>> {
+        (self.read)(path, dir_stats)
     }
 
     pub fn sort_dents(&self, entries: &mut Vec<DirEntry>) {

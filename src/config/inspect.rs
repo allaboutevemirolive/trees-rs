@@ -1,27 +1,29 @@
 use crate::error::simple::TResult;
-use crate::report::tail::Tail;
+use crate::report::stats::DirectoryStats;
 
 use std::fs;
 use std::fs::DirEntry;
 use std::path::PathBuf;
 
-pub type FnReadDir = fn(PathBuf, &mut Tail) -> TResult<Vec<DirEntry>>;
+pub type FnReadDir = fn(PathBuf, &mut DirectoryStats) -> TResult<Vec<DirEntry>>;
 
-#[allow(unused_variables)]
-pub fn read_all_entries(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
+pub fn read_all_entries(path: PathBuf, _dir_stats: &mut DirectoryStats) -> TResult<Vec<DirEntry>> {
     let entries = fs::read_dir(path)?.collect::<Result<Vec<DirEntry>, std::io::Error>>()?;
 
     Ok(entries)
 }
 
-pub fn read_visible_entries(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
+pub fn read_visible_entries(
+    path: PathBuf,
+    dir_stats: &mut DirectoryStats,
+) -> TResult<Vec<DirEntry>> {
     let entries = fs::read_dir(path)?
         .filter_map(|entry_result| {
             entry_result.ok().and_then(|entry| {
                 if !entry.file_name().to_string_lossy().starts_with('.') {
                     Some(entry)
                 } else {
-                    tail.hidden_add_one();
+                    dir_stats.hidden_add_one();
                     None
                 }
             })
@@ -30,7 +32,10 @@ pub fn read_visible_entries(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEn
     Ok(entries)
 }
 
-pub fn read_visible_folders(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEntry>> {
+pub fn read_visible_folders(
+    path: PathBuf,
+    dir_stats: &mut DirectoryStats,
+) -> TResult<Vec<DirEntry>> {
     let entries = fs::read_dir(path)?
         .filter_map(|entry_result| {
             entry_result.ok().and_then(|entry| {
@@ -38,7 +43,7 @@ pub fn read_visible_folders(path: PathBuf, tail: &mut Tail) -> TResult<Vec<DirEn
                 if metadata.is_dir() && !entry.file_name().to_string_lossy().starts_with('.') {
                     Some(entry)
                 } else {
-                    tail.hidden_add_one();
+                    dir_stats.hidden_add_one();
                     None
                 }
             })

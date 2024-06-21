@@ -5,6 +5,7 @@ use crate::cli::arg::TreeArgs;
 
 mod config;
 use config::root::BaseDirectory;
+use report::stats::ReportMode;
 
 mod error;
 use crate::error::simple::TResult;
@@ -21,18 +22,18 @@ fn main() -> TResult<()> {
     let mut tr = TreeCtxt::new()?;
     let mut base_dir = BaseDirectory::from_current_dir()?;
 
-    args.match_app(&mut tr, &mut base_dir)?;
+    let report_mode = args.match_app(&mut tr, &mut base_dir)?;
 
     // Update path_builder based on base_dir
     tr.path_builder = base_dir.build().expect("Cannot build base directory.");
     tr.path_builder.append_root();
 
-    run_tree(&mut tr)?;
+    run_tree(&mut tr, report_mode)?;
 
     Ok(())
 }
 
-fn run_tree(tr: &mut TreeCtxt) -> TResult<()> {
+fn run_tree(tr: &mut TreeCtxt, report_mode: ReportMode) -> TResult<()> {
     tr.print_head(
         tr.path_builder.filename(),
         tr.path_builder.base_path(),
@@ -41,7 +42,7 @@ fn run_tree(tr: &mut TreeCtxt) -> TResult<()> {
 
     tr.walk_dir(tr.path_builder.base_path())?;
 
-    tr.print_report()?;
+    tr.print_report(report_mode)?;
 
     Ok(())
 }
