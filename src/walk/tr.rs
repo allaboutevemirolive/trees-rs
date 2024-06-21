@@ -24,7 +24,7 @@ pub struct TreeCtxt<'tr> {
     pub level: Level,
     pub nod: Node,
     pub rg: Registry<'tr>,
-    pub tail: DirectoryStats,
+    pub dir_stats: DirectoryStats,
     pub file_colors: FileColors,
     pub path_builder: PathBuilder,
 }
@@ -34,7 +34,7 @@ impl<'tr> TreeCtxt<'tr> {
         let buf = Buffer::new(io::stdout().lock())?;
         let branch = Branch::default();
         let nod = Node::default();
-        let tail = DirectoryStats::default();
+        let dir_stats = DirectoryStats::default();
         let level = Level::default();
         let rg = Registry::new()?;
         let file_colors = FileColors::new();
@@ -46,7 +46,7 @@ impl<'tr> TreeCtxt<'tr> {
             level,
             nod,
             rg,
-            tail,
+            dir_stats,
             file_colors,
             path_builder,
         })
@@ -54,7 +54,7 @@ impl<'tr> TreeCtxt<'tr> {
 
     pub fn walk_dir(&mut self, path: PathBuf) -> TResult<()> {
         // Get entries in target path
-        let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.tail)?;
+        let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.dir_stats)?;
 
         self.rg.sort_dents(&mut entries);
 
@@ -67,7 +67,8 @@ impl<'tr> TreeCtxt<'tr> {
             // Get entry's information
             let mut visitor = Visitor::new(entry)?;
             // Accumulate entry's size
-            self.tail.add_size(visitor.size().expect("Invalid size."));
+            self.dir_stats
+                .add_size(visitor.size().expect("Invalid size."));
             // Print entry's information
             self.print_info(&visitor.metadata())?;
             // If current entry is not the last entry in entries
@@ -76,7 +77,7 @@ impl<'tr> TreeCtxt<'tr> {
             self.nod.to_branch(&self.branch, &mut self.buf)?;
 
             if visitor.is_symlink() {
-                self.tail.symlink_add_one();
+                self.dir_stats.symlink_add_one();
                 self.buf
                     .write_message(&self.file_colors.symlink.open_color())?;
                 self.buf
@@ -103,7 +104,7 @@ impl<'tr> TreeCtxt<'tr> {
             }
 
             if visitor.is_file() {
-                self.tail.file_add_one();
+                self.dir_stats.file_add_one();
                 self.buf
                     .write_message(&self.file_colors.file.open_color())?;
                 self.buf
@@ -116,7 +117,7 @@ impl<'tr> TreeCtxt<'tr> {
             }
 
             if visitor.is_dir() {
-                self.tail.dir_add_one();
+                self.dir_stats.dir_add_one();
                 self.buf
                     .write_message(&self.file_colors.directory.open_color())?;
                 self.buf
@@ -137,7 +138,7 @@ impl<'tr> TreeCtxt<'tr> {
                 // If entry is not dir, file or symlink like:
                 // - Special File(Device File, Socket File, Named Pipe (FIFO))
                 // - Unix-Specific(Block Device, Character Device)
-                self.tail.special_add_one();
+                self.dir_stats.special_add_one();
                 self.buf
                     .write_message(&self.file_colors.special_file.open_color())?;
                 self.buf.write_message(
@@ -162,7 +163,7 @@ impl<'tr> TreeCtxt<'tr> {
         base_path: PathBuf,
         fmeta: Metadata,
     ) -> TResult<()> {
-        self.tail.add_size(fmeta.size());
+        self.dir_stats.add_size(fmeta.size());
 
         self.print_info(&fmeta)?;
 
@@ -192,15 +193,14 @@ impl<'tr> TreeCtxt<'tr> {
 
     pub fn print_report(&mut self, report_mode: ReportMode) -> TResult<()> {
         self.buf.newline()?;
-
-        self.tail.accumulate_items();
+        self.dir_stats.accumulate_items();
+        // Store formatted DirectoryStats here
         let mut report_summary = ReportSummary::with_capacity(50).unwrap();
-        self.tail.populate_report(&mut report_summary, report_mode);
+        self.dir_stats
+            .populate_report(&mut report_summary, report_mode);
         let summary = report_summary.join(", ");
         self.buf.write_message(&summary)?;
-
         self.buf.newline()?;
-
         Ok(())
     }
 }

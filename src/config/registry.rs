@@ -44,8 +44,8 @@ pub struct Registry<'a> {
 }
 
 impl<'a> Registry<'a> {
-    pub fn inspt_dents(&self, path: PathBuf, tail: &mut DirectoryStats) -> TResult<Vec<DirEntry>> {
-        (self.read)(path, tail)
+    pub fn inspt_dents(&self, path: PathBuf, dir_stats: &mut DirectoryStats) -> TResult<Vec<DirEntry>> {
+        (self.read)(path, dir_stats)
     }
 
     pub fn sort_dents(&self, entries: &mut Vec<DirEntry>) {
