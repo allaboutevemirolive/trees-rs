@@ -10,6 +10,7 @@ pub enum ReportMode {
 pub struct DirectoryStats {
     directories: usize,
     files: usize,
+    media: usize,
     hidden_files: usize,
     symlinks: usize,
     special_files: usize,
@@ -22,6 +23,7 @@ impl Default for DirectoryStats {
         DirectoryStats {
             directories: 1,
             files: 0,
+            media: 0,
             size: 0,
             hidden_files: 0,
             symlinks: 0,
@@ -56,11 +58,16 @@ impl DirectoryStats {
         self.special_files += 1
     }
 
+    pub fn media_add_one(&mut self) {
+        self.media += 1
+    }
+
     /// Accumulate all items except hidden files.
     ///
     /// If user want to include hidden files, pass `--all` in the arguments
     pub fn accumulate_items(&mut self) {
-        self.total_items = self.directories + self.files + self.symlinks + self.special_files;
+        self.total_items =
+            self.directories + self.files + self.symlinks + self.special_files + self.media;
     }
 }
 
@@ -87,47 +94,48 @@ impl ReportSummary {
 
 impl DirectoryStats {
     pub fn populate_report(&self, report_summary: &mut ReportSummary, report_mode: ReportMode) {
-        let directories = self.directories_to_string().unwrap();
+        let directories = self.directories_to_string(&report_mode).unwrap();
         let directories = format!("{}: {}", directories.1, directories.0);
 
-        let files = self.files_to_string().unwrap();
+        let files = self.files_to_string(&report_mode).unwrap();
         let files = format!("{}: {}", files.1, files.0);
 
-        let hidden_files = self.hidden_files_to_string().unwrap();
+        let hidden_files = self.hidden_files_to_string(&report_mode).unwrap();
         let hidden_files = format!("{}: {}", hidden_files.1, hidden_files.0);
 
-        let symlinks = self.symlinks_to_string().unwrap();
+        let symlinks = self.symlinks_to_string(&report_mode).unwrap();
         let symlinks = format!("{}: {}", symlinks.1, symlinks.0);
 
-        let special_files = self.special_files_to_string().unwrap();
-        let special_files = format!("{}: {}", special_files.1, special_files.0);
+        // let special_files = self.special_files_to_string(&report_mode).unwrap();
+        // let special_files = format!("{}: {}", special_files.1, special_files.0);
 
-        let total_items = self.total_items_to_string().unwrap();
+        let media_files = format!("M: {}", self.media);
+
+        let total_items = self.total_items_to_string(&report_mode).unwrap();
         let total_items = format!("{}: {}", total_items.1, total_items.0);
 
-        let size = self.size_to_string().unwrap();
-        let size = format!("Sizes: {} {}", size.0, size.1);
-
-        if report_mode == ReportMode::Default {
-            report_summary.push(directories);
-            report_summary.push(files);
-            report_summary.push(symlinks);
-            report_summary.push(size);
+        let size = self.size_to_string(&report_mode).unwrap();
+        let size_str: String = if report_mode == ReportMode::Default {
+            "SZ".to_string()
         } else {
-            report_summary.push(directories);
-            report_summary.push(files);
-            report_summary.push(hidden_files);
-            report_summary.push(symlinks);
-            report_summary.push(special_files);
-            report_summary.push(total_items);
-            report_summary.push(size);
-        }
+            "Sizes".to_string()
+        };
+        let size = format!("{}: {} {}", size_str, size.0, size.1);
+
+        report_summary.push(directories);
+        report_summary.push(files);
+        report_summary.push(hidden_files);
+        report_summary.push(symlinks);
+        // report_summary.push(special_files);
+        report_summary.push(media_files);
+        report_summary.push(total_items);
+        report_summary.push(size);
     }
 }
 
 #[allow(unused_assignments, dead_code)]
 impl DirectoryStats {
-    fn directories_to_string(&self) -> TResult<(String, String)> {
+    fn directories_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
         let mut dir_str = String::new();
 
         let directories = self.directories;
@@ -138,12 +146,16 @@ impl DirectoryStats {
             dir_str = "Directory".to_string();
         }
 
+        if *report_mode == ReportMode::Default {
+            dir_str = "D".to_string();
+        }
+
         let dir_count = format!("{}", directories);
 
         Ok((dir_count, dir_str))
     }
 
-    fn files_to_string(&self) -> TResult<(String, String)> {
+    fn files_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
         let mut file_str = String::new();
 
         let files = self.files;
@@ -154,13 +166,21 @@ impl DirectoryStats {
             file_str = "File".to_string();
         }
 
+        if *report_mode == ReportMode::Default {
+            file_str = "F".to_string();
+        }
+
         let file_count = format!("{}", files);
 
         Ok((file_count, file_str))
     }
 
-    fn hidden_files_to_string(&self) -> TResult<(String, String)> {
-        let hidden_files_str = "Hidden".to_string();
+    fn hidden_files_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
+        let mut hidden_files_str = "Hidden".to_string();
+
+        if *report_mode == ReportMode::Default {
+            hidden_files_str = "H".to_string();
+        }
 
         let hidden_files = self.hidden_files;
 
@@ -169,7 +189,7 @@ impl DirectoryStats {
         Ok((hidden_files_count, hidden_files_str))
     }
 
-    fn symlinks_to_string(&self) -> TResult<(String, String)> {
+    fn symlinks_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
         let mut symlinks_str = String::new();
 
         let symlinks = self.symlinks;
@@ -180,12 +200,16 @@ impl DirectoryStats {
             symlinks_str = "Symlink".to_string();
         }
 
+        if *report_mode == ReportMode::Default {
+            symlinks_str = "SY".to_string();
+        }
+
         let symlinks_count = format!("{}", symlinks);
 
         Ok((symlinks_count, symlinks_str))
     }
 
-    fn special_files_to_string(&self) -> TResult<(String, String)> {
+    fn special_files_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
         let mut special_files_str = String::new();
 
         let special_files = self.special_files;
@@ -196,12 +220,16 @@ impl DirectoryStats {
             special_files_str = "Special File".to_string();
         }
 
+        if *report_mode == ReportMode::Default {
+            special_files_str = "SP".to_string();
+        }
+
         let special_files_count = format!("{}", special_files);
 
         Ok((special_files_count, special_files_str))
     }
 
-    fn total_items_to_string(&self) -> TResult<(String, String)> {
+    fn total_items_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
         let mut total_items_str = String::new();
 
         let total_items = self.total_items;
@@ -212,12 +240,16 @@ impl DirectoryStats {
             total_items_str = "Total Item".to_string();
         }
 
+        if *report_mode == ReportMode::Default {
+            total_items_str = "T".to_string();
+        }
+
         let total_items_count = format!("{}", total_items);
 
         Ok((total_items_count, total_items_str))
     }
 
-    fn size_to_string(&self) -> TResult<(String, String)> {
+    fn size_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
         let size = self.size as f64;
         let size_count: f64;
 
@@ -232,14 +264,26 @@ impl DirectoryStats {
             unit_str = "Gigabytes".to_string();
             size_count = size / 1_073_741_824.0;
             unit_count = format!("{:.3}", size_count);
+
+            if *report_mode == ReportMode::Default {
+                unit_str = "GB".to_string();
+            }
         } else if size < two_gb_in_bytes && size > one_gb_in_bytes {
             unit_str = "Gigabyte".to_string();
             size_count = size / 1_073_741_824.0;
             unit_count = format!("{:.3}", size_count);
+
+            if *report_mode == ReportMode::Default {
+                unit_str = "GB".to_string();
+            }
         } else if size < one_gb_in_bytes {
             unit_str = "bytes".to_string();
             size_count = size;
             unit_count = format!("{}", size_count);
+
+            if *report_mode == ReportMode::Default {
+                unit_str = "B".to_string();
+            }
         }
 
         Ok((unit_count, unit_str))

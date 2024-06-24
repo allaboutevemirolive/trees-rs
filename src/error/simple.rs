@@ -26,9 +26,19 @@ impl TSimpleError {
 
 impl Error for TSimpleError {}
 
+// impl Display for TSimpleError {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+//         self.message.fmt(f)
+//     }
+// }
+
 impl Display for TSimpleError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        self.message.fmt(f)
+        match self.code {
+            1 => write!(f, "IO Error: {}", self.message),
+            2 => write!(f, "Symlink Error: {}", self.message),
+            _ => self.message.fmt(f),
+        }
     }
 }
 

@@ -103,6 +103,19 @@ impl<'tr> TreeCtxt<'tr> {
                 continue;
             }
 
+            if visitor.is_media_type() {
+                self.dir_stats.media_add_one();
+                self.buf
+                    .write_message(&self.file_colors.file.open_color())?;
+                self.buf
+                    .print_file(&visitor, &self.path_builder, self.rg.file)?;
+                self.buf
+                    .write_message(&self.file_colors.file.closed_color())?;
+                self.buf.newline()?;
+                self.nod.pop();
+                continue;
+            }
+
             if visitor.is_file() {
                 self.dir_stats.file_add_one();
                 self.buf
@@ -196,9 +209,12 @@ impl<'tr> TreeCtxt<'tr> {
         self.dir_stats.accumulate_items();
         // Store formatted DirectoryStats here
         let mut report_summary = ReportSummary::with_capacity(50).unwrap();
+        // Get report
         self.dir_stats
             .populate_report(&mut report_summary, report_mode);
+        // Parse report
         let summary = report_summary.join(", ");
+
         self.buf.write_message(&summary)?;
         self.buf.newline()?;
         Ok(())

@@ -1,12 +1,22 @@
 use crate::error::simple::TResult;
 use crate::error::simple::TSimpleError;
 
+use phf::phf_set;
+use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::fs;
 use std::fs::DirEntry;
 use std::fs::FileType;
 use std::fs::Metadata;
 use std::path::PathBuf;
+
+static MEDIA_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp",     // Images
+    "mp4", "avi", "mkv", "mov", "flv", "wmv", "webm",       // Videos
+    "mp3", "wav", "ogg", "flac", "aac", "m4a"             // Audio
+    // "pdf",                                                // Documents
+    // "txt", "doc", "docx", "xls", "xlsx", "ppt", "pptx"     // More documents
+};
 
 #[derive(Debug)]
 pub struct Visitor {
@@ -16,29 +26,31 @@ pub struct Visitor {
     filety: FileType,
     meta: Metadata,
     size: Option<u64>,
+    is_media: bool,
 }
 
 impl Visitor {
     pub fn new(dent: DirEntry) -> TResult<Self> {
         let filety = dent.file_type()?;
-        let abs = dent.path();
+
         let filename = dent
             .path()
             .file_name()
             .map(|os_str| os_str.to_os_string())
-            .expect("Failed to get file name");
+            .expect("Cannot get filename");
 
         let meta = dent.metadata()?;
 
         let size = meta.len();
 
         Ok(Self {
-            abs: Some(abs),
+            abs: Some(dent.path()),
             dent,
             filety,
             meta,
             filename,
             size: Some(size),
+            is_media: false,
         })
     }
 
@@ -79,21 +91,26 @@ impl Visitor {
         self.meta.clone()
     }
 
+    pub fn is_media_type(&mut self) -> bool {
+        if let Some(ext) = self
+            .absolute_path()
+            .expect("Cannot get absolute path")
+            .extension()
+            .and_then(OsStr::to_str)
+        {
+            MEDIA_EXTENSIONS.contains(ext)
+        } else {
+            false
+        }
+    }
+
     pub fn get_target_symlink(&self) -> Result<PathBuf, TSimpleError> {
         if !self.is_symlink() {
-            return Err(TSimpleError {
-                code: 2,
-                message: "Visitor is not a symlink".to_string(),
-            });
+            return Err(TSimpleError::new(2, "Visitor is not a symlink".to_string()));
         }
 
-        if let Ok(link_target) =
-            fs::read_link(self.absolute_path().expect("Invalid absolute path."))
-        {
-            Ok(link_target)
-        } else {
-            Err(TSimpleError::new(2, "Cannot read target link to symlink"))
-        }
+        fs::read_link(self.absolute_path().expect("Invalid absolute path."))
+            .map_err(|_| TSimpleError::new(2, "Cannot read target link to symlink"))
     }
 }
 
