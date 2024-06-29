@@ -2,7 +2,6 @@ use crate::render::buffer::Buffer;
 use std::fs::Metadata;
 use std::io;
 use std::io::Write;
-use std::os::unix::fs::PermissionsExt;
 
 pub type FnExtPermission<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 
@@ -18,6 +17,8 @@ impl<W: Write> Buffer<W> {
 
     #[cfg(unix)]
     pub fn write_permission(&mut self, meta: &Metadata) -> io::Result<()> {
+        use std::os::unix::fs::PermissionsExt;
+
         let mode = meta.permissions().mode();
 
         self.write_space()?;

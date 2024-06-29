@@ -14,7 +14,7 @@ use std::ffi::OsString;
 use std::fs::Metadata;
 use std::io;
 use std::io::StdoutLock;
-use std::os::unix::fs::MetadataExt;
+// use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 
 pub struct TreeCtxt<'tr> {
@@ -126,7 +126,7 @@ impl<'tr> TreeCtxt<'tr> {
                 if self.level.can_descend_further() {
                     self.level.add_one();
                     // If folder needed permission, we skip it. Safe to use unwrap.
-                    if let Err(_) = self.walk_dir(visitor.absolute_path().unwrap()) {
+                    if self.walk_dir(visitor.absolute_path().unwrap()).is_err() {
                         self.dir_stats.err_dirs_add_one();
                         self.level.subtract_one();
                         self.nod.pop();
@@ -152,12 +152,15 @@ impl<'tr> TreeCtxt<'tr> {
         Ok(())
     }
 
+    #[cfg(unix)]
     pub fn print_head(
         &mut self,
         file_name: OsString,
         base_path: PathBuf,
         fmeta: Metadata,
     ) -> TResult<()> {
+        use std::os::unix::fs::MetadataExt;
+
         self.dir_stats.add_size(fmeta.size());
 
         self.print_info(&fmeta)?;
