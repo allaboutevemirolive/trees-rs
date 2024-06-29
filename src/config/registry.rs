@@ -30,13 +30,15 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Copy)]
 pub struct Registry<'a> {
     // Common util
-    pub read: FnReadDir,
-    pub sort: FnSortEntries,
+    read: FnReadDir,
+    sort: FnSortEntries,
+
     // Entry
     pub dir: FnOutDir<StdoutLock<'a>>,
     pub file: FnOutFile<StdoutLock<'a>>,
     pub symlink: FnOutSymlink<StdoutLock<'a>>,
     pub head: FnOutHead<StdoutLock<'a>>,
+
     // Metadata
     pub pms: FnExtPermission<StdoutLock<'a>>,
     pub btime: FnExtBTime<StdoutLock<'a>>,
@@ -45,12 +47,13 @@ pub struct Registry<'a> {
     pub size: FnExtSize<StdoutLock<'a>>,
 
     // Color
-    pub reset: FnColor<StdoutLock<'a>>,
-    pub yellow: FnColor<StdoutLock<'a>>,
-    pub bold_red: FnColor<StdoutLock<'a>>,
-    pub underlined_blue: FnColor<StdoutLock<'a>>,
-    pub blue: FnColor<StdoutLock<'a>>,
-    pub green: FnColor<StdoutLock<'a>>,
+    reset: FnColor<StdoutLock<'a>>,
+    yellow: FnColor<StdoutLock<'a>>,
+    bold_red: FnColor<StdoutLock<'a>>,
+    underlined_blue: FnColor<StdoutLock<'a>>,
+    blue: FnColor<StdoutLock<'a>>,
+    green: FnColor<StdoutLock<'a>>,
+    purple: FnColor<StdoutLock<'a>>,
 }
 
 impl<'a> Registry<'a> {
@@ -77,6 +80,10 @@ impl<'a> Registry<'a> {
     pub fn green(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
         (self.green)(buf)
     }
+
+    pub fn purple(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+        (self.purple)(buf)
+    }
 }
 
 impl<'a> Registry<'a> {
@@ -95,6 +102,7 @@ impl<'a> Registry<'a> {
 
 impl<'a> Registry<'a> {
     pub fn new() -> TResult<Self> {
+        // Common util
         let read: FnReadDir = read_visible_entries;
         let sort: FnSortEntries = sort_by_name;
 
@@ -118,14 +126,18 @@ impl<'a> Registry<'a> {
         let underlined_blue: FnColor<StdoutLock> = Buffer::underlined_blue;
         let blue: FnColor<StdoutLock> = Buffer::blue;
         let green: FnColor<StdoutLock> = Buffer::green;
+        let purple: FnColor<StdoutLock> = Buffer::purple;
 
         Ok(Self {
+            // common-util
             read,
             sort,
+            // entry
             dir,
             file,
             head,
             symlink,
+            // pms
             pms,
             btime,
             mtime,
@@ -138,6 +150,7 @@ impl<'a> Registry<'a> {
             underlined_blue,
             blue,
             green,
+            purple,
         })
     }
 }

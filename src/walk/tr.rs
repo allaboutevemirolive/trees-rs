@@ -14,7 +14,6 @@ use std::ffi::OsString;
 use std::fs::Metadata;
 use std::io;
 use std::io::StdoutLock;
-// use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 
 pub struct TreeCtxt<'tr> {
@@ -97,7 +96,7 @@ impl<'tr> TreeCtxt<'tr> {
 
             if visitor.is_media_type() {
                 self.dir_stats.media_add_one();
-                self.rg.blue(&mut self.buf)?; // TODO: Use specific color for media type
+                self.rg.purple(&mut self.buf)?; // TODO: Use specific color for media type
                 self.buf
                     .print_file(&visitor, &self.path_builder, self.rg.file)?;
                 self.rg.reset(&mut self.buf)?;

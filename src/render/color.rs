@@ -29,6 +29,10 @@ impl<W: Write> Buffer<W> {
         self.bufwr.write_all(b"\x1B[1;32m")
     }
 
+    pub fn purple(&mut self) -> io::Result<()> {
+        self.bufwr.write_all(b"\x1B[1;35m")
+    }
+
     pub fn no_color(&mut self) -> io::Result<()> {
         Ok(())
     }
