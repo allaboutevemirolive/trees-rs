@@ -126,7 +126,7 @@ impl<'tr> TreeCtxt<'tr> {
                 if self.level.can_descend_further() {
                     self.level.add_one();
                     // If folder needed permission, we skip it. Safe to use unwrap.
-                    if self.walk_dir(visitor.absolute_path().unwrap()).is_err() {
+                    if let Err(_) = self.walk_dir(visitor.absolute_path().unwrap()) {
                         self.dir_stats.err_dirs_add_one();
                         self.level.subtract_one();
                         self.nod.pop();
