@@ -13,13 +13,7 @@ impl<W: Write> Buffer<W> {
         visit: &Visitor,
         path_builder: &PathBuilder,
     ) -> io::Result<()> {
-        self.bufwr.write_all(
-            path_builder
-                .clone()
-                .append_relative(visit)
-                .to_os_string()
-                .as_encoded_bytes(),
-        )?;
+        self.write_os_string(path_builder.clone().append_relative(visit).to_os_string())?;
 
         Ok(())
     }

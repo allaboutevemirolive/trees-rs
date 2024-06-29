@@ -14,19 +14,13 @@ impl<W: Write> Buffer<W> {
         path_builder: &PathBuilder,
     ) -> io::Result<()> {
         // No need to pop since we clone path_builder
-        self.bufwr.write_all(
-            path_builder
-                .clone()
-                .append_relative(visit)
-                .to_os_string()
-                .as_encoded_bytes(),
-        )?;
+        self.write_os_string(path_builder.clone().append_relative(visit).to_os_string())?;
 
         Ok(())
     }
 
     pub fn write_entry(&mut self, visit: &Visitor, _path_builder: &PathBuilder) -> io::Result<()> {
-        self.bufwr.write_all(visit.filename().as_encoded_bytes())?;
+        self.write_os_string(visit.filename())?;
         Ok(())
     }
 

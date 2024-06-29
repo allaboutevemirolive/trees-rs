@@ -16,6 +16,7 @@ pub struct DirectoryStats {
     special_files: usize,
     total_items: usize,
     size: u64,
+    err_directories: u64,
 }
 
 impl Default for DirectoryStats {
@@ -29,6 +30,7 @@ impl Default for DirectoryStats {
             symlinks: 0,
             total_items: 0,
             special_files: 0,
+            err_directories: 0,
         }
     }
 }
@@ -60,6 +62,10 @@ impl DirectoryStats {
 
     pub fn media_add_one(&mut self) {
         self.media += 1
+    }
+
+    pub fn err_dirs_add_one(&mut self) {
+        self.err_directories += 1
     }
 
     /// Accumulate all items except hidden files.
@@ -106,6 +112,7 @@ impl DirectoryStats {
         let symlinks = self.symlinks_to_string(&report_mode).unwrap();
         let symlinks = format!("{}: {}", symlinks.1, symlinks.0);
 
+        // TODO:
         // let special_files = self.special_files_to_string(&report_mode).unwrap();
         // let special_files = format!("{}: {}", special_files.1, special_files.0);
 

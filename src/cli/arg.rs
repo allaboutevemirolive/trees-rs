@@ -144,7 +144,8 @@ impl TreeArgs {
         }
 
         if matches.get_flag(options::color::COLORLESS) {
-            tr.file_colors.disable_color();
+            // tr.file_colors.disable_color();
+            tr.rg.with_no_color()?;
         }
 
         Ok(report_mode)

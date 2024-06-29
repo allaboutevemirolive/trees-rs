@@ -26,18 +26,12 @@ impl TSimpleError {
 
 impl Error for TSimpleError {}
 
-// impl Display for TSimpleError {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-//         self.message.fmt(f)
-//     }
-// }
-
 impl Display for TSimpleError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self.code {
             1 => write!(f, "IO Error: {}", self.message),
             2 => write!(f, "Symlink Error: {}", self.message),
-            _ => self.message.fmt(f),
+            _ => write!(f, "Error: {}", self.message),
         }
     }
 }
@@ -57,6 +51,15 @@ impl From<TSimpleError> for Box<dyn TError> {
 impl From<std::io::Error> for Box<dyn TError> {
     fn from(err: std::io::Error) -> Self {
         Box::new(TSimpleError::new(1, format!("IO Error: {}", err)))
+    }
+}
+
+impl<T> From<Option<T>> for Box<dyn TError> {
+    fn from(err: Option<T>) -> Self {
+        match err {
+            Some(_) => Box::new(TSimpleError::new(0, "Unexpected Value".to_string())),
+            None => Box::new(TSimpleError::new(404, "Value Not Found".to_string())),
+        }
     }
 }
 

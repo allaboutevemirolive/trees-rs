@@ -2,6 +2,7 @@ use crate::error::simple::TResult;
 use crate::error::simple::TSimpleError;
 
 use phf::phf_set;
+
 use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::fs;
@@ -43,6 +44,16 @@ impl Visitor {
 
         let size = meta.len();
 
+        let is_media: bool;
+
+        if let Some(ext) = dent.path().extension().and_then(OsStr::to_str) {
+            is_media = MEDIA_EXTENSIONS.contains(ext);
+        } else {
+            is_media = false;
+        }
+
+        // dbg!("Hello");
+
         Ok(Self {
             abs: Some(dent.path()),
             dent,
@@ -50,7 +61,7 @@ impl Visitor {
             meta,
             filename,
             size: Some(size),
-            is_media: false,
+            is_media,
         })
     }
 
@@ -91,18 +102,22 @@ impl Visitor {
         self.meta.clone()
     }
 
-    pub fn is_media_type(&mut self) -> bool {
-        if let Some(ext) = self
-            .absolute_path()
-            .expect("Cannot get absolute path")
-            .extension()
-            .and_then(OsStr::to_str)
-        {
-            MEDIA_EXTENSIONS.contains(ext)
-        } else {
-            false
-        }
+    pub fn is_media_type(&self) -> bool {
+        self.is_media
     }
+
+    // pub fn check_media_type(&mut self) {
+    //     if let Some(ext) = self
+    //         .absolute_path()
+    //         .expect("Cannot get absolute path")
+    //         .extension()
+    //         .and_then(OsStr::to_str)
+    //     {
+    //         self.is_media = MEDIA_EXTENSIONS.contains(ext);
+    //     } else {
+    //         self.is_media = false;
+    //     }
+    // }
 
     pub fn get_target_symlink(&self) -> Result<PathBuf, TSimpleError> {
         if !self.is_symlink() {
