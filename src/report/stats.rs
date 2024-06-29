@@ -72,8 +72,13 @@ impl DirectoryStats {
     ///
     /// If user want to include hidden files, pass `--all` in the arguments
     pub fn accumulate_items(&mut self) {
-        self.total_items =
-            self.directories + self.files + self.symlinks + self.special_files + self.media;
+        self.total_items = self.directories
+            + self.files
+            + self.symlinks
+            + self.special_files
+            + self.media
+            + self.err_directories as usize
+            + self.special_files;
     }
 }
 
