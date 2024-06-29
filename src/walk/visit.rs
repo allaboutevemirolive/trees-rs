@@ -128,30 +128,3 @@ impl Visitor {
             .map_err(|_| TSimpleError::new(2, "Cannot read target link to symlink"))
     }
 }
-
-#[cfg(test)]
-mod metada_test {
-
-    #[allow(unused_imports)]
-    use super::*;
-    use std::fs::{self, File};
-    use std::io;
-    #[allow(unused_imports)]
-    use std::io::Write;
-    #[allow(unused_imports)]
-    use std::os::unix::fs::PermissionsExt;
-    #[allow(unused_imports)]
-    use tempfile::tempdir;
-
-    #[allow(dead_code)]
-    fn create_temp_file_with_permissions(
-        temp_dir: &tempfile::TempDir,
-        permissions: u32,
-    ) -> io::Result<DirEntry> {
-        let file_path = temp_dir.path().join("test_file.txt");
-        let file = File::create(&file_path)?;
-        file.set_permissions(fs::Permissions::from_mode(permissions))?;
-        let dir_entry = fs::read_dir(temp_dir.path())?.next().unwrap()?;
-        Ok(dir_entry)
-    }
-}
