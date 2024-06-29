@@ -75,7 +75,7 @@ mod tests {
     #[test]
     fn test_usimple_error_message() {
         let error = TSimpleError::new(404, "Not Found");
-        assert_eq!(error.to_string(), "Not Found");
+        assert_eq!(error.to_string(), "Error: Not Found");
     }
 
     #[test]
@@ -90,6 +90,6 @@ mod tests {
         assert!(result.is_err());
         let err = result.err().unwrap();
         assert_eq!(err.code(), 404);
-        assert_eq!(err.to_string(), "Resource with id 123 not found");
+        assert_eq!(err.to_string(), "Error: Resource with id 123 not found");
     }
 }
