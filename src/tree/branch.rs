@@ -5,13 +5,13 @@ use std::io::StdoutLock;
 
 #[derive(Debug, Clone)]
 pub struct Branch {
-    /// Represents the end of a branch, e.g., `"└── "`
+    /// Represents the end of a branch, e.g., "└── "
     end: &'static str,
-    /// Represents the middle part of a branch, e.g., `"├── "`
+    /// Represents the middle part of a branch, e.g., "├── "
     middle: &'static str,
-    /// Represents empty space between branches, e.g., `"    "`
+    /// Represents empty space between branches, e.g., "    "
     space: &'static str,
-    /// Represents the main structural part of the tree, e.g., `"│   "`
+    /// Represents the main structural part of the tree, e.g., "│   "
     structural: &'static str,
 }
 
@@ -28,9 +28,9 @@ impl Default for Branch {
     #[rustfmt::skip]
     fn default() -> Self {
         Branch {
-            end       : "└── ",
-            middle    : "├── ",
-            space     : "    ",
+            end:        "└── ",
+            middle:     "├── ",
+            space:      "    ",
             structural: "│   ",
         }
     }

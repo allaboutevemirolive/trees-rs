@@ -51,8 +51,6 @@ impl TreeArgs {
         tr: &mut TreeCtxt,
         base_dir: &mut BaseDirectory,
     ) -> TResult<ReportMode> {
-        let report_mode: ReportMode;
-
         let path_exist = extract_and_update_base_dir(&mut self.args, base_dir);
 
         if !path_exist {
@@ -82,11 +80,11 @@ impl TreeArgs {
             tr.rg.with_size()?;
         }
 
-        if matches.get_flag(options::report::YIELD) {
-            report_mode = ReportMode::Exhaustive
+        let report_mode: ReportMode = if matches.get_flag(options::report::YIELD) {
+            ReportMode::Exhaustive
         } else {
-            report_mode = ReportMode::Default
-        }
+            ReportMode::Default
+        };
 
         if matches.get_flag(options::sort::REVERSE) {
             tr.rg.with_reverse_sort_entries()?;
@@ -144,7 +142,8 @@ impl TreeArgs {
         }
 
         if matches.get_flag(options::color::COLORLESS) {
-            tr.file_colors.disable_color();
+            // tr.file_colors.disable_color();
+            tr.rg.with_no_color()?;
         }
 
         Ok(report_mode)
@@ -216,7 +215,7 @@ mod tests {
     #[test]
     fn test_new() {
         let tree_args = TreeArgs::new();
-        assert!(tree_args.args.len() >= 1);
+        assert!(!tree_args.args.is_empty());
     }
 
     #[test]

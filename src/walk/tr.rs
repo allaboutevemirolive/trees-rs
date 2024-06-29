@@ -1,4 +1,3 @@
-use crate::config::color::FileColors;
 use crate::config::registry::Registry;
 use crate::config::root::PathBuilder;
 use crate::error::simple::TResult;
@@ -15,7 +14,7 @@ use std::ffi::OsString;
 use std::fs::Metadata;
 use std::io;
 use std::io::StdoutLock;
-use std::os::unix::fs::MetadataExt;
+// use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 
 pub struct TreeCtxt<'tr> {
@@ -25,7 +24,6 @@ pub struct TreeCtxt<'tr> {
     pub nod: Node,
     pub rg: Registry<'tr>,
     pub dir_stats: DirectoryStats,
-    pub file_colors: FileColors,
     pub path_builder: PathBuilder,
 }
 
@@ -37,7 +35,6 @@ impl<'tr> TreeCtxt<'tr> {
         let dir_stats = DirectoryStats::default();
         let level = Level::default();
         let rg = Registry::new()?;
-        let file_colors = FileColors::new();
         let path_builder = PathBuilder::default();
 
         Ok(Self {
@@ -47,7 +44,6 @@ impl<'tr> TreeCtxt<'tr> {
             nod,
             rg,
             dir_stats,
-            file_colors,
             path_builder,
         })
     }
@@ -78,17 +74,14 @@ impl<'tr> TreeCtxt<'tr> {
 
             if visitor.is_symlink() {
                 self.dir_stats.symlink_add_one();
-                self.buf
-                    .write_message(&self.file_colors.symlink.open_color())?;
+                self.rg.yellow(&mut self.buf)?;
                 self.buf
                     .print_symlink(&mut visitor, &self.path_builder, self.rg.symlink)?;
-                self.buf
-                    .write_message(&self.file_colors.symlink.closed_color())?;
+                self.rg.reset(&mut self.buf)?;
 
                 self.buf.write_message(" @ ")?;
 
-                self.buf
-                    .write_message(&self.file_colors.target_symlink.open_color())?;
+                self.rg.underlined_blue(&mut self.buf)?;
                 self.buf.write_message(
                     visitor
                         .get_target_symlink()
@@ -96,8 +89,18 @@ impl<'tr> TreeCtxt<'tr> {
                         .to_str()
                         .expect("Cannot convert target symlink to &str"),
                 )?;
+                self.rg.reset(&mut self.buf)?;
+                self.buf.newline()?;
+                self.nod.pop();
+                continue;
+            }
+
+            if visitor.is_media_type() {
+                self.dir_stats.media_add_one();
+                self.rg.blue(&mut self.buf)?; // TODO: Use specific color for media type
                 self.buf
-                    .write_message(&self.file_colors.target_symlink.closed_color())?;
+                    .print_file(&visitor, &self.path_builder, self.rg.file)?;
+                self.rg.reset(&mut self.buf)?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -106,11 +109,7 @@ impl<'tr> TreeCtxt<'tr> {
             if visitor.is_file() {
                 self.dir_stats.file_add_one();
                 self.buf
-                    .write_message(&self.file_colors.file.open_color())?;
-                self.buf
                     .print_file(&visitor, &self.path_builder, self.rg.file)?;
-                self.buf
-                    .write_message(&self.file_colors.file.closed_color())?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -118,18 +117,21 @@ impl<'tr> TreeCtxt<'tr> {
 
             if visitor.is_dir() {
                 self.dir_stats.dir_add_one();
-                self.buf
-                    .write_message(&self.file_colors.directory.open_color())?;
+                self.rg.blue(&mut self.buf)?;
                 self.buf
                     .print_dir(&visitor, &self.path_builder, self.rg.dir)?;
-                self.buf
-                    .write_message(&self.file_colors.directory.closed_color())?;
-
+                self.rg.reset(&mut self.buf)?;
                 self.buf.newline()?;
 
                 if self.level.can_descend_further() {
                     self.level.add_one();
-                    self.walk_dir(visitor.absolute_path().expect("Invalid absolute path."))?;
+                    // If folder needed permission, we skip it. Safe to use unwrap.
+                    if self.walk_dir(visitor.absolute_path().unwrap()).is_err() {
+                        self.dir_stats.err_dirs_add_one();
+                        self.level.subtract_one();
+                        self.nod.pop();
+                        continue;
+                    }
                     self.level.subtract_one();
                 }
                 self.nod.pop();
@@ -139,16 +141,9 @@ impl<'tr> TreeCtxt<'tr> {
                 // - Special File(Device File, Socket File, Named Pipe (FIFO))
                 // - Unix-Specific(Block Device, Character Device)
                 self.dir_stats.special_add_one();
-                self.buf
-                    .write_message(&self.file_colors.special_file.open_color())?;
-                self.buf.write_message(
-                    visitor
-                        .filename()
-                        .to_str()
-                        .expect("Cannot convert OsString to &str"),
-                )?;
-                self.buf
-                    .write_message(&self.file_colors.special_file.closed_color())?;
+                self.rg.bold_red(&mut self.buf)?;
+                self.buf.write_os_string(visitor.filename())?;
+                self.rg.reset(&mut self.buf)?;
                 self.nod.pop();
                 continue;
             }
@@ -157,22 +152,23 @@ impl<'tr> TreeCtxt<'tr> {
         Ok(())
     }
 
+    #[cfg(unix)]
     pub fn print_head(
         &mut self,
         file_name: OsString,
         base_path: PathBuf,
         fmeta: Metadata,
     ) -> TResult<()> {
+        use std::os::unix::fs::MetadataExt;
+
         self.dir_stats.add_size(fmeta.size());
 
         self.print_info(&fmeta)?;
 
-        self.buf
-            .write_message(&self.file_colors.directory.open_color())?;
+        self.rg.blue(&mut self.buf)?;
         self.buf
             .print_header(&fmeta, &base_path.clone(), &file_name, self.rg.head)?;
-        self.buf
-            .write_message(&self.file_colors.directory.closed_color())?;
+        self.rg.reset(&mut self.buf)?;
         self.buf.newline()?;
 
         Ok(())
@@ -183,11 +179,10 @@ impl<'tr> TreeCtxt<'tr> {
         self.buf.print_btime(meta, self.rg.btime)?;
         self.buf.print_mtime(meta, self.rg.mtime)?;
         self.buf.print_atime(meta, self.rg.atime)?;
-        self.buf
-            .write_message(&self.file_colors.size.open_color())?;
+
+        self.rg.green(&mut self.buf)?;
         self.buf.print_size(meta, self.rg.size)?;
-        self.buf
-            .write_message(&self.file_colors.size.closed_color())?;
+        self.rg.reset(&mut self.buf)?;
         Ok(())
     }
 
@@ -196,9 +191,12 @@ impl<'tr> TreeCtxt<'tr> {
         self.dir_stats.accumulate_items();
         // Store formatted DirectoryStats here
         let mut report_summary = ReportSummary::with_capacity(50).unwrap();
+        // Get report
         self.dir_stats
             .populate_report(&mut report_summary, report_mode);
+        // Parse report
         let summary = report_summary.join(", ");
+
         self.buf.write_message(&summary)?;
         self.buf.newline()?;
         Ok(())

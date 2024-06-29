@@ -14,6 +14,7 @@ use crate::render::attr::mtime::FnExtModTime;
 use crate::render::attr::pms::FnExtPermission;
 use crate::render::attr::size::FnExtSize;
 use crate::render::buffer::Buffer;
+use crate::render::color::FnColor;
 use crate::render::entree::dirr::FnOutDir;
 use crate::render::entree::filee::FnOutFile;
 use crate::render::entree::headd::FnOutHead;
@@ -21,6 +22,7 @@ use crate::render::entree::symlinked::FnOutSymlink;
 use crate::report::stats::DirectoryStats;
 
 use std::fs::DirEntry;
+use std::io;
 use std::io::StdoutLock;
 use std::path::PathBuf;
 
@@ -41,10 +43,48 @@ pub struct Registry<'a> {
     pub mtime: FnExtModTime<StdoutLock<'a>>,
     pub atime: FnExtAccessTime<StdoutLock<'a>>,
     pub size: FnExtSize<StdoutLock<'a>>,
+
+    // Color
+    pub reset: FnColor<StdoutLock<'a>>,
+    pub yellow: FnColor<StdoutLock<'a>>,
+    pub bold_red: FnColor<StdoutLock<'a>>,
+    pub underlined_blue: FnColor<StdoutLock<'a>>,
+    pub blue: FnColor<StdoutLock<'a>>,
+    pub green: FnColor<StdoutLock<'a>>,
 }
 
 impl<'a> Registry<'a> {
-    pub fn inspt_dents(&self, path: PathBuf, dir_stats: &mut DirectoryStats) -> TResult<Vec<DirEntry>> {
+    pub fn reset(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+        (self.reset)(buf)
+    }
+
+    pub fn yellow(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+        (self.yellow)(buf)
+    }
+
+    pub fn bold_red(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+        (self.bold_red)(buf)
+    }
+
+    pub fn underlined_blue(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+        (self.underlined_blue)(buf)
+    }
+
+    pub fn blue(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+        (self.blue)(buf)
+    }
+
+    pub fn green(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+        (self.green)(buf)
+    }
+}
+
+impl<'a> Registry<'a> {
+    pub fn inspt_dents(
+        &self,
+        path: PathBuf,
+        dir_stats: &mut DirectoryStats,
+    ) -> TResult<Vec<DirEntry>> {
         (self.read)(path, dir_stats)
     }
 
@@ -71,6 +111,14 @@ impl<'a> Registry<'a> {
         let atime: FnExtAccessTime<StdoutLock> = Buffer::write_no_atime;
         let size: FnExtSize<StdoutLock> = Buffer::write_no_size;
 
+        // Color
+        let reset: FnColor<StdoutLock> = Buffer::reset_color;
+        let yellow: FnColor<StdoutLock> = Buffer::yellow;
+        let bold_red: FnColor<StdoutLock> = Buffer::bold_red;
+        let underlined_blue: FnColor<StdoutLock> = Buffer::underlined_blue;
+        let blue: FnColor<StdoutLock> = Buffer::blue;
+        let green: FnColor<StdoutLock> = Buffer::green;
+
         Ok(Self {
             read,
             sort,
@@ -83,6 +131,13 @@ impl<'a> Registry<'a> {
             mtime,
             atime,
             size,
+            // color
+            reset,
+            yellow,
+            bold_red,
+            underlined_blue,
+            blue,
+            green,
         })
     }
 }
@@ -212,6 +267,29 @@ impl<'a> Registry<'a> {
 
     pub fn with_no_size(&mut self) -> TResult<()> {
         self.size = Buffer::write_no_size;
+        Ok(())
+    }
+}
+
+#[allow(dead_code)]
+impl<'a> Registry<'a> {
+    pub fn with_color(&mut self) -> TResult<()> {
+        self.reset = Buffer::reset_color;
+        self.yellow = Buffer::yellow;
+        self.bold_red = Buffer::bold_red;
+        self.underlined_blue = Buffer::underlined_blue;
+        self.blue = Buffer::blue;
+        self.green = Buffer::green;
+        Ok(())
+    }
+
+    pub fn with_no_color(&mut self) -> TResult<()> {
+        self.reset = Buffer::no_color;
+        self.yellow = Buffer::no_color;
+        self.bold_red = Buffer::no_color;
+        self.underlined_blue = Buffer::no_color;
+        self.blue = Buffer::no_color;
+        self.green = Buffer::no_color;
         Ok(())
     }
 }

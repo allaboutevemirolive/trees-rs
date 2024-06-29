@@ -1,4 +1,5 @@
 use crate::error::simple::TResult;
+use std::ffi::OsString;
 use std::io;
 use std::io::Write;
 
@@ -26,6 +27,10 @@ impl<W: Write> Buffer<W> {
     pub fn write_message(&mut self, message: &str) -> io::Result<()> {
         self.bufwr.write_all(message.as_bytes())
     }
+
+    pub fn write_os_string(&mut self, message: OsString) -> io::Result<()> {
+        self.bufwr.write_all(message.as_encoded_bytes())
+    }
 }
 
 impl<W: Write> Buffer<W> {
@@ -50,7 +55,7 @@ mod test {
         let mut buffer = Buffer::new(Vec::new());
 
         let message = "Hello, world!";
-        buffer.as_mut().unwrap().write_message(&message).unwrap();
+        buffer.as_mut().unwrap().write_message(message).unwrap();
 
         let buffer_contents = buffer.unwrap().bufwr.into_inner().unwrap();
         let output_string = String::from_utf8(buffer_contents).unwrap();

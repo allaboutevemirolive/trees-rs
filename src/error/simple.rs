@@ -28,7 +28,11 @@ impl Error for TSimpleError {}
 
 impl Display for TSimpleError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        self.message.fmt(f)
+        match self.code {
+            1 => write!(f, "IO Error: {}", self.message),
+            2 => write!(f, "Symlink Error: {}", self.message),
+            _ => write!(f, "Error: {}", self.message),
+        }
     }
 }
 
@@ -50,6 +54,15 @@ impl From<std::io::Error> for Box<dyn TError> {
     }
 }
 
+impl<T> From<Option<T>> for Box<dyn TError> {
+    fn from(err: Option<T>) -> Self {
+        match err {
+            Some(_) => Box::new(TSimpleError::new(0, "Unexpected Value".to_string())),
+            None => Box::new(TSimpleError::new(404, "Value Not Found".to_string())),
+        }
+    }
+}
+
 #[allow(dead_code)]
 fn find_resource(id: u64) -> Result<(), Box<dyn TError>> {
     Err(TSimpleError::new(404, format!("Resource with id {} not found", id)).into())
@@ -62,7 +75,7 @@ mod tests {
     #[test]
     fn test_usimple_error_message() {
         let error = TSimpleError::new(404, "Not Found");
-        assert_eq!(error.to_string(), "Not Found");
+        assert_eq!(error.to_string(), "Error: Not Found");
     }
 
     #[test]
@@ -77,6 +90,6 @@ mod tests {
         assert!(result.is_err());
         let err = result.err().unwrap();
         assert_eq!(err.code(), 404);
-        assert_eq!(err.to_string(), "Resource with id 123 not found");
+        assert_eq!(err.to_string(), "Error: Resource with id 123 not found");
     }
 }

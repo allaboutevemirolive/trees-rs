@@ -79,16 +79,14 @@ mod tests {
         let current_dir = std::env::current_dir().expect("Failed to get current directory");
 
         if let Ok(entries) = fs::read_dir(&current_dir) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    let relative_path = path
-                        .strip_prefix(&current_dir)
-                        .expect("Failed to get relative path")
-                        .to_path_buf();
-                    println!("./{}", relative_path.display());
-                    println!("{}", path.display());
-                }
+            for entry in entries.flatten() {
+                let path = entry.path();
+                let relative_path = path
+                    .strip_prefix(&current_dir)
+                    .expect("Failed to get relative path")
+                    .to_path_buf();
+                println!("./{}", relative_path.display());
+                println!("{}", path.display());
             }
         }
     }
