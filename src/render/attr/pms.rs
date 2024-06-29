@@ -16,6 +16,7 @@ impl<W: Write> Buffer<W> {
         Ok(())
     }
 
+    #[cfg(unix)]
     pub fn write_permission(&mut self, meta: &Metadata) -> io::Result<()> {
         let mode = meta.permissions().mode();
 
@@ -80,6 +81,85 @@ impl<W: Write> Buffer<W> {
         } else {
             self.bufwr.write_all("-".as_bytes())?;
         }
+
+        self.write_space()
+    }
+
+    #[cfg(windows)]
+    pub fn write_permission(&mut self, meta: &Metadata) -> io::Result<()> {
+        use std::os::windows::fs::MetadataExt;
+        use winapi::um::winnt::{GENERIC_EXECUTE, GENERIC_READ, GENERIC_WRITE};
+
+        self.write_space()?;
+
+        if meta.is_dir() {
+            self.bufwr.write_all("d".as_bytes())?;
+        } else {
+            self.bufwr.write_all(".".as_bytes())?;
+        }
+
+        // Get the security descriptor of the file
+        let security_descriptor = meta.get_security_descriptor()?;
+
+        // Check permissions for the owner
+        let access_rights = security_descriptor.get_access_rights()?;
+        self.bufwr.write_all(if access_rights & GENERIC_READ != 0 {
+            "r".as_bytes()
+        } else {
+            "-".as_bytes()
+        })?;
+        self.bufwr
+            .write_all(if access_rights & GENERIC_WRITE != 0 {
+                "w".as_bytes()
+            } else {
+                "-".as_bytes()
+            })?;
+        self.bufwr
+            .write_all(if access_rights & GENERIC_EXECUTE != 0 {
+                "x".as_bytes()
+            } else {
+                "-".as_bytes()
+            })?;
+
+        // Check permissions for the group
+        let access_rights = security_descriptor.get_group_access_rights()?;
+        self.bufwr.write_all(if access_rights & GENERIC_READ != 0 {
+            "r".as_bytes()
+        } else {
+            "-".as_bytes()
+        })?;
+        self.bufwr
+            .write_all(if access_rights & GENERIC_WRITE != 0 {
+                "w".as_bytes()
+            } else {
+                "-".as_bytes()
+            })?;
+        self.bufwr
+            .write_all(if access_rights & GENERIC_EXECUTE != 0 {
+                "x".as_bytes()
+            } else {
+                "-".as_bytes()
+            })?;
+
+        // Check permissions for others
+        let access_rights = security_descriptor.get_others_access_rights()?;
+        self.bufwr.write_all(if access_rights & GENERIC_READ != 0 {
+            "r".as_bytes()
+        } else {
+            "-".as_bytes()
+        })?;
+        self.bufwr
+            .write_all(if access_rights & GENERIC_WRITE != 0 {
+                "w".as_bytes()
+            } else {
+                "-".as_bytes()
+            })?;
+        self.bufwr
+            .write_all(if access_rights & GENERIC_EXECUTE != 0 {
+                "x".as_bytes()
+            } else {
+                "-".as_bytes()
+            })?;
 
         self.write_space()
     }
