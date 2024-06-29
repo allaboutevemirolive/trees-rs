@@ -215,7 +215,7 @@ mod tests {
     #[test]
     fn test_new() {
         let tree_args = TreeArgs::new();
-        assert!(tree_args.args.len() >= 1);
+        assert!(!tree_args.args.is_empty());
     }
 
     #[test]

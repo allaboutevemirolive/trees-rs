@@ -199,13 +199,3 @@ impl<'tr> TreeCtxt<'tr> {
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_sudo_folder() {
-        //
-    }
-}

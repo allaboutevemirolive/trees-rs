@@ -55,7 +55,7 @@ mod test {
         let mut buffer = Buffer::new(Vec::new());
 
         let message = "Hello, world!";
-        buffer.as_mut().unwrap().write_message(&message).unwrap();
+        buffer.as_mut().unwrap().write_message(message).unwrap();
 
         let buffer_contents = buffer.unwrap().bufwr.into_inner().unwrap();
         let output_string = String::from_utf8(buffer_contents).unwrap();
