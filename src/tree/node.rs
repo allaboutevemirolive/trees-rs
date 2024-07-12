@@ -1,5 +1,4 @@
 use super::branch::PaintBranch;
-use crate::error::simple::TResult;
 use crate::render::buffer::Buffer;
 
 use std::io::StdoutLock;
@@ -24,7 +23,7 @@ impl Node {
         Node { nod }
     }
 
-    pub fn with_capacity(cap: i32) -> TResult<Self> {
+    pub fn with_capacity(cap: i32) -> anyhow::Result<Self> {
         Ok(Node {
             nod: Vec::with_capacity(cap as usize),
         })
@@ -68,7 +67,7 @@ impl Node {
     }
 
     /// Convert node into branch stick
-    pub fn to_branch<T>(&self, branch: &T, buf: &mut Buffer<StdoutLock>) -> TResult<()>
+    pub fn to_branch<T>(&self, branch: &T, buf: &mut Buffer<StdoutLock>) -> anyhow::Result<()>
     where
         T: PaintBranch,
     {

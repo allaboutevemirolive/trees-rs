@@ -1,4 +1,3 @@
-use crate::error::simple::TResult;
 use crate::walk::visit::Visitor;
 
 use std::env;
@@ -76,7 +75,7 @@ impl BaseDirectory {
         fs::metadata(&self.base_path)
     }
 
-    pub fn build(&self) -> TResult<PathBuilder> {
+    pub fn build(&self) -> anyhow::Result<PathBuilder> {
         Ok(PathBuilder {
             builder: PathBuf::with_capacity(5_000),
             base_dir: BaseDirectory {

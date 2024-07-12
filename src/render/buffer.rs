@@ -1,4 +1,3 @@
-use crate::error::simple::TResult;
 use std::ffi::OsString;
 use std::io;
 use std::io::Write;
@@ -19,7 +18,7 @@ impl<W: Write> IntoBranch<W> for Buffer<W> {
 }
 
 impl<W: Write> Buffer<W> {
-    pub fn new(writer: W) -> TResult<Self> {
+    pub fn new(writer: W) -> anyhow::Result<Self> {
         let bufwr = io::BufWriter::new(writer);
         Ok(Buffer { bufwr })
     }

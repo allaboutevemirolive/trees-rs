@@ -7,7 +7,6 @@ use super::sorting::sort_by_file_first;
 use super::sorting::sort_by_name;
 use super::sorting::FnSortEntries;
 
-use crate::error::simple::TResult;
 use crate::render::attr::atime::FnExtAccessTime;
 use crate::render::attr::btime::FnExtBTime;
 use crate::render::attr::mtime::FnExtModTime;
@@ -91,7 +90,7 @@ impl<'a> Registry<'a> {
         &self,
         path: PathBuf,
         dir_stats: &mut DirectoryStats,
-    ) -> TResult<Vec<DirEntry>> {
+    ) -> anyhow::Result<Vec<DirEntry>> {
         (self.read)(path, dir_stats)
     }
 
@@ -101,7 +100,7 @@ impl<'a> Registry<'a> {
 }
 
 impl<'a> Registry<'a> {
-    pub fn new() -> TResult<Self> {
+    pub fn new() -> anyhow::Result<Self> {
         // Common util
         let read: FnReadDir = read_visible_entries;
         let sort: FnSortEntries = sort_by_name;
@@ -159,21 +158,21 @@ impl<'a> Registry<'a> {
 impl<'a> Registry<'a> {
     /// This method sets the internal `read` function to the implementation
     /// that reads all entries, including hidden ones.
-    pub fn read_all_entries(&mut self) -> TResult<()> {
+    pub fn read_all_entries(&mut self) -> anyhow::Result<()> {
         self.read = read_all_entries;
         Ok(())
     }
 
     /// This sets the internal `read` function to the implementation
     /// that filters out hidden entries during the read process.
-    pub fn read_visible_entries(&mut self) -> TResult<()> {
+    pub fn read_visible_entries(&mut self) -> anyhow::Result<()> {
         self.read = read_visible_entries;
         Ok(())
     }
 
     /// This sets the internal `read` function to the implementation
     /// that focuses on retrieving visible folders within the registry.
-    pub fn read_visible_folders(&mut self) -> TResult<()> {
+    pub fn read_visible_folders(&mut self) -> anyhow::Result<()> {
         self.read = read_visible_folders;
         Ok(())
     }
@@ -182,17 +181,17 @@ impl<'a> Registry<'a> {
 // Sort's kind.
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
-    pub fn with_sort_entries(&mut self) -> TResult<()> {
+    pub fn with_sort_entries(&mut self) -> anyhow::Result<()> {
         self.sort = sort_by_name;
         Ok(())
     }
 
-    pub fn with_reverse_sort_entries(&mut self) -> TResult<()> {
+    pub fn with_reverse_sort_entries(&mut self) -> anyhow::Result<()> {
         self.sort = reverse_sort_by_name;
         Ok(())
     }
 
-    pub fn with_sort_by_file_first(&mut self) -> TResult<()> {
+    pub fn with_sort_by_file_first(&mut self) -> anyhow::Result<()> {
         self.sort = sort_by_file_first;
         Ok(())
     }
@@ -201,12 +200,12 @@ impl<'a> Registry<'a> {
 // Permission
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
-    pub fn with_permission(&mut self) -> TResult<()> {
+    pub fn with_permission(&mut self) -> anyhow::Result<()> {
         self.pms = Buffer::write_permission;
         Ok(())
     }
 
-    pub fn with_no_permission(&mut self) -> TResult<()> {
+    pub fn with_no_permission(&mut self) -> anyhow::Result<()> {
         self.pms = Buffer::write_no_permission;
         Ok(())
     }
@@ -215,12 +214,12 @@ impl<'a> Registry<'a> {
 // Read entry's btime.
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
-    pub fn with_btime(&mut self) -> TResult<()> {
+    pub fn with_btime(&mut self) -> anyhow::Result<()> {
         self.btime = Buffer::write_btime;
         Ok(())
     }
 
-    pub fn with_no_btime(&mut self) -> TResult<()> {
+    pub fn with_no_btime(&mut self) -> anyhow::Result<()> {
         self.btime = Buffer::write_no_btime;
         Ok(())
     }
@@ -229,12 +228,12 @@ impl<'a> Registry<'a> {
 // Read's mtime
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
-    pub fn with_mtime(&mut self) -> TResult<()> {
+    pub fn with_mtime(&mut self) -> anyhow::Result<()> {
         self.mtime = Buffer::write_mtime;
         Ok(())
     }
 
-    pub fn with_no_mtime(&mut self) -> TResult<()> {
+    pub fn with_no_mtime(&mut self) -> anyhow::Result<()> {
         self.mtime = Buffer::write_no_mtime;
         Ok(())
     }
@@ -243,12 +242,12 @@ impl<'a> Registry<'a> {
 // Read atime
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
-    pub fn with_atime(&mut self) -> TResult<()> {
+    pub fn with_atime(&mut self) -> anyhow::Result<()> {
         self.atime = Buffer::write_atime;
         Ok(())
     }
 
-    pub fn with_no_atime(&mut self) -> TResult<()> {
+    pub fn with_no_atime(&mut self) -> anyhow::Result<()> {
         self.atime = Buffer::write_no_atime;
         Ok(())
     }
@@ -256,12 +255,12 @@ impl<'a> Registry<'a> {
 
 // Kind's entry
 impl<'a> Registry<'a> {
-    pub fn with_entry(&mut self) -> TResult<()> {
+    pub fn with_entry(&mut self) -> anyhow::Result<()> {
         self.dir = Buffer::write_dir;
         Ok(())
     }
 
-    pub fn with_relative_path(&mut self) -> TResult<()> {
+    pub fn with_relative_path(&mut self) -> anyhow::Result<()> {
         self.dir = Buffer::write_dir_relative_path;
         self.file = Buffer::write_entry_relative_path;
         self.head = Buffer::write_header_relative_path;
@@ -273,12 +272,12 @@ impl<'a> Registry<'a> {
 // Size
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
-    pub fn with_size(&mut self) -> TResult<()> {
+    pub fn with_size(&mut self) -> anyhow::Result<()> {
         self.size = Buffer::write_size;
         Ok(())
     }
 
-    pub fn with_no_size(&mut self) -> TResult<()> {
+    pub fn with_no_size(&mut self) -> anyhow::Result<()> {
         self.size = Buffer::write_no_size;
         Ok(())
     }
@@ -286,7 +285,7 @@ impl<'a> Registry<'a> {
 
 #[allow(dead_code)]
 impl<'a> Registry<'a> {
-    pub fn with_color(&mut self) -> TResult<()> {
+    pub fn with_color(&mut self) -> anyhow::Result<()> {
         self.reset = Buffer::reset_color;
         self.yellow = Buffer::yellow;
         self.bold_red = Buffer::bold_red;
@@ -296,7 +295,7 @@ impl<'a> Registry<'a> {
         Ok(())
     }
 
-    pub fn with_no_color(&mut self) -> TResult<()> {
+    pub fn with_no_color(&mut self) -> anyhow::Result<()> {
         self.reset = Buffer::no_color;
         self.yellow = Buffer::no_color;
         self.bold_red = Buffer::no_color;

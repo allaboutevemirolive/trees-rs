@@ -1,8 +1,3 @@
-use crate::error::simple::TResult;
-use crate::error::simple::TSimpleError;
-
-use phf::phf_set;
-
 use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::fs;
@@ -11,7 +6,8 @@ use std::fs::FileType;
 use std::fs::Metadata;
 use std::path::PathBuf;
 
-static MEDIA_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+// TODO: Add more extension
+static MEDIA_EXTENSIONS: phf::Set<&'static str> = phf::phf_set! {
     "jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp",     // Images
     "mp4", "avi", "mkv", "mov", "flv", "wmv", "webm",       // Videos
     "mp3", "wav", "ogg", "flac", "aac", "m4a"             // Audio
@@ -29,29 +25,30 @@ pub struct Visitor {
 }
 
 impl Visitor {
-    pub fn new(dent: DirEntry) -> TResult<Self> {
-        let filety = dent.file_type()?;
-        let filename = dent
-            .path()
+    pub fn new(dent: DirEntry) -> anyhow::Result<Self> {
+        use anyhow::{anyhow, Context};
+        let metadata = dent.metadata().context("Failed to get file metadata")?;
+        let file_type = dent.file_type().context("Failed to get file type")?;
+        let path = dent.path();
+
+        let filename = path
             .file_name()
-            .map(|os_str| os_str.to_os_string())
-            .expect("Cannot get filename");
+            .map(OsString::from)
+            .ok_or_else(|| anyhow!("Cannot get filename for path '{:?}'", path))?;
 
-        let meta = dent.metadata()?;
-        let size = meta.len();
-        let is_media: bool;
+        let size = metadata.len();
 
-        if let Some(ext) = dent.path().extension().and_then(OsStr::to_str) {
-            is_media = MEDIA_EXTENSIONS.contains(ext);
-        } else {
-            is_media = false;
-        }
+        let is_media = path
+            .extension()
+            .and_then(OsStr::to_str)
+            .map(|ext| MEDIA_EXTENSIONS.contains(&ext.to_lowercase()))
+            .unwrap_or(false);
 
         Ok(Self {
-            abs: Some(dent.path()),
+            abs: Some(path),
             dent,
-            filety,
-            meta,
+            filety: file_type,
+            meta: metadata,
             filename,
             size: Some(size),
             is_media,
@@ -79,32 +76,37 @@ impl Visitor {
         self.filety.is_file()
     }
 
-    pub fn filename(&self) -> OsString {
-        self.filename.clone()
+    pub fn filename(&self) -> &OsString {
+        &self.filename
     }
 
-    pub fn absolute_path(&self) -> Option<PathBuf> {
-        self.abs.clone()
+    pub fn absolute_path(&self) -> Option<&PathBuf> {
+        self.abs.as_ref()
     }
 
     pub fn size(&self) -> Option<u64> {
         self.size
     }
 
-    pub fn metadata(&self) -> Metadata {
-        self.meta.clone()
+    pub fn metadata(&self) -> &Metadata {
+        &self.meta
     }
 
     pub fn is_media_type(&self) -> bool {
         self.is_media
     }
 
-    pub fn get_target_symlink(&self) -> Result<PathBuf, TSimpleError> {
+    pub fn get_target_symlink(&self) -> anyhow::Result<PathBuf> {
+        use anyhow::Context;
+        let path = self
+            .absolute_path()
+            .ok_or_else(|| anyhow::anyhow!("Invalid absolute path"))?;
+
         if !self.is_symlink() {
-            return Err(TSimpleError::new(2, "Visitor is not a symlink".to_string()));
+            return Err(anyhow::anyhow!("Path '{path:?}' is not a symlink"));
         }
 
-        fs::read_link(self.absolute_path().expect("Invalid absolute path."))
-            .map_err(|_| TSimpleError::new(2, "Cannot read target link to symlink"))
+        fs::read_link(path.clone())
+            .with_context(|| format!("Cannot read target link for symlink '{path:?}'"))
     }
 }

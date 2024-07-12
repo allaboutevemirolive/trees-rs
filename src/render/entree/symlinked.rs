@@ -22,7 +22,7 @@ impl<W: Write> Buffer<W> {
         visit: &Visitor,
         _path_builder: &PathBuilder,
     ) -> io::Result<()> {
-        self.write_os_string(visit.filename())?;
+        self.write_os_string(visit.filename().clone())?;
         Ok(())
     }
 

@@ -1,5 +1,3 @@
-use crate::error::simple::TResult;
-
 #[derive(PartialEq)]
 pub enum ReportMode {
     Default,
@@ -88,7 +86,7 @@ pub struct ReportSummary {
 }
 
 impl ReportSummary {
-    pub fn with_capacity(cap: i32) -> TResult<Self> {
+    pub fn with_capacity(cap: i32) -> anyhow::Result<Self> {
         Ok(ReportSummary {
             report: Vec::with_capacity(cap as usize),
         })
@@ -147,7 +145,7 @@ impl DirectoryStats {
 
 #[allow(unused_assignments, dead_code)]
 impl DirectoryStats {
-    fn directories_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
+    fn directories_to_string(&self, report_mode: &ReportMode) -> anyhow::Result<(String, String)> {
         let mut dir_str = String::new();
 
         let directories = self.directories;
@@ -167,7 +165,7 @@ impl DirectoryStats {
         Ok((dir_count, dir_str))
     }
 
-    fn files_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
+    fn files_to_string(&self, report_mode: &ReportMode) -> anyhow::Result<(String, String)> {
         let mut file_str = String::new();
 
         let files = self.files;
@@ -187,7 +185,7 @@ impl DirectoryStats {
         Ok((file_count, file_str))
     }
 
-    fn hidden_files_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
+    fn hidden_files_to_string(&self, report_mode: &ReportMode) -> anyhow::Result<(String, String)> {
         let mut hidden_files_str = "Hidden".to_string();
 
         if *report_mode == ReportMode::Default {
@@ -201,7 +199,7 @@ impl DirectoryStats {
         Ok((hidden_files_count, hidden_files_str))
     }
 
-    fn symlinks_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
+    fn symlinks_to_string(&self, report_mode: &ReportMode) -> anyhow::Result<(String, String)> {
         let mut symlinks_str = String::new();
 
         let symlinks = self.symlinks;
@@ -221,7 +219,10 @@ impl DirectoryStats {
         Ok((symlinks_count, symlinks_str))
     }
 
-    fn special_files_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
+    fn special_files_to_string(
+        &self,
+        report_mode: &ReportMode,
+    ) -> anyhow::Result<(String, String)> {
         let mut special_files_str = String::new();
 
         let special_files = self.special_files;
@@ -241,7 +242,7 @@ impl DirectoryStats {
         Ok((special_files_count, special_files_str))
     }
 
-    fn total_items_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
+    fn total_items_to_string(&self, report_mode: &ReportMode) -> anyhow::Result<(String, String)> {
         let mut total_items_str = String::new();
 
         let total_items = self.total_items;
@@ -261,7 +262,7 @@ impl DirectoryStats {
         Ok((total_items_count, total_items_str))
     }
 
-    fn size_to_string(&self, report_mode: &ReportMode) -> TResult<(String, String)> {
+    fn size_to_string(&self, report_mode: &ReportMode) -> anyhow::Result<(String, String)> {
         let size = self.size as f64;
         let size_count: f64;
 
