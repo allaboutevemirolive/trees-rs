@@ -15,8 +15,6 @@ static MEDIA_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp",     // Images
     "mp4", "avi", "mkv", "mov", "flv", "wmv", "webm",       // Videos
     "mp3", "wav", "ogg", "flac", "aac", "m4a"             // Audio
-    // "pdf",                                                // Documents
-    // "txt", "doc", "docx", "xls", "xlsx", "ppt", "pptx"     // More documents
 };
 
 #[derive(Debug)]
@@ -33,7 +31,6 @@ pub struct Visitor {
 impl Visitor {
     pub fn new(dent: DirEntry) -> TResult<Self> {
         let filety = dent.file_type()?;
-
         let filename = dent
             .path()
             .file_name()
@@ -41,9 +38,7 @@ impl Visitor {
             .expect("Cannot get filename");
 
         let meta = dent.metadata()?;
-
         let size = meta.len();
-
         let is_media: bool;
 
         if let Some(ext) = dent.path().extension().and_then(OsStr::to_str) {
@@ -51,8 +46,6 @@ impl Visitor {
         } else {
             is_media = false;
         }
-
-        // dbg!("Hello");
 
         Ok(Self {
             abs: Some(dent.path()),
@@ -105,19 +98,6 @@ impl Visitor {
     pub fn is_media_type(&self) -> bool {
         self.is_media
     }
-
-    // pub fn check_media_type(&mut self) {
-    //     if let Some(ext) = self
-    //         .absolute_path()
-    //         .expect("Cannot get absolute path")
-    //         .extension()
-    //         .and_then(OsStr::to_str)
-    //     {
-    //         self.is_media = MEDIA_EXTENSIONS.contains(ext);
-    //     } else {
-    //         self.is_media = false;
-    //     }
-    // }
 
     pub fn get_target_symlink(&self) -> Result<PathBuf, TSimpleError> {
         if !self.is_symlink() {

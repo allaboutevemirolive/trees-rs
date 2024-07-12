@@ -96,7 +96,7 @@ impl<'tr> TreeCtxt<'tr> {
 
             if visitor.is_media_type() {
                 self.dir_stats.media_add_one();
-                self.rg.purple(&mut self.buf)?; // TODO: Use specific color for media type
+                self.rg.purple(&mut self.buf)?;
                 self.buf
                     .print_file(&visitor, &self.path_builder, self.rg.file)?;
                 self.rg.reset(&mut self.buf)?;
@@ -143,6 +143,7 @@ impl<'tr> TreeCtxt<'tr> {
                 self.rg.bold_red(&mut self.buf)?;
                 self.buf.write_os_string(visitor.filename())?;
                 self.rg.reset(&mut self.buf)?;
+                self.buf.newline()?;
                 self.nod.pop();
                 continue;
             }

@@ -1,5 +1,6 @@
 use super::app::options;
 use super::app::tree_app;
+
 use crate::config::root::BaseDirectory;
 use crate::error::simple::TResult;
 use crate::report::stats::ReportMode;
@@ -142,7 +143,6 @@ impl TreeArgs {
         }
 
         if matches.get_flag(options::color::COLORLESS) {
-            // tr.file_colors.disable_color();
             tr.rg.with_no_color()?;
         }
 
