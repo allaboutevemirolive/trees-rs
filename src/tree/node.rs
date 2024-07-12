@@ -69,7 +69,8 @@ impl Node {
         self.nod.get(idx + 1)
     }
 
-    /// If there is remaining folder needs to be traverse
+    /// If there is remaining folder needs to be traverse or
+    /// if current entry is not the last entry in entries
     pub fn push_if(&mut self, curr_index: usize, entries_len: usize) {
         if curr_index < entries_len - 1 {
             self.push(1);
@@ -83,6 +84,7 @@ impl Node {
     where
         T: PaintBranch,
     {
+        tracing::info!("Convert node to branch's stick");
         self.into_iter().for_each(|(value_is_one, value_has_next)| {
             branch
                 .print_branch_if(value_is_one, value_has_next, buf)

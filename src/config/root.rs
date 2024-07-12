@@ -19,6 +19,7 @@ pub struct BaseDirectory {
 
 impl BaseDirectory {
     pub fn from_current_dir() -> io::Result<Self> {
+        tracing::info!("Initializing BaseDirectory");
         let base_path = env::current_dir()?;
 
         Ok(Self {
@@ -76,6 +77,7 @@ impl BaseDirectory {
     }
 
     pub fn build(&self) -> anyhow::Result<PathBuilder> {
+        tracing::info!("Building PathBuilder");
         Ok(PathBuilder {
             builder: PathBuf::with_capacity(5_000),
             base_dir: BaseDirectory {
@@ -133,6 +135,7 @@ impl PathBuilder {
     /// // path_builder now contains "project_root"
     /// ```
     pub fn append_root(&mut self) {
+        tracing::info!("Append root dir to PathBuilder");
         self.builder.push(self.base_dir.filename());
     }
 

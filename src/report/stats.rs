@@ -51,6 +51,7 @@ impl DirectoryStats {
     }
 
     pub fn add_size(&mut self, size: u64) {
+        tracing::info!("Accumulate entry's size with size: {}", size);
         self.size += size
     }
 

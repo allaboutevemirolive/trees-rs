@@ -18,6 +18,7 @@ pub struct TreeArgs {
 #[allow(dead_code)]
 impl TreeArgs {
     pub fn new() -> Self {
+        tracing::info!("Initializing TreeArguments");
         let args: Vec<OsString> = env::args_os().collect();
         TreeArgs { args }
     }
@@ -51,6 +52,7 @@ impl TreeArgs {
         tr: &mut TreeCtxt,
         base_dir: &mut BaseDirectory,
     ) -> anyhow::Result<ReportMode> {
+        tracing::info!("Filter arguments and get report mode");
         let path_exist = extract_and_update_base_dir(&mut self.args, base_dir);
 
         if !path_exist {

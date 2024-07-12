@@ -19,6 +19,8 @@ impl<W: Write> IntoBranch<W> for Buffer<W> {
 
 impl<W: Write> Buffer<W> {
     pub fn new(writer: W) -> anyhow::Result<Self> {
+        tracing::info!("Initializing Buffer");
+
         let bufwr = io::BufWriter::new(writer);
         Ok(Buffer { bufwr })
     }

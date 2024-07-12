@@ -51,19 +51,13 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         let entries_len = enumerated_entries.len();
 
         for (idx, entry) in enumerated_entries {
-            tracing::info!("Get entry's information");
+            tracing::info!("Get entry's information for entry: {:?}", entry);
+
             let mut visitor = walk::visit::Visitor::new(entry)?;
 
-            tracing::info!("Accumulate entry's size");
             self.dir_stats.add_size(visitor.size().unwrap());
-
-            tracing::info!("Print entry's information");
             self.print_info(visitor.metadata())?;
-
-            tracing::info!("If current entry is not the last entry in entries");
             self.nod.push_if(idx, entries_len);
-
-            tracing::info!("Convert node to branch's stick");
             self.nod.to_branch(&self.branch, self.buf)?;
 
             if visitor.is_symlink() {
@@ -155,6 +149,8 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     pub fn print_head(&mut self) -> anyhow::Result<()> {
         use std::os::unix::fs::MetadataExt;
 
+        tracing::info!("Print directory header");
+
         let file_name = self.path_builder.filename();
         let base_path = self.path_builder.base_path();
         let fmeta = self.path_builder.metadata()?;
@@ -173,6 +169,8 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     pub fn print_info(&mut self, meta: &std::fs::Metadata) -> anyhow::Result<()> {
+        tracing::info!("Print entry's information");
+
         self.buf.print_permission(meta, self.rg.pms)?;
         self.buf.print_btime(meta, self.rg.btime)?;
         self.buf.print_mtime(meta, self.rg.mtime)?;
