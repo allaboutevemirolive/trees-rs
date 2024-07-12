@@ -53,7 +53,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
             // Accumulate entry's size
             self.dir_stats.add_size(visitor.size().unwrap());
             // Print entry's information
-            self.print_info(&visitor.metadata())?;
+            self.print_info(visitor.metadata())?;
             // If current entry is not the last entry in entries
             self.nod.push_if(idx, entries_len);
             // Convert node to branch's stick
@@ -171,9 +171,9 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         self.buf.print_mtime(meta, self.rg.mtime)?;
         self.buf.print_atime(meta, self.rg.atime)?;
 
-        self.rg.green(&mut self.buf)?;
+        self.rg.green(self.buf)?;
         self.buf.print_size(meta, self.rg.size)?;
-        self.rg.reset(&mut self.buf)?;
+        self.rg.reset(self.buf)?;
         Ok(())
     }
 
