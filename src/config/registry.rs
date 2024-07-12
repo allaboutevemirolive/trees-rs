@@ -91,10 +91,12 @@ impl<'a> Registry<'a> {
         path: PathBuf,
         dir_stats: &mut DirectoryStats,
     ) -> anyhow::Result<Vec<DirEntry>> {
+        tracing::info!("Inspect directory's entries");
         (self.read)(path, dir_stats)
     }
 
     pub fn sort_dents(&self, entries: &mut Vec<DirEntry>) {
+        tracing::info!("Sort DirEntry");
         (self.sort)(entries)
     }
 }

@@ -27,6 +27,9 @@ pub struct Visitor {
 impl Visitor {
     pub fn new(dent: DirEntry) -> anyhow::Result<Self> {
         use anyhow::{anyhow, Context};
+
+        tracing::info!("Collect DirEntry's metadata for {:?}", dent.path());
+
         let metadata = dent.metadata().context("Failed to get file metadata")?;
         let file_type = dent.file_type().context("Failed to get file type")?;
         let path = dent.path();

@@ -8,6 +8,18 @@ pub struct Node {
     nod: Vec<i32>,
 }
 
+impl<'a> IntoIterator for &'a Node {
+    type Item = (bool, bool);
+    type IntoIter = NodeIterator<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        NodeIterator {
+            node: self,
+            index: 0,
+        }
+    }
+}
+
 impl Default for Node {
     fn default() -> Self {
         Node {
@@ -97,18 +109,6 @@ impl<'a> Iterator for NodeIterator<'a> {
             Some((value_is_one, value_has_next))
         } else {
             None
-        }
-    }
-}
-
-impl<'a> IntoIterator for &'a Node {
-    type Item = (bool, bool);
-    type IntoIter = NodeIterator<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        NodeIterator {
-            node: self,
-            index: 0,
         }
     }
 }

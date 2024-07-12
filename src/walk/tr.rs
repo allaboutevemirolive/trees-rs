@@ -18,6 +18,8 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     pub fn new(
         buf: &'a mut render::buffer::Buffer<std::io::StdoutLock<'tr>>,
     ) -> anyhow::Result<Self> {
+        tracing::info!("Initializing TreeCtxt");
+
         let branch = tree::branch::Branch::default();
         let nod = tree::node::Node::default();
         let dir_stats = report::stats::DirectoryStats::default();
@@ -37,11 +39,13 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     pub fn walk_dir(&mut self, path: std::path::PathBuf) -> anyhow::Result<()> {
-        // Get entries in target path
+        tracing::info!("Displaying tree view for directory: {}", path.display());
+
         let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.dir_stats)?;
 
         self.rg.sort_dents(&mut entries);
 
+        tracing::info!("Enumerate sorted's DirEntry");
         let enumerated_entries: Vec<(usize, std::fs::DirEntry)> =
             entries.into_iter().enumerate().collect();
 
@@ -178,6 +182,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     pub fn print_report(&mut self, report_mode: report::stats::ReportMode) -> anyhow::Result<()> {
+        tracing::info!("Print reports");
         // TODO: Improve report mode
         self.buf.newline()?;
         self.dir_stats.accumulate_items();
