@@ -2,7 +2,6 @@ use super::app::options;
 use super::app::tree_app;
 
 use crate::config::root::BaseDirectory;
-use crate::error::simple::TResult;
 use crate::report::stats::ReportMode;
 use crate::walk::tr::TreeCtxt;
 
@@ -51,7 +50,7 @@ impl TreeArgs {
         &mut self,
         tr: &mut TreeCtxt,
         base_dir: &mut BaseDirectory,
-    ) -> TResult<ReportMode> {
+    ) -> anyhow::Result<ReportMode> {
         let path_exist = extract_and_update_base_dir(&mut self.args, base_dir);
 
         if !path_exist {

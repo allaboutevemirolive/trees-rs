@@ -1,4 +1,3 @@
-use crate::error::simple::TResult;
 use crate::render::buffer::IntoBranch;
 
 use std::io::StdoutLock;
@@ -42,7 +41,7 @@ pub trait PaintBranch {
         value_is_one: bool,
         value_has_next: bool,
         buffer: &mut T,
-    ) -> TResult<()>
+    ) -> anyhow::Result<()>
     where
         T: IntoBranch<StdoutLock<'a>>;
 }
@@ -54,7 +53,7 @@ impl PaintBranch for Branch {
         value_is_one: bool,
         value_has_next: bool,
         buffer: &mut T,
-    ) -> TResult<()>
+    ) -> anyhow::Result<()>
     where
         T: IntoBranch<StdoutLock<'a>>,
     {

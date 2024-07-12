@@ -1,13 +1,15 @@
-use crate::error::simple::TResult;
 use crate::report::stats::DirectoryStats;
 
 use std::fs;
 use std::fs::DirEntry;
 use std::path::PathBuf;
 
-pub type FnReadDir = fn(PathBuf, &mut DirectoryStats) -> TResult<Vec<DirEntry>>;
+pub type FnReadDir = fn(PathBuf, &mut DirectoryStats) -> anyhow::Result<Vec<DirEntry>>;
 
-pub fn read_all_entries(path: PathBuf, _dir_stats: &mut DirectoryStats) -> TResult<Vec<DirEntry>> {
+pub fn read_all_entries(
+    path: PathBuf,
+    _dir_stats: &mut DirectoryStats,
+) -> anyhow::Result<Vec<DirEntry>> {
     let entries = fs::read_dir(path)?.collect::<Result<Vec<DirEntry>, std::io::Error>>()?;
 
     Ok(entries)
@@ -16,7 +18,7 @@ pub fn read_all_entries(path: PathBuf, _dir_stats: &mut DirectoryStats) -> TResu
 pub fn read_visible_entries(
     path: PathBuf,
     dir_stats: &mut DirectoryStats,
-) -> TResult<Vec<DirEntry>> {
+) -> anyhow::Result<Vec<DirEntry>> {
     let entries = fs::read_dir(path)?
         .filter_map(|entry_result| {
             entry_result.ok().and_then(|entry| {
@@ -32,10 +34,11 @@ pub fn read_visible_entries(
     Ok(entries)
 }
 
+// anyhow::Result<()>
 pub fn read_visible_folders(
     path: PathBuf,
     dir_stats: &mut DirectoryStats,
-) -> TResult<Vec<DirEntry>> {
+) -> anyhow::Result<Vec<DirEntry>> {
     let entries = fs::read_dir(path)?
         .filter_map(|entry_result| {
             entry_result.ok().and_then(|entry| {
@@ -53,7 +56,7 @@ pub fn read_visible_folders(
 }
 
 #[allow(dead_code)]
-pub fn read_all_folders(path: PathBuf) -> TResult<Vec<DirEntry>> {
+pub fn read_all_folders(path: PathBuf) -> anyhow::Result<Vec<DirEntry>> {
     let entries = fs::read_dir(path)?
         .filter_map(|entry_result| {
             entry_result.ok().and_then(|entry| {

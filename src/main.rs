@@ -1,12 +1,11 @@
 mod cli;
 mod config;
-mod error;
 mod render;
 mod report;
 mod tree;
 mod walk;
 
-fn main() -> error::simple::TResult<()> {
+fn main() -> anyhow::Result<()> {
     let mut args = cli::arg::TreeArgs::new();
     let mut buf = render::buffer::Buffer::new(std::io::stdout().lock())?;
     let mut tr = walk::tr::TreeCtxt::new(&mut buf)?;
