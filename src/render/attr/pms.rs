@@ -86,6 +86,7 @@ impl<W: Write> Buffer<W> {
         self.write_space()
     }
 
+    // TODO:
     #[cfg(windows)]
     pub fn write_permission(&mut self, meta: &Metadata) -> io::Result<()> {
         use std::os::windows::fs::MetadataExt;

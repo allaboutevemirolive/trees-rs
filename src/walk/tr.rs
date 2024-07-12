@@ -52,14 +52,13 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
             // Get entry's information
             let mut visitor = walk::visit::Visitor::new(entry)?;
             // Accumulate entry's size
-            self.dir_stats
-                .add_size(visitor.size().expect("Invalid size."));
+            self.dir_stats.add_size(visitor.size().unwrap());
             // Print entry's information
             self.print_info(&visitor.metadata())?;
             // If current entry is not the last entry in entries
             self.nod.push_if(idx, entries_len);
             // Convert node to branch's stick
-            self.nod.to_branch(&self.branch, &mut self.buf)?;
+            self.nod.to_branch(&self.branch, self.buf)?;
 
             if visitor.is_symlink() {
                 self.dir_stats.symlink_add_one();

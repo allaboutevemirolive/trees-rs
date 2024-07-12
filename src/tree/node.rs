@@ -175,7 +175,6 @@ mod tests {
             assert_eq!(item, expected_item);
         }
     }
-
     #[test]
     fn test_next_iter() {
         let mut node = Node::with_capacity(5).unwrap();
@@ -196,19 +195,17 @@ mod tests {
         let mut node = Node::with_capacity(5).unwrap();
         let num_entries = 5;
 
-        // Add markers for each entry except the last one
         for i in 0..num_entries {
             node.push_if(i, num_entries);
         }
 
-        // Check the contents of the node
         let mut iter = node.enumerate_node();
-        assert_eq!(iter.next(), Some((0, &1))); // First entry marker
-        assert_eq!(iter.next(), Some((1, &1))); // Second entry marker
-        assert_eq!(iter.next(), Some((2, &1))); // Third entry marker
-        assert_eq!(iter.next(), Some((3, &1))); // Fourth entry marker
-        assert_eq!(iter.next(), Some((4, &2))); // Last entry marker
-        assert_eq!(iter.next(), None); // No more entries
+        assert_eq!(iter.next(), Some((0, &1)));
+        assert_eq!(iter.next(), Some((1, &1)));
+        assert_eq!(iter.next(), Some((2, &1)));
+        assert_eq!(iter.next(), Some((3, &1)));
+        assert_eq!(iter.next(), Some((4, &2)));
+        assert_eq!(iter.next(), None);
     }
 
     #[test]
@@ -218,19 +215,12 @@ mod tests {
         node.push(2);
         node.push(3);
 
-        // let iter = node.enumerate_node();
-
-        // Test for the next item after the first element
         let next_item = node.next_ref(0);
         assert_eq!(next_item, Some(&2));
 
-        // Test for the next item after the second element
-        // let _ = iter.next(); // Consume the iterator to point to the second element
         let next_item = node.next_ref(1);
         assert_eq!(next_item, Some(&3));
 
-        // Test for the next item after the last element
-        // let _ = iter.next(); // Consume the iterator to point to the third element
         let next_item = node.next_ref(2);
         assert_eq!(next_item, None);
     }
@@ -244,84 +234,19 @@ mod tests {
 
         let mut iter = node.enumerate_node();
 
-        // Test for the next item after the first element
         let next_item = node.next_ref(0);
         assert_eq!(next_item, Some(&2));
-        // Assert that the iterator remains at the first element
+
         assert_eq!(iter.next(), Some((0, &1)));
 
-        // Test for the next item after the second element
         let next_item = node.next_ref(1);
         assert_eq!(next_item, Some(&3));
-        // Assert that the iterator remains at the second element
+
         assert_eq!(iter.next(), Some((1, &2)));
 
-        // Test for the next item after the last element
         let next_item = node.next_ref(2);
         assert_eq!(next_item, None);
-        // Assert that the iterator remains at the third element
+
         assert_eq!(iter.next(), Some((2, &3)));
     }
-
-    // cargo test test_node_iterator -- --nocapture
-    // #[test]
-    // fn test_node_iterator() {
-    //     let node = Node::new(vec![1, 2, 3]);
-    //     let mut iterator = node.into_iter();
-    //     // for (value, has_next) in iterator {
-    //     // }
-    //     assert_eq!(iterator.next(), Some((1, true)));
-    //     assert_eq!(iterator.next(), Some((2, true)));
-    //     assert_eq!(iterator.next(), Some((3, false)));
-    //     assert_eq!(iterator.next(), None);
-    // }
-
-    // #[test]
-    // fn test_node_iterator_for_loop() {
-    //     let node = Node::new(vec![1, 2, 3]);
-    //     let mut iterator = node.into_iter();
-
-    //     let expected_values = vec![(1, true), (2, true), (3, false)];
-    //     for expected_value in &expected_values {
-    //         assert_eq!(iterator.next(), Some(*expected_value));
-    //     }
-    //     assert_eq!(iterator.next(), None);
-    // }
-
-    // #[test]
-    // fn test_node_iterator_while_loop() {
-    //     let node = Node::new(vec![1, 2, 3]);
-    //     let mut iterator = node.into_iter();
-
-    //     let expected_values = vec![(1, true), (2, true), (3, false)];
-    //     let mut index = 0;
-    //     while let Some(expected_value) = expected_values.get(index) {
-    //         assert_eq!(iterator.next(), Some(*expected_value));
-    //         index += 1;
-    //     }
-    //     assert_eq!(iterator.next(), None);
-    // }
-
-    // cargo test test_iteration_and_next -- --nocapture
-    // #[test]
-    // fn test_iteration_and_next() {
-    //     let node = Node {
-    //         nod: vec![1, 2, 3, 4, 5],
-    //     };
-    //     let mut iter = node.iter();
-
-    //     let mut expected_index = 0;
-    //     while let Some((index, item)) = iter.next() {
-    //         assert_eq!(index, expected_index);
-    //         assert_eq!(*item, node.nod[index]);
-    //         expected_index += 1;
-
-    //         if let Some((next_index, next_item)) = iter.get_next() {
-    //             assert_eq!(next_index, expected_index);
-    //             assert_eq!(*next_item, node.nod[next_index]);
-    //         } else {
-    //             assert_eq!(expected_index, node.nod.len());
-    //         }
-    //     }
-    // }
 }

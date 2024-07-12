@@ -33,6 +33,7 @@ impl<W: Write> Buffer<W> {
     }
 }
 
+// TODO:
 fn format_system_time(time: std::time::SystemTime) -> String {
     let datetime: DateTime<Local> = time.into();
     datetime.format("%d-%m-%Y %H:%M").to_string()
