@@ -1,40 +1,30 @@
-use crate::config::registry::Registry;
-use crate::config::root::PathBuilder;
-use crate::error::simple::TResult;
-use crate::render::buffer::Buffer;
-use crate::report::stats::DirectoryStats;
-use crate::report::stats::ReportMode;
-use crate::report::stats::ReportSummary;
-use crate::tree::branch::Branch;
-use crate::tree::level::Level;
-use crate::tree::node::Node;
-use crate::walk::visit::Visitor;
+use crate::config;
+use crate::error;
+use crate::render;
+use crate::report;
+use crate::tree;
+use crate::walk;
 
-use std::ffi::OsString;
-use std::fs::Metadata;
-use std::io;
-use std::io::StdoutLock;
-use std::path::PathBuf;
-
-pub struct TreeCtxt<'tr> {
-    pub branch: Branch,
-    pub buf: Buffer<StdoutLock<'tr>>,
-    pub level: Level,
-    pub nod: Node,
-    pub rg: Registry<'tr>,
-    pub dir_stats: DirectoryStats,
-    pub path_builder: PathBuilder,
+pub struct TreeCtxt<'tr, 'a> {
+    pub branch: tree::branch::Branch,
+    pub buf: &'a mut render::buffer::Buffer<std::io::StdoutLock<'tr>>,
+    pub level: tree::level::Level,
+    pub nod: tree::node::Node,
+    pub rg: config::registry::Registry<'tr>,
+    pub dir_stats: report::stats::DirectoryStats,
+    pub path_builder: config::root::PathBuilder,
 }
 
-impl<'tr> TreeCtxt<'tr> {
-    pub fn new() -> TResult<Self> {
-        let buf = Buffer::new(io::stdout().lock())?;
-        let branch = Branch::default();
-        let nod = Node::default();
-        let dir_stats = DirectoryStats::default();
-        let level = Level::default();
-        let rg = Registry::new()?;
-        let path_builder = PathBuilder::default();
+impl<'tr, 'a> TreeCtxt<'tr, 'a> {
+    pub fn new(
+        buf: &'a mut render::buffer::Buffer<std::io::StdoutLock<'tr>>,
+    ) -> error::simple::TResult<Self> {
+        let branch = tree::branch::Branch::default();
+        let nod = tree::node::Node::default();
+        let dir_stats = report::stats::DirectoryStats::default();
+        let level = tree::level::Level::default();
+        let rg = config::registry::Registry::new()?;
+        let path_builder = config::root::PathBuilder::default();
 
         Ok(Self {
             branch,
@@ -47,7 +37,7 @@ impl<'tr> TreeCtxt<'tr> {
         })
     }
 
-    pub fn walk_dir(&mut self, path: PathBuf) -> TResult<()> {
+    pub fn walk_dir(&mut self, path: std::path::PathBuf) -> error::simple::TResult<()> {
         // Get entries in target path
         let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.dir_stats)?;
 
@@ -60,7 +50,7 @@ impl<'tr> TreeCtxt<'tr> {
 
         for (idx, entry) in enumerated_entries {
             // Get entry's information
-            let mut visitor = Visitor::new(entry)?;
+            let mut visitor = walk::visit::Visitor::new(entry)?;
             // Accumulate entry's size
             self.dir_stats
                 .add_size(visitor.size().expect("Invalid size."));
@@ -73,14 +63,14 @@ impl<'tr> TreeCtxt<'tr> {
 
             if visitor.is_symlink() {
                 self.dir_stats.symlink_add_one();
-                self.rg.yellow(&mut self.buf)?;
+                self.rg.yellow(self.buf)?;
                 self.buf
                     .print_symlink(&mut visitor, &self.path_builder, self.rg.symlink)?;
-                self.rg.reset(&mut self.buf)?;
+                self.rg.reset(self.buf)?;
 
                 self.buf.write_message(" @ ")?;
 
-                self.rg.underlined_blue(&mut self.buf)?;
+                self.rg.underlined_blue(self.buf)?;
                 self.buf.write_message(
                     visitor
                         .get_target_symlink()
@@ -88,7 +78,7 @@ impl<'tr> TreeCtxt<'tr> {
                         .to_str()
                         .expect("Cannot convert target symlink to &str"),
                 )?;
-                self.rg.reset(&mut self.buf)?;
+                self.rg.reset(self.buf)?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -96,10 +86,10 @@ impl<'tr> TreeCtxt<'tr> {
 
             if visitor.is_media_type() {
                 self.dir_stats.media_add_one();
-                self.rg.purple(&mut self.buf)?;
+                self.rg.purple(self.buf)?;
                 self.buf
                     .print_file(&visitor, &self.path_builder, self.rg.file)?;
-                self.rg.reset(&mut self.buf)?;
+                self.rg.reset(self.buf)?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -116,12 +106,13 @@ impl<'tr> TreeCtxt<'tr> {
 
             if visitor.is_dir() {
                 self.dir_stats.dir_add_one();
-                self.rg.blue(&mut self.buf)?;
+                self.rg.blue(self.buf)?;
                 self.buf
                     .print_dir(&visitor, &self.path_builder, self.rg.dir)?;
-                self.rg.reset(&mut self.buf)?;
+                self.rg.reset(self.buf)?;
                 self.buf.newline()?;
 
+                // TODO: Should this be in register?
                 if self.level.can_descend_further() {
                     self.level.add_one();
                     // If folder needed permission, we skip it. Safe to use unwrap.
@@ -140,9 +131,9 @@ impl<'tr> TreeCtxt<'tr> {
                 // - Special File(Device File, Socket File, Named Pipe (FIFO))
                 // - Unix-Specific(Block Device, Character Device)
                 self.dir_stats.special_add_one();
-                self.rg.bold_red(&mut self.buf)?;
+                self.rg.bold_red(self.buf)?;
                 self.buf.write_os_string(visitor.filename())?;
-                self.rg.reset(&mut self.buf)?;
+                self.rg.reset(self.buf)?;
                 self.buf.newline()?;
                 self.nod.pop();
                 continue;
@@ -153,28 +144,27 @@ impl<'tr> TreeCtxt<'tr> {
     }
 
     #[cfg(unix)]
-    pub fn print_head(
-        &mut self,
-        file_name: OsString,
-        base_path: PathBuf,
-        fmeta: Metadata,
-    ) -> TResult<()> {
+    pub fn print_head(&mut self) -> error::simple::TResult<()> {
         use std::os::unix::fs::MetadataExt;
+
+        let file_name = self.path_builder.filename();
+        let base_path = self.path_builder.base_path();
+        let fmeta = self.path_builder.metadata()?;
 
         self.dir_stats.add_size(fmeta.size());
 
         self.print_info(&fmeta)?;
 
-        self.rg.blue(&mut self.buf)?;
+        self.rg.blue(self.buf)?;
         self.buf
             .print_header(&fmeta, &base_path.clone(), &file_name, self.rg.head)?;
-        self.rg.reset(&mut self.buf)?;
+        self.rg.reset(self.buf)?;
         self.buf.newline()?;
 
         Ok(())
     }
 
-    pub fn print_info(&mut self, meta: &Metadata) -> TResult<()> {
+    pub fn print_info(&mut self, meta: &std::fs::Metadata) -> error::simple::TResult<()> {
         self.buf.print_permission(meta, self.rg.pms)?;
         self.buf.print_btime(meta, self.rg.btime)?;
         self.buf.print_mtime(meta, self.rg.mtime)?;
@@ -186,11 +176,14 @@ impl<'tr> TreeCtxt<'tr> {
         Ok(())
     }
 
-    pub fn print_report(&mut self, report_mode: ReportMode) -> TResult<()> {
+    pub fn print_report(
+        &mut self,
+        report_mode: report::stats::ReportMode,
+    ) -> error::simple::TResult<()> {
         self.buf.newline()?;
         self.dir_stats.accumulate_items();
         // Store formatted DirectoryStats here
-        let mut report_summary = ReportSummary::with_capacity(50).unwrap();
+        let mut report_summary = report::stats::ReportSummary::with_capacity(50).unwrap();
         // Get report
         self.dir_stats
             .populate_report(&mut report_summary, report_mode);

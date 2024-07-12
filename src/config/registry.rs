@@ -303,6 +303,7 @@ impl<'a> Registry<'a> {
         self.underlined_blue = Buffer::no_color;
         self.blue = Buffer::no_color;
         self.green = Buffer::no_color;
+        self.purple = Buffer::no_color;
         Ok(())
     }
 }
