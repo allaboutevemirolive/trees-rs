@@ -42,7 +42,6 @@ fn main() -> anyhow::Result<()> {
     tracing::info!("Ready to iterate directories");
     tr.walk_dir(tr.path_builder.base_path())?;
 
-    tracing::info!("Print reports");
     tr.print_report(report_mode)?;
 
     Ok(())
