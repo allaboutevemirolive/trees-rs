@@ -59,8 +59,7 @@ impl Visitor {
     }
 
     pub fn get_relative_path(&self, current_dir: &PathBuf) -> Option<PathBuf> {
-        let path = self.dent.path();
-        if let Ok(relative_path) = path.strip_prefix(current_dir) {
+        if let Ok(relative_path) = self.dent.path().strip_prefix(current_dir) {
             Some(relative_path.to_path_buf())
         } else {
             None

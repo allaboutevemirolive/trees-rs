@@ -34,7 +34,6 @@ pub fn read_visible_entries(
     Ok(entries)
 }
 
-// anyhow::Result<()>
 pub fn read_visible_folders(
     path: PathBuf,
     dir_stats: &mut DirectoryStats,

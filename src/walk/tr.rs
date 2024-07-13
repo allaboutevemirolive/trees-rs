@@ -39,6 +39,8 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     pub fn walk_dir(&mut self, path: std::path::PathBuf) -> anyhow::Result<()> {
+        use anyhow::Context;
+
         tracing::info!("Displaying tree view for directory: {}", path.display());
 
         let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.dir_stats)?;
@@ -73,9 +75,9 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
                 self.buf.write_message(
                     visitor
                         .get_target_symlink()
-                        .expect("Cannot get target link.")
+                        .context("Failed to get target symlink")?
                         .to_str()
-                        .expect("Cannot convert target symlink to &str"),
+                        .context("Failed to convert target symlink to &str")?,
                 )?;
                 self.rg.reset(self.buf)?;
                 self.buf.newline()?;

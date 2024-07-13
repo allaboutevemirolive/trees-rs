@@ -69,8 +69,7 @@ impl Node {
         self.nod.get(idx + 1)
     }
 
-    /// If there is remaining folder needs to be traverse or
-    /// if current entry is not the last entry in entries
+    /// If current entry is not the last entry in entries
     pub fn push_if(&mut self, curr_index: usize, entries_len: usize) {
         if curr_index < entries_len - 1 {
             self.push(1);
