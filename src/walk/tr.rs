@@ -4,6 +4,12 @@ use crate::report;
 use crate::tree;
 use crate::walk;
 
+// Color trait which allows output to be colorize.
+// We use function pointer to generate colorize output
+// instead of enum for performance reason.
+use crate::config::registry::Color;
+
+#[derive(Debug)]
 pub struct TreeCtxt<'tr, 'a> {
     pub branch: tree::branch::Branch,
     pub buf: &'a mut render::buffer::Buffer<std::io::StdoutLock<'tr>>,
@@ -47,8 +53,11 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         self.rg.sort_dents(&mut entries);
 
         tracing::info!("Enumerate sorted's DirEntry");
-        let enumerated_entries: Vec<(usize, std::fs::DirEntry)> =
-            entries.into_iter().enumerate().collect();
+
+        let enumerated_entries = entries
+            .into_iter()
+            .enumerate()
+            .collect::<Vec<(usize, std::fs::DirEntry)>>();
 
         let entries_len = enumerated_entries.len();
 
@@ -56,7 +65,6 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
             tracing::info!("Get entry's information for entry: {:?}", entry);
 
             let mut visitor = walk::visit::Visitor::new(entry)?;
-
             self.dir_stats.add_size(visitor.size().unwrap());
             self.print_info(visitor.metadata())?;
             self.nod.push_if(idx, entries_len);
@@ -68,9 +76,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
                 self.buf
                     .print_symlink(&mut visitor, &self.path_builder, self.rg.symlink)?;
                 self.rg.reset(self.buf)?;
-
                 self.buf.write_message(" @ ")?;
-
                 self.rg.underlined_blue(self.buf)?;
                 self.buf.write_message(
                     visitor
@@ -113,12 +119,11 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
                 self.rg.reset(self.buf)?;
                 self.buf.newline()?;
 
-                // TODO: Should this be in register?
                 if self.level.can_descend_further() {
                     self.level.add_one();
                     // If folder needed permission, we skip it. Safe to use unwrap.
                     if self
-                        .walk_dir(visitor.absolute_path().unwrap().clone())
+                        .walk_dir(visitor.absolute_path().unwrap().to_path_buf())
                         .is_err()
                     {
                         self.dir_stats.err_dirs_add_one();
@@ -131,9 +136,8 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
                 self.nod.pop();
                 continue;
             } else {
-                // If entry is not dir, file or symlink like:
-                // - Special File(Device File, Socket File, Named Pipe (FIFO))
-                // - Unix-Specific(Block Device, Character Device)
+                // If entry is not dir, file or symlink like: special File(Device File, Socket File, Named Pipe (FIFO)) or
+                // Unix-Specific(Block Device, Character Device)
                 self.dir_stats.special_add_one();
                 self.rg.bold_red(self.buf)?;
                 self.buf.write_os_string(visitor.filename().clone())?;
@@ -158,9 +162,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         let fmeta = self.path_builder.metadata()?;
 
         self.dir_stats.add_size(fmeta.size());
-
         self.print_info(&fmeta).unwrap();
-
         self.rg.blue(self.buf)?;
         self.buf
             .print_header(&fmeta, &base_path.clone(), &file_name, self.rg.head)?;

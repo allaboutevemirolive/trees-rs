@@ -5,17 +5,27 @@ mod report;
 mod tree;
 mod walk;
 
+macro_rules! trace {
+    ($x:expr) => {
+        if std::env::var("ENABLE_TRACING").is_ok() {
+            dbg!($x);
+        }
+    };
+}
+
 fn main() -> anyhow::Result<()> {
     use anyhow::Context;
 
     if std::env::var("ENABLE_TRACING").is_ok() {
         tracing_subscriber::fmt::init();
-        tracing::info!("Hello from Trees-rs");
+        tracing::info!("{}", dbg!("Hello from Trees-rs"));
     }
 
     let mut args = cli::arg::TreeArgs::new();
     let mut buf = render::buffer::Buffer::new(std::io::stdout().lock())?;
     let mut tr = walk::tr::TreeCtxt::new(&mut buf).context("Failed to create TreeCtxt")?;
+
+    trace!(&tr);
 
     let mut base_dir = config::root::BaseDirectory::from_current_dir()
         .context("Failed to determine base directory")?;

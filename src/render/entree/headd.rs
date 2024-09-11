@@ -28,27 +28,12 @@ impl<W: Write> Buffer<W> {
     ///
     /// This function handles the logic for determining the appropriate name to write:
     ///
-    /// 1. **File:** If the `root` path represents a file, it extracts and writes the filename.
-    /// 2. **Directory:** If `root` is a directory, it extracts and writes the directory name (without the trailing path separator).
-    /// 3. **Fallback:** If neither filename nor directory name can be obtained (e.g., root is "." or ""),
+    /// 1. File: If the `root` path represents a file, it extracts and writes the filename.
+    /// 2. Directory: If `root` is a directory, it extracts and writes the directory name (without the trailing path separator).
+    /// 3. Fallback: If neither filename nor directory name can be obtained (e.g., root is "." or ""),
     ///     it converts the entire `root` path to a string and writes that. This handles edge cases that
     ///     could otherwise cause panics.
     ///
-    /// # Arguments
-    ///
-    /// * `meta`: Metadata about the file or directory. (Currently unused in this function, but could be used for future enhancements)
-    /// * `root`: The `PathBuf` representing the file or directory whose name is to be written.
-    /// * `parent`: The parent directory's name as an `OsString`. (Currently unused in this function)
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` if the write operation is successful.
-    /// * `Err(io::Error)` if an I/O error occurs during the write.
-    ///
-    /// # Panics
-    ///
-    /// This function will no longer panic, as it includes explicit handling for cases where `root` might not
-    /// have a valid filename or directory name.
     pub fn write_header_name(
         &mut self,
         _meta: &Metadata,

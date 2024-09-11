@@ -55,32 +55,48 @@ pub struct Registry<'a> {
     purple: FnColor<StdoutLock<'a>>,
 }
 
-impl<'a> Registry<'a> {
-    pub fn reset(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+pub trait Color<'a> {
+    fn reset(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()>;
+
+    fn yellow(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()>;
+
+    fn bold_red(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()>;
+
+    fn underlined_blue(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()>;
+
+    fn blue(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()>;
+
+    fn green(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()>;
+
+    fn purple(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()>;
+}
+
+impl<'a> Color<'a> for Registry<'a> {
+    fn reset(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
         (self.reset)(buf)
     }
 
-    pub fn yellow(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+    fn yellow(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
         (self.yellow)(buf)
     }
 
-    pub fn bold_red(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+    fn bold_red(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
         (self.bold_red)(buf)
     }
 
-    pub fn underlined_blue(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+    fn underlined_blue(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
         (self.underlined_blue)(buf)
     }
 
-    pub fn blue(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+    fn blue(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
         (self.blue)(buf)
     }
 
-    pub fn green(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+    fn green(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
         (self.green)(buf)
     }
 
-    pub fn purple(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
+    fn purple(&self, buf: &mut Buffer<StdoutLock<'a>>) -> io::Result<()> {
         (self.purple)(buf)
     }
 }

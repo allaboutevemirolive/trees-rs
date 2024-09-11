@@ -107,6 +107,8 @@ impl TreeArgs {
         // TODO
         // if matches.get_flag(options::path::ABSOLUTE) {}
 
+        // TODO: Add discard output and produce tracing
+
         if matches.get_flag(options::read::VISIBLE) {
             tr.rg.read_visible_entries()?;
         }
