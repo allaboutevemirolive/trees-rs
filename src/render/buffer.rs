@@ -1,6 +1,5 @@
 use std::ffi::OsString;
-use std::io;
-use std::io::Write;
+use std::io::{self, Write};
 
 #[derive(Debug)]
 pub struct Buffer<W: Write> {
@@ -13,34 +12,47 @@ pub trait IntoBranch<W: Write> {
 
 impl<W: Write> IntoBranch<W> for Buffer<W> {
     fn print_branch(&mut self, message: &str) -> io::Result<()> {
-        self.bufwr.write_all(message.as_bytes())
+        self.write_message(message)
     }
 }
 
 impl<W: Write> Buffer<W> {
+    /// Initializes a new `Buffer` with a given writer.
     pub fn new(writer: W) -> anyhow::Result<Self> {
         tracing::info!("Initializing Buffer");
-
-        let bufwr = io::BufWriter::new(writer);
-        Ok(Buffer { bufwr })
+        Ok(Self::create_buffer(writer))
     }
 
+    /// Writes a message to the buffer.
     pub fn write_message(&mut self, message: &str) -> io::Result<()> {
-        self.bufwr.write_all(message.as_bytes())
+        self.write_bytes(message.as_bytes())
     }
 
+    /// Writes an `OsString` to the buffer.
     pub fn write_os_string(&mut self, message: OsString) -> io::Result<()> {
-        self.bufwr.write_all(message.as_encoded_bytes())
+        self.write_bytes(message.as_encoded_bytes())
     }
-}
 
-impl<W: Write> Buffer<W> {
+    /// Writes a newline to the buffer.
     pub fn newline(&mut self) -> io::Result<()> {
-        self.bufwr.write_all("\n".as_bytes())
+        self.write_bytes("\n".as_bytes())
     }
 
+    /// Writes a space to the buffer.
     pub fn write_space(&mut self) -> io::Result<()> {
-        self.bufwr.write_all(" ".as_bytes())
+        self.write_bytes(" ".as_bytes())
+    }
+
+    /// Helper method to write bytes to the buffer.
+    fn write_bytes(&mut self, bytes: &[u8]) -> io::Result<()> {
+        self.bufwr.write_all(bytes)
+    }
+
+    /// Helper method to create a `BufWriter`.
+    fn create_buffer(writer: W) -> Buffer<W> {
+        Buffer {
+            bufwr: io::BufWriter::new(writer),
+        }
     }
 }
 

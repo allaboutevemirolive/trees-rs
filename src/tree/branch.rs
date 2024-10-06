@@ -1,40 +1,47 @@
 use crate::render::buffer::IntoBranch;
-
 use std::io::StdoutLock;
 
 #[derive(Debug, Clone)]
 pub struct Branch {
-    /// Represents the end of a branch, e.g., "└── "
     end: &'static str,
-    /// Represents the middle part of a branch, e.g., "├── "
     middle: &'static str,
-    /// Represents empty space between branches, e.g., "    "
     space: &'static str,
-    /// Represents the main structural part of the tree, e.g., "│   "
     structural: &'static str,
 }
 
 impl Branch {
+    /// Resets the branch to have no structural markers.
     pub fn no_branch(&mut self) {
-        self.end = "";
-        self.middle = "";
-        self.space = "";
-        self.structural = "";
+        self.reset_branches("", "", "", "");
+    }
+
+    /// Resets branch properties with the given values.
+    fn reset_branches(
+        &mut self,
+        end: &'static str,
+        middle: &'static str,
+        space: &'static str,
+        structural: &'static str,
+    ) {
+        self.end = end;
+        self.middle = middle;
+        self.space = space;
+        self.structural = structural;
     }
 }
 
 impl Default for Branch {
-    #[rustfmt::skip]
     fn default() -> Self {
         Branch {
-            end:        "└── ",
-            middle:     "├── ",
-            space:      "    ",
+            end: "└── ",
+            middle: "├── ",
+            space: "    ",
             structural: "│   ",
         }
     }
 }
 
+/// A trait for painting branches onto a buffer.
 pub trait PaintBranch {
     fn print_branch_if<'a, T>(
         &self,
@@ -47,7 +54,6 @@ pub trait PaintBranch {
 }
 
 impl PaintBranch for Branch {
-    #[allow(clippy::collapsible_else_if)]
     fn print_branch_if<'a, T>(
         &self,
         value_is_one: bool,
@@ -57,19 +63,27 @@ impl PaintBranch for Branch {
     where
         T: IntoBranch<StdoutLock<'a>>,
     {
+        let branch_part = self.determine_branch_part(value_is_one, value_has_next);
+        buffer.print_branch(branch_part)?;
+        Ok(())
+    }
+}
+
+impl Branch {
+    /// Determines which branch part to print based on the conditions.
+    fn determine_branch_part(&self, value_is_one: bool, value_has_next: bool) -> &'static str {
         if value_has_next {
             if value_is_one {
-                buffer.print_branch(self.structural)?;
+                self.structural
             } else {
-                buffer.print_branch(self.space)?;
+                self.space
             }
         } else {
             if value_is_one {
-                buffer.print_branch(self.middle)?;
+                self.middle
             } else {
-                buffer.print_branch(self.end)?;
+                self.end
             }
         }
-        Ok(())
     }
 }
