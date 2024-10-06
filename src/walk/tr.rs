@@ -9,6 +9,8 @@ use crate::walk;
 // instead of enum for performance reason.
 use crate::config::registry::Color;
 
+use anyhow::Context;
+
 #[derive(Debug)]
 pub struct TreeCtxt<'tr, 'a> {
     pub branch: tree::branch::Branch,
@@ -45,109 +47,151 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     pub fn walk_dir(&mut self, path: std::path::PathBuf) -> anyhow::Result<()> {
-        use anyhow::Context;
-
         tracing::info!("Displaying tree view for directory: {}", path.display());
 
-        let mut entries: Vec<std::fs::DirEntry> = self.rg.inspt_dents(path, &mut self.dir_stats)?;
-        self.rg.sort_dents(&mut entries);
-
-        tracing::info!("Enumerate sorted's DirEntry");
-
-        let enumerated_entries = entries
-            .into_iter()
-            .enumerate()
-            .collect::<Vec<(usize, std::fs::DirEntry)>>();
-
+        let enumerated_entries = self.get_sorted_entries(path)?;
         let entries_len = enumerated_entries.len();
 
         for (idx, entry) in enumerated_entries {
-            tracing::info!("Get entry's information for entry: {:?}", entry);
-
-            let mut visitor = walk::visit::Visitor::new(entry)?;
-            self.dir_stats.add_size(visitor.size().unwrap());
-            self.print_info(visitor.metadata())?;
-            self.nod.push_if(idx, entries_len);
-            self.nod.to_branch(&self.branch, self.buf)?;
-
-            if visitor.is_symlink() {
-                self.dir_stats.symlink_add_one();
-                self.rg.yellow(self.buf)?;
-                self.buf
-                    .print_symlink(&mut visitor, &self.path_builder, self.rg.symlink)?;
-                self.rg.reset(self.buf)?;
-                self.buf.write_message(" @ ")?;
-                self.rg.underlined_blue(self.buf)?;
-                self.buf.write_message(
-                    visitor
-                        .get_target_symlink()
-                        .context("Failed to get target symlink")?
-                        .to_str()
-                        .context("Failed to convert target symlink to &str")?,
-                )?;
-                self.rg.reset(self.buf)?;
-                self.buf.newline()?;
-                self.nod.pop();
-                continue;
-            }
-
-            if visitor.is_media_type() {
-                self.dir_stats.media_add_one();
-                self.rg.purple(self.buf)?;
-                self.buf
-                    .print_file(&visitor, &self.path_builder, self.rg.file)?;
-                self.rg.reset(self.buf)?;
-                self.buf.newline()?;
-                self.nod.pop();
-                continue;
-            }
-
-            if visitor.is_file() {
-                self.dir_stats.file_add_one();
-                self.buf
-                    .print_file(&visitor, &self.path_builder, self.rg.file)?;
-                self.buf.newline()?;
-                self.nod.pop();
-                continue;
-            }
-
-            if visitor.is_dir() {
-                self.dir_stats.dir_add_one();
-                self.rg.blue(self.buf)?;
-                self.buf
-                    .print_dir(&visitor, &self.path_builder, self.rg.dir)?;
-                self.rg.reset(self.buf)?;
-                self.buf.newline()?;
-
-                if self.level.can_descend_further() {
-                    self.level.add_one();
-                    // If folder needed permission, we skip it. Safe to use unwrap.
-                    if self
-                        .walk_dir(visitor.absolute_path().unwrap().to_path_buf())
-                        .is_err()
-                    {
-                        self.dir_stats.err_dirs_add_one();
-                        self.level.subtract_one();
-                        self.nod.pop();
-                        continue;
-                    }
-                    self.level.subtract_one();
-                }
-                self.nod.pop();
-                continue;
-            } else {
-                // If entry is not dir, file or symlink like: special File(Device File, Socket File, Named Pipe (FIFO)) or
-                // Unix-Specific(Block Device, Character Device)
-                self.dir_stats.special_add_one();
-                self.rg.bold_red(self.buf)?;
-                self.buf.write_os_string(visitor.filename().clone())?;
-                self.rg.reset(self.buf)?;
-                self.buf.newline()?;
-                self.nod.pop();
-                continue;
-            }
+            self.process_entry(idx, entry, entries_len)?;
         }
 
+        Ok(())
+    }
+
+    fn get_sorted_entries(
+        &mut self,
+        path: std::path::PathBuf,
+    ) -> anyhow::Result<Vec<(usize, std::fs::DirEntry)>> {
+        let mut entries = self.rg.inspt_dents(path, &mut self.dir_stats)?;
+        self.rg.sort_dents(&mut entries);
+
+        Ok(entries.into_iter().enumerate().collect())
+    }
+
+    fn process_entry(
+        &mut self,
+        idx: usize,
+        entry: std::fs::DirEntry,
+        entries_len: usize,
+    ) -> anyhow::Result<()> {
+        tracing::info!("Get entry's information for entry: {:?}", entry);
+
+        let mut visitor = walk::visit::Visitor::new(entry)?;
+        self.update_stats_and_print_info(&visitor)?;
+        self.update_node(idx, entries_len)?;
+
+        if visitor.is_symlink() {
+            self.handle_symlink(&mut visitor)?;
+            self.nod.pop();
+            return Ok(());
+        } else if visitor.is_media_type() {
+            self.handle_media(&visitor)?;
+            self.nod.pop();
+            return Ok(());
+        } else if visitor.is_file() {
+            self.handle_file(&visitor)?;
+            self.nod.pop();
+            return Ok(());
+        } else if visitor.is_dir() {
+            self.handle_directory(&visitor)?;
+            self.nod.pop();
+            return Ok(());
+        } else {
+            self.handle_special(&visitor)?;
+            self.nod.pop();
+            return Ok(());
+        }
+    }
+
+    fn update_stats_and_print_info(
+        &mut self,
+        visitor: &walk::visit::Visitor,
+    ) -> anyhow::Result<()> {
+        if let Some(size) = visitor.size() {
+            self.dir_stats.add_size(size);
+        }
+        self.print_info(visitor.metadata())?;
+        Ok(())
+    }
+
+    fn update_node(&mut self, idx: usize, entries_len: usize) -> anyhow::Result<()> {
+        self.nod.push_if(idx, entries_len);
+        self.nod.to_branch(&self.branch, self.buf)?;
+        Ok(())
+    }
+
+    fn handle_symlink(&mut self, visitor: &mut walk::visit::Visitor) -> anyhow::Result<()> {
+        self.dir_stats.symlink_add_one();
+        self.rg.yellow(self.buf)?;
+        self.buf
+            .print_symlink(visitor, &self.path_builder, self.rg.symlink)?;
+        self.rg.reset(self.buf)?;
+        self.buf.write_message(" @ ")?;
+        self.rg.underlined_blue(self.buf)?;
+
+        self.buf.write_message(
+            visitor
+                .get_target_symlink()
+                .context("Failed to get target symlink")?
+                .to_str()
+                .context("Failed to convert target symlink to &str")?,
+        )?;
+
+        self.rg.reset(self.buf)?;
+        self.buf.newline()?;
+        Ok(())
+    }
+
+    fn handle_media(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+        self.dir_stats.media_add_one();
+        self.rg.purple(self.buf)?;
+        self.buf
+            .print_file(visitor, &self.path_builder, self.rg.file)?;
+        self.rg.reset(self.buf)?;
+        self.buf.newline()?;
+        Ok(())
+    }
+
+    fn handle_file(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+        self.dir_stats.file_add_one();
+        self.buf
+            .print_file(visitor, &self.path_builder, self.rg.file)?;
+        self.buf.newline()?;
+        Ok(())
+    }
+
+    fn handle_directory(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+        self.dir_stats.dir_add_one();
+        self.rg.blue(self.buf)?;
+        self.buf
+            .print_dir(visitor, &self.path_builder, self.rg.dir)?;
+        self.rg.reset(self.buf)?;
+        self.buf.newline()?;
+
+        if self.level.can_descend_further() {
+            self.descend_into_directory(visitor)?;
+        }
+        Ok(())
+    }
+
+    fn descend_into_directory(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+        self.level.add_one();
+        if let Some(path) = visitor.absolute_path() {
+            if self.walk_dir(path.to_path_buf()).is_err() {
+                self.dir_stats.err_dirs_add_one();
+            }
+        }
+        self.level.subtract_one();
+        Ok(())
+    }
+
+    fn handle_special(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+        self.dir_stats.special_add_one();
+        self.rg.bold_red(self.buf)?;
+        self.buf.write_os_string(visitor.filename().clone())?;
+        self.rg.reset(self.buf)?;
+        self.buf.newline()?;
         Ok(())
     }
 
