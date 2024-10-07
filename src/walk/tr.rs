@@ -115,7 +115,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         if let Some(size) = visitor.size() {
             self.dir_stats.add_size(size);
         }
-        self.print_info(visitor.metadata())?;
+        self.handle_info(visitor.metadata())?;
         Ok(())
     }
 
@@ -200,7 +200,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[cfg(unix)]
-    pub fn print_head(&mut self) -> anyhow::Result<()> {
+    pub fn handle_header(&mut self) -> anyhow::Result<()> {
         use std::os::unix::fs::MetadataExt;
         tracing::info!("Print directory header");
 
@@ -209,7 +209,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         let fmeta = self.path_builder.metadata()?;
 
         self.dir_stats.add_size(fmeta.size());
-        self.print_info(&fmeta)?;
+        self.handle_info(&fmeta)?;
         self.rg.blue(self.buf)?;
         self.buf
             .print_header(&fmeta, &base_path, &file_name, self.rg.head)?;
@@ -218,7 +218,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         Ok(())
     }
 
-    pub fn print_info(&mut self, meta: &std::fs::Metadata) -> anyhow::Result<()> {
+    pub fn handle_info(&mut self, meta: &std::fs::Metadata) -> anyhow::Result<()> {
         tracing::info!("Print entry's information");
         self.buf.print_permission(meta, self.rg.pms)?;
         self.buf.print_btime(meta, self.rg.btime)?;
@@ -230,7 +230,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         Ok(())
     }
 
-    pub fn print_report(&mut self, report_mode: report::stats::ReportMode) -> anyhow::Result<()> {
+    pub fn handle_report(&mut self, report_mode: report::stats::ReportMode) -> anyhow::Result<()> {
         tracing::info!("Print reports");
         self.buf.newline()?;
         self.dir_stats.accumulate_items();

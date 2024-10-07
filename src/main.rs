@@ -5,6 +5,7 @@ mod report;
 mod tree;
 mod walk;
 
+use ignore::gitignore::GitignoreBuilder;
 use report::stats::ReportMode;
 
 macro_rules! trace {
@@ -76,7 +77,7 @@ fn build_and_print_tree_head<'tr, 'a>(
         .into_builder()
         .context("Failed to build base directory path")?;
     tr.path_builder.append_root();
-    tr.print_head()?;
+    tr.handle_header()?;
 
     Ok(())
 }
@@ -87,8 +88,14 @@ fn iterate_directories_and_print_report<'tr, 'a>(
     report_mode: ReportMode,
 ) -> anyhow::Result<()> {
     tracing::info!("Ready to iterate directories");
+
+    let path_ignore = tr.path_builder.base_path();
+
+    let mut builder = GitignoreBuilder::new(path_ignore.clone().as_path());
+    builder.add(path_ignore.join(".gitignore"));
+
     tr.walk_dir(tr.path_builder.base_path())?;
-    tr.print_report(report_mode)?;
+    tr.handle_report(report_mode)?;
 
     Ok(())
 }
