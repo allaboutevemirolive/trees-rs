@@ -56,7 +56,7 @@ impl TreeArgs {
 
     fn apply_level_settings(&self, tr: &mut TreeCtxt, matches: &clap::ArgMatches) {
         if let Some(level) = matches.get_one::<usize>(options::miscellaneous::LEVEL) {
-            tr.level.with_cap(*level as i32);
+            tr.level.set_capacity(*level as u32);
         }
     }
 

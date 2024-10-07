@@ -1,44 +1,63 @@
-// TODO: Inform user if directories's depth potentially exceed more than capacity
-#[allow(dead_code)]
-#[derive(Debug, Clone, Copy)]
+use std::cmp::min;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Level {
-    lvl: i32,
-    cap: i32,
+    level: u32,
+    capacity: u32,
 }
 
 impl Default for Level {
     fn default() -> Self {
-        Level {
-            lvl: 1,
-            cap: 10_000,
-        }
+        Self::new(1, 10_000)
     }
 }
 
 impl Level {
-    #[allow(dead_code)]
-    pub fn with_lvl_and_cap(lvl: i32, cap: i32) -> Self {
-        Level { lvl, cap }
+    pub fn new(level: u32, capacity: u32) -> Self {
+        Self { level, capacity }
     }
 
-    pub fn with_cap(&mut self, num: i32) {
-        self.cap = num;
+    pub fn level(&self) -> u32 {
+        self.level
     }
 
-    pub fn _modify_capacity(&mut self, num: i32) {
-        self.lvl = num;
+    pub fn capacity(&self) -> u32 {
+        self.capacity
     }
 
-    pub fn add_one(&mut self) {
-        self.lvl += 1;
+    pub fn set_capacity(&mut self, capacity: u32) {
+        self.capacity = capacity;
     }
 
-    pub fn subtract_one(&mut self) {
-        self.lvl -= 1;
+    pub fn set_level(&mut self, level: u32) {
+        self.level = min(level, self.capacity);
+    }
+
+    pub fn increment(&mut self) {
+        // if self.can_descend_further() {
+        self.level += 1;
+        // }
+    }
+
+    pub fn decrement(&mut self) {
+        // if self.level > 0 {
+        self.level -= 1;
+        // }
     }
 
     pub fn can_descend_further(&self) -> bool {
-        self.lvl < self.cap
+        self.level < self.capacity
+    }
+
+    pub fn depth_warning(&self) -> Option<String> {
+        if self.level >= self.capacity * 9 / 10 {
+            Some(format!(
+                "Warning: Current depth ({}) is approaching capacity ({})",
+                self.level, self.capacity
+            ))
+        } else {
+            None
+        }
     }
 }
 
@@ -47,26 +66,41 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_plus_one() {
-        let mut level = Level::with_lvl_and_cap(0, 5000);
-        level.add_one();
-        assert_eq!(level.lvl, 1);
+    fn test_default() {
+        let level = Level::default();
+        assert_eq!(level.level(), 1);
+        assert_eq!(level.capacity(), 10_000);
     }
 
     #[test]
-    fn test_minus_one() {
-        let mut level = Level::with_lvl_and_cap(3, 5000);
-        level.subtract_one();
-        assert_eq!(level.lvl, 2);
+    fn test_new() {
+        let level = Level::new(5, 100);
+        assert_eq!(level.level(), 5);
+        assert_eq!(level.capacity(), 100);
     }
 
     #[test]
-    fn test_lvl_not_exceed_cap() {
-        let mut level = Level::with_lvl_and_cap(1, 5000);
-        while level.lvl < level.cap {
-            level.add_one();
-        }
-        assert_eq!(level.lvl, level.cap);
-        assert_ne!(level.lvl, 5001)
+    fn test_increment_and_decrement() {
+        let mut level = Level::new(5, 10);
+        level.increment();
+        assert_eq!(level.level(), 6);
+        level.decrement();
+        assert_eq!(level.level(), 5);
+    }
+
+    #[test]
+    fn test_can_descend_further() {
+        let level = Level::new(5, 10);
+        assert!(level.can_descend_further());
+        let level = Level::new(10, 10);
+        assert!(!level.can_descend_further());
+    }
+
+    #[test]
+    fn test_depth_warning() {
+        let level = Level::new(90, 100);
+        assert!(level.depth_warning().is_some());
+        let level = Level::new(50, 100);
+        assert!(level.depth_warning().is_none());
     }
 }

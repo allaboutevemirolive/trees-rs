@@ -176,13 +176,13 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     fn descend_into_directory(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
-        self.level.add_one();
+        self.level.increment();
         if let Some(path) = visitor.absolute_path() {
             if self.walk_dir(path.to_path_buf()).is_err() {
                 self.dir_stats.err_dirs_add_one();
             }
         }
-        self.level.subtract_one();
+        self.level.decrement();
         Ok(())
     }
 
