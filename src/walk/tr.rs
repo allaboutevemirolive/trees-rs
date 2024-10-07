@@ -80,25 +80,29 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         let mut visitor = walk::visit::Visitor::new(entry)?;
         self.update_stats_and_print_info(&visitor)?;
         self.update_node(idx, entries_len)?;
+        self.handle_entry_type(&mut visitor)?;
+        Ok(())
+    }
 
+    fn handle_entry_type(&mut self, visitor: &mut walk::visit::Visitor) -> anyhow::Result<()> {
         if visitor.is_symlink() {
-            self.handle_symlink(&mut visitor)?;
+            self.handle_symlink(visitor)?;
             self.nod.pop();
             return Ok(());
         } else if visitor.is_media_type() {
-            self.handle_media(&visitor)?;
+            self.handle_media(visitor)?;
             self.nod.pop();
             return Ok(());
         } else if visitor.is_file() {
-            self.handle_file(&visitor)?;
+            self.handle_file(visitor)?;
             self.nod.pop();
             return Ok(());
         } else if visitor.is_dir() {
-            self.handle_directory(&visitor)?;
+            self.handle_directory(visitor)?;
             self.nod.pop();
             return Ok(());
         } else {
-            self.handle_special(&visitor)?;
+            self.handle_special(visitor)?;
             self.nod.pop();
             return Ok(());
         }
