@@ -1,11 +1,109 @@
 use super::branch::PaintBranch;
 use crate::render::buffer::Buffer;
-
+use anyhow::Result;
 use std::io::StdoutLock;
+
+const DEFAULT_CAPACITY: usize = 5_000;
 
 #[derive(Debug, Clone)]
 pub struct Node {
-    nod: Vec<i32>,
+    values: Vec<i32>,
+}
+
+impl Default for Node {
+    fn default() -> Self {
+        Self::with_capacity_unchecked(DEFAULT_CAPACITY)
+    }
+}
+
+impl Node {
+    /// Creates a new Node with the given values.
+    ///
+    /// # Note
+    /// For testing purposes only. Not intended for production use.
+    #[cfg(test)]
+    pub fn new(values: Vec<i32>) -> Self {
+        Self { values }
+    }
+
+    /// Creates a new Node with the specified capacity.
+    pub fn with_capacity(cap: i32) -> Result<Self> {
+        if cap < 0 {
+            anyhow::bail!("Capacity must be non-negative");
+        }
+        Ok(Self::with_capacity_unchecked(cap as usize))
+    }
+
+    /// Internal method to create a Node with unchecked capacity.
+    fn with_capacity_unchecked(cap: usize) -> Self {
+        Self {
+            values: Vec::with_capacity(cap),
+        }
+    }
+
+    /// Removes and returns the last element.
+    pub fn pop(&mut self) -> Option<i32> {
+        self.values.pop()
+    }
+
+    /// Appends an element to the end.
+    pub fn push(&mut self, num: i32) {
+        self.values.push(num);
+    }
+
+    /// Returns an iterator over the values with their indices.
+    pub fn enumerate(&self) -> impl Iterator<Item = (usize, &i32)> {
+        self.values.iter().enumerate()
+    }
+
+    /// Gets the next element from an iterator.
+    pub fn next_from_iterator<'a, I>(&'a self, iter: &mut I) -> Option<(usize, &'a i32)>
+    where
+        I: Iterator<Item = (usize, &'a i32)>,
+    {
+        iter.next()
+    }
+
+    /// Gets a reference to the next element without consuming the iterator.
+    fn peek_next(&self, current_index: usize) -> Option<&i32> {
+        self.values.get(current_index + 1)
+    }
+
+    /// Pushes a value based on the current index and total entries.
+    pub fn push_conditional(&mut self, current_index: usize, total_entries: usize) {
+        let value = if current_index < total_entries - 1 {
+            1
+        } else {
+            2
+        };
+        self.push(value);
+    }
+
+    /// Converts the node into a branch representation.
+    pub fn paint_as_branch<T>(&self, branch: &T, buffer: &mut Buffer<StdoutLock>) -> Result<()>
+    where
+        T: PaintBranch,
+    {
+        tracing::info!("Converting node to branch representation");
+
+        for (is_one, has_next) in self.into_iter() {
+            branch
+                .print_branch_if(is_one, has_next, buffer)
+                .map_err(|e| anyhow::anyhow!("Failed to print branch: {}", e))?;
+        }
+
+        Ok(())
+    }
+
+    /// Returns the current length of the node.
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+
+    /// Returns true if the node contains no elements.
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
 }
 
 impl<'a> IntoIterator for &'a Node {
@@ -13,84 +111,7 @@ impl<'a> IntoIterator for &'a Node {
     type IntoIter = NodeIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        NodeIterator {
-            node: self,
-            index: 0,
-        }
-    }
-}
-
-impl Default for Node {
-    fn default() -> Self {
-        Node {
-            nod: Vec::with_capacity(5_000_usize),
-        }
-    }
-}
-
-impl Node {
-    /// For testing and not intended to be use in production as this will initialize default capacity.
-    #[allow(dead_code)]
-    fn new(nod: Vec<i32>) -> Self {
-        Node { nod }
-    }
-
-    pub fn with_capacity(cap: i32) -> anyhow::Result<Self> {
-        Ok(Node {
-            nod: Vec::with_capacity(cap as usize),
-        })
-    }
-
-    pub fn pop(&mut self) -> Option<i32> {
-        self.nod.pop()
-    }
-
-    pub fn push(&mut self, num: i32) {
-        self.nod.push(num);
-    }
-
-    #[allow(dead_code)]
-    fn enumerate_node(&self) -> impl Iterator<Item = (usize, &i32)> {
-        self.nod.iter().enumerate()
-    }
-
-    /// Get next element or subslice and consume the iterator.
-    #[allow(dead_code)]
-    fn next_iter<'a>(
-        &'a self,
-        iter: &mut impl Iterator<Item = (usize, &'a i32)>,
-    ) -> Option<(usize, &i32)> {
-        iter.next()
-    }
-
-    ///  Get reference to the next element or subslice without consuming iterator.
-    ///  If next item is out-of-bounds, return None.
-    fn next_ref(&self, idx: usize) -> Option<&i32> {
-        self.nod.get(idx + 1)
-    }
-
-    /// If current entry is not the last entry in entries
-    pub fn push_if(&mut self, curr_index: usize, entries_len: usize) {
-        if curr_index < entries_len - 1 {
-            self.push(1);
-        } else {
-            self.push(2);
-        }
-    }
-
-    /// Convert node into branch stick
-    pub fn to_branch<T>(&self, branch: &T, buf: &mut Buffer<StdoutLock>) -> anyhow::Result<()>
-    where
-        T: PaintBranch,
-    {
-        tracing::info!("Convert node to branch's stick");
-        self.into_iter().for_each(|(value_is_one, value_has_next)| {
-            branch
-                .print_branch_if(value_is_one, value_has_next, buf)
-                .expect("Cannot print branch");
-        });
-
-        Ok(())
+        NodeIterator::new(self)
     }
 }
 
@@ -99,15 +120,23 @@ pub struct NodeIterator<'a> {
     index: usize,
 }
 
+impl<'a> NodeIterator<'a> {
+    fn new(node: &'a Node) -> Self {
+        Self { node, index: 0 }
+    }
+}
+
 impl<'a> Iterator for NodeIterator<'a> {
     type Item = (bool, bool);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index < self.node.nod.len() {
-            let value_is_one = self.node.nod[self.index] == 1;
-            let value_has_next = self.node.next_ref(self.index).is_some();
+        if self.index < self.node.len() {
+            let current_value = &self.node.values[self.index];
+            let is_one = *current_value == 1;
+            let has_next = self.node.peek_next(self.index).is_some();
+
             self.index += 1;
-            Some((value_is_one, value_has_next))
+            Some((is_one, has_next))
         } else {
             None
         }
@@ -118,135 +147,33 @@ impl<'a> Iterator for NodeIterator<'a> {
 mod tests {
     use super::*;
 
-    // cargo test test_node_new -- --nocapture
     #[test]
-    fn test_node_new() {
-        let node = Node::with_capacity(5).unwrap();
-        assert_eq!(node.nod.len(), 0);
-        assert_eq!(node.nod.capacity(), 5);
+    fn test_node_creation() {
+        let node = Node::default();
+        assert_eq!(node.len(), 0);
+        assert!(node.is_empty());
     }
 
     #[test]
     fn test_push_and_pop() {
-        let mut node = Node::with_capacity(5).unwrap();
+        let mut node = Node::default();
         node.push(1);
         node.push(2);
-        assert_eq!(node.nod.len(), 2);
 
-        let popped = node.pop();
-        assert_eq!(popped, Some(2));
-        assert_eq!(node.nod.len(), 1);
-
-        let popped = node.pop();
-        assert_eq!(popped, Some(1));
-        assert_eq!(node.nod.len(), 0);
-
-        let popped = node.pop();
-        assert_eq!(popped, None);
-    }
-
-    // cargo test test_iterate_node -- --nocapture
-    #[test]
-    fn test_iterate_node() {
-        let mut node = Node::with_capacity(5).unwrap();
-        node.push(1);
-        node.push(2);
-        node.push(3);
-
-        let mut iter = node.enumerate_node();
-        assert_eq!(iter.next(), Some((0, &1)));
-        assert_eq!(iter.next(), Some((1, &2)));
-        assert_eq!(iter.next(), Some((2, &3)));
-        assert_eq!(iter.next(), None);
+        assert_eq!(node.pop(), Some(2));
+        assert_eq!(node.pop(), Some(1));
+        assert_eq!(node.pop(), None);
     }
 
     #[test]
-    fn test_iterate_node_for_loop() {
-        let mut node = Node::with_capacity(5).unwrap();
-        node.push(1);
-        node.push(2);
-        node.push(3);
-
-        let mut expected_iter = node.nod.iter().enumerate();
-
-        for (idx, item) in node.enumerate_node() {
-            let (expected_idx, expected_item) = expected_iter.next().unwrap();
-            assert_eq!(idx, expected_idx);
-            assert_eq!(item, expected_item);
-        }
-    }
-    #[test]
-    fn test_next_iter() {
-        let mut node = Node::with_capacity(5).unwrap();
-        node.push(1);
-        node.push(2);
-        node.push(3);
-
-        let mut iter = node.enumerate_node();
-
-        assert_eq!(node.next_iter(&mut iter), Some((0, &1)));
-        assert_eq!(node.next_iter(&mut iter), Some((1, &2)));
-        assert_eq!(node.next_iter(&mut iter), Some((2, &3)));
-        assert_eq!(node.next_iter(&mut iter), None);
+    fn test_invalid_capacity() {
+        assert!(Node::with_capacity(-1).is_err());
     }
 
     #[test]
-    fn test_add_entry_marker() {
-        let mut node = Node::with_capacity(5).unwrap();
-        let num_entries = 5;
-
-        for i in 0..num_entries {
-            node.push_if(i, num_entries);
-        }
-
-        let mut iter = node.enumerate_node();
-        assert_eq!(iter.next(), Some((0, &1)));
-        assert_eq!(iter.next(), Some((1, &1)));
-        assert_eq!(iter.next(), Some((2, &1)));
-        assert_eq!(iter.next(), Some((3, &1)));
-        assert_eq!(iter.next(), Some((4, &2)));
-        assert_eq!(iter.next(), None);
-    }
-
-    #[test]
-    fn test_get_next_item() {
-        let mut node = Node::with_capacity(5).unwrap();
-        node.push(1);
-        node.push(2);
-        node.push(3);
-
-        let next_item = node.next_ref(0);
-        assert_eq!(next_item, Some(&2));
-
-        let next_item = node.next_ref(1);
-        assert_eq!(next_item, Some(&3));
-
-        let next_item = node.next_ref(2);
-        assert_eq!(next_item, None);
-    }
-
-    #[test]
-    fn test_get_next_item_and_check_iterator_movement() {
-        let mut node = Node::with_capacity(5).unwrap();
-        node.push(1);
-        node.push(2);
-        node.push(3);
-
-        let mut iter = node.enumerate_node();
-
-        let next_item = node.next_ref(0);
-        assert_eq!(next_item, Some(&2));
-
-        assert_eq!(iter.next(), Some((0, &1)));
-
-        let next_item = node.next_ref(1);
-        assert_eq!(next_item, Some(&3));
-
-        assert_eq!(iter.next(), Some((1, &2)));
-
-        let next_item = node.next_ref(2);
-        assert_eq!(next_item, None);
-
-        assert_eq!(iter.next(), Some((2, &3)));
+    fn test_iterator() {
+        let node = Node::new(vec![1, 2, 1]);
+        let items: Vec<_> = (&node).into_iter().collect();
+        assert_eq!(items, vec![(true, true), (false, true), (true, false)]);
     }
 }

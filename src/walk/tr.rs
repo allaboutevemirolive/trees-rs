@@ -116,8 +116,8 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     fn update_node(&mut self, idx: usize, entries_len: usize) -> anyhow::Result<()> {
-        self.nod.push_if(idx, entries_len);
-        self.nod.to_branch(&self.branch, self.buf)?;
+        self.nod.push_conditional(idx, entries_len);
+        self.nod.paint_as_branch(&self.branch, self.buf)?;
         Ok(())
     }
 
