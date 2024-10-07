@@ -198,7 +198,6 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     #[cfg(unix)]
     pub fn print_head(&mut self) -> anyhow::Result<()> {
         use std::os::unix::fs::MetadataExt;
-
         tracing::info!("Print directory header");
 
         let file_name = self.path_builder.filename();
@@ -206,24 +205,21 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         let fmeta = self.path_builder.metadata()?;
 
         self.dir_stats.add_size(fmeta.size());
-        self.print_info(&fmeta).unwrap();
+        self.print_info(&fmeta)?;
         self.rg.blue(self.buf)?;
         self.buf
-            .print_header(&fmeta, &base_path.clone(), &file_name, self.rg.head)?;
+            .print_header(&fmeta, &base_path, &file_name, self.rg.head)?;
         self.rg.reset(self.buf)?;
         self.buf.newline()?;
-
         Ok(())
     }
 
     pub fn print_info(&mut self, meta: &std::fs::Metadata) -> anyhow::Result<()> {
         tracing::info!("Print entry's information");
-
         self.buf.print_permission(meta, self.rg.pms)?;
         self.buf.print_btime(meta, self.rg.btime)?;
         self.buf.print_mtime(meta, self.rg.mtime)?;
         self.buf.print_atime(meta, self.rg.atime)?;
-
         self.rg.green(self.buf)?;
         self.buf.print_size(meta, self.rg.size)?;
         self.rg.reset(self.buf)?;
@@ -232,17 +228,12 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
 
     pub fn print_report(&mut self, report_mode: report::stats::ReportMode) -> anyhow::Result<()> {
         tracing::info!("Print reports");
-        // TODO: Improve report mode
         self.buf.newline()?;
         self.dir_stats.accumulate_items();
-        // Store formatted DirectoryStats here
-        let mut report_summary = report::stats::ReportSummary::with_capacity(50).unwrap();
-        // Get report
+        let mut report_summary = report::stats::ReportSummary::with_capacity(50)?;
         self.dir_stats
             .populate_report(&mut report_summary, report_mode);
-        // Parse report
         let summary = report_summary.join(", ");
-
         self.buf.write_message(&summary)?;
         self.buf.newline()?;
         Ok(())
