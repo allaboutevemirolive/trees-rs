@@ -56,10 +56,10 @@ impl TreeArgs {
         let path_exist = extract_and_update_base_dir(&mut self.args, base_dir);
 
         if !path_exist {
-            base_dir.set_path_from_cwd();
-            base_dir.set_file_name_to_current_dir();
+            base_dir.set_path_source(false);
+            base_dir.set_to_current_dir();
         } else {
-            base_dir.set_path_from_args();
+            base_dir.set_path_source(true);
         }
 
         let matches = tree_app()
@@ -161,8 +161,8 @@ fn extract_and_update_base_dir(args: &mut Vec<OsString>, base_dir: &mut BaseDire
 
     for (index, arg) in args.iter().skip(1).enumerate() {
         if let Some(arg_path) = valid_path(arg) {
-            base_dir.with_base_path(arg_path.clone());
-            base_dir.with_filename(arg_path.into_os_string());
+            base_dir.set_base_path(arg_path.clone());
+            base_dir.set_filename(arg_path.into_os_string());
             delete_index = Some(index + 1);
             break;
         }

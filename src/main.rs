@@ -72,7 +72,8 @@ fn build_and_print_tree_head<'tr, 'a>(
     use anyhow::Context;
 
     tr.path_builder = base_dir
-        .build()
+        .clone()
+        .into_builder()
         .context("Failed to build base directory path")?;
     tr.path_builder.append_root();
     tr.print_head()?;
