@@ -1,7 +1,7 @@
-use super::app::options;
+use super::app::cli_options;
 use super::app::tree_app;
 
-use crate::config::root::BaseDirectory;
+use crate::config::root::TraversalBase;
 use crate::report::stats::ReportMode;
 use crate::walk::tr::TreeCtxt;
 
@@ -24,7 +24,7 @@ impl TreeArgs {
     pub fn match_app(
         &mut self,
         tr: &mut TreeCtxt,
-        base_dir: &mut BaseDirectory,
+        base_dir: &mut TraversalBase,
     ) -> anyhow::Result<ReportMode> {
         tracing::info!("Filter arguments and get report mode");
         self.handle_base_directory(base_dir);
@@ -40,13 +40,13 @@ impl TreeArgs {
         Ok(self.determine_report_mode(&matches))
     }
 
-    fn handle_base_directory(&mut self, base_dir: &mut BaseDirectory) {
+    fn handle_base_directory(&mut self, base_dir: &mut TraversalBase) {
         let path_exist = self.extract_and_update_base_dir(base_dir);
         if !path_exist {
-            base_dir.set_path_source(false);
-            base_dir.set_to_current_dir();
+            base_dir.set_from_args(false);
+            base_dir.set_file_name_to_current_dir();
         } else {
-            base_dir.set_path_source(true);
+            base_dir.set_from_args(true);
         }
     }
 
@@ -55,7 +55,7 @@ impl TreeArgs {
     }
 
     fn apply_level_settings(&self, tr: &mut TreeCtxt, matches: &clap::ArgMatches) {
-        if let Some(level) = matches.get_one::<usize>(options::miscellaneous::LEVEL) {
+        if let Some(level) = matches.get_one::<usize>(cli_options::misc::LEVEL) {
             tr.level.set_capacity(*level as u32);
         }
     }
@@ -65,24 +65,24 @@ impl TreeArgs {
         tr: &mut TreeCtxt,
         matches: &clap::ArgMatches,
     ) -> anyhow::Result<()> {
-        if matches.get_flag(options::meta::META) {
+        if matches.get_flag(cli_options::meta::META) {
             tr.rg.with_all_metadata();
         }
 
         // Individual meta settings
-        if matches.get_flag(options::meta::PERMISSION) {
+        if matches.get_flag(cli_options::meta::PERMISSION) {
             tr.rg.with_permission();
         }
-        if matches.get_flag(options::meta::BTIME) {
+        if matches.get_flag(cli_options::meta::BTIME) {
             tr.rg.with_birth_time();
         }
-        if matches.get_flag(options::meta::MTIME) {
+        if matches.get_flag(cli_options::meta::MTIME) {
             tr.rg.with_modification_time();
         }
-        if matches.get_flag(options::meta::ATIME) {
+        if matches.get_flag(cli_options::meta::ATIME) {
             tr.rg.with_access_time();
         }
-        if matches.get_flag(options::meta::SIZE) {
+        if matches.get_flag(cli_options::meta::SIZE) {
             tr.rg.with_size();
         }
 
@@ -94,10 +94,10 @@ impl TreeArgs {
         tr: &mut TreeCtxt,
         matches: &clap::ArgMatches,
     ) -> anyhow::Result<()> {
-        if matches.get_flag(options::sort::REVERSE) {
+        if matches.get_flag(cli_options::sort::REVERSE) {
             tr.rg.with_reverse_sort_entries()?;
         }
-        if matches.get_flag(options::sort::FILEFIRST) {
+        if matches.get_flag(cli_options::sort::FILES_FIRST) {
             tr.rg.with_sort_by_file_first()?;
         }
         Ok(())
@@ -108,7 +108,7 @@ impl TreeArgs {
         tr: &mut TreeCtxt,
         matches: &clap::ArgMatches,
     ) -> anyhow::Result<()> {
-        if matches.get_flag(options::path::RELATIVE) {
+        if matches.get_flag(cli_options::path::RELATIVE) {
             tr.rg.with_relative_paths();
         }
         // TODO: Implement absolute path handling
@@ -120,13 +120,13 @@ impl TreeArgs {
         tr: &mut TreeCtxt,
         matches: &clap::ArgMatches,
     ) -> anyhow::Result<()> {
-        if matches.get_flag(options::read::VISIBLE) {
+        if matches.get_flag(cli_options::read::VISIBLE) {
             tr.rg.read_visible_entries()?;
         }
-        if matches.get_flag(options::read::ALL) {
+        if matches.get_flag(cli_options::read::ALL) {
             tr.rg.read_all_entries()?;
         }
-        if matches.get_flag(options::read::FOLDER) {
+        if matches.get_flag(cli_options::read::FOLDER) {
             tr.rg.read_visible_folders()?;
         }
         Ok(())
@@ -137,33 +137,33 @@ impl TreeArgs {
         tr: &mut TreeCtxt,
         matches: &clap::ArgMatches,
     ) -> anyhow::Result<()> {
-        if matches.get_flag(options::color::COLOR) {
+        if matches.get_flag(cli_options::color::COLOR) {
             tr.rg.with_color()?;
         }
-        if matches.get_flag(options::branch::NOBRANCH) {
+        if matches.get_flag(cli_options::branch::NO_BRANCH) {
             tr.branch.no_branch();
         }
-        if matches.get_flag(options::color::COLORLESS) {
+        if matches.get_flag(cli_options::color::NO_COLOR) {
             tr.rg.with_no_color()?;
         }
         Ok(())
     }
 
     fn determine_report_mode(&self, matches: &clap::ArgMatches) -> ReportMode {
-        if matches.get_flag(options::report::YIELD) {
+        if matches.get_flag(cli_options::report::YIELD) {
             ReportMode::Exhaustive
         } else {
             ReportMode::Default
         }
     }
 
-    fn extract_and_update_base_dir(&mut self, base_dir: &mut BaseDirectory) -> bool {
+    fn extract_and_update_base_dir(&mut self, base_dir: &mut TraversalBase) -> bool {
         let mut delete_index = None;
 
         for (index, arg) in self.args.iter().skip(1).enumerate() {
             if let Some(arg_path) = self.valid_path(arg) {
                 base_dir.set_base_path(arg_path.clone());
-                base_dir.set_filename(arg_path.into_os_string());
+                base_dir.set_file_name(arg_path.into_os_string());
                 delete_index = Some(index + 1);
                 break;
             }

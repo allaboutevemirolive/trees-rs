@@ -19,7 +19,7 @@ pub struct TreeCtxt<'tr, 'a> {
     pub nod: tree::node::Node,
     pub rg: config::registry::Registry<'tr>,
     pub dir_stats: report::stats::DirectoryStats,
-    pub path_builder: config::root::PathBuilder,
+    pub path_builder: config::root::TraversalPathBuilder,
 }
 
 impl<'tr, 'a> TreeCtxt<'tr, 'a> {
@@ -33,7 +33,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         let dir_stats = report::stats::DirectoryStats::default();
         let level = tree::level::Level::default();
         let rg = config::registry::Registry::new()?;
-        let path_builder = config::root::PathBuilder::default();
+        let path_builder = config::root::TraversalPathBuilder::default();
 
         Ok(Self {
             branch,
@@ -77,32 +77,32 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     ) -> anyhow::Result<()> {
         tracing::info!("Get entry's information for entry: {:?}", entry);
 
-        let mut visitor = walk::visit::Visitor::new(entry)?;
-        self.update_stats_and_print_info(&visitor)?;
+        let mut file_entry = walk::visit::FileEntry::new(entry)?;
+        self.update_stats_and_print_info(&file_entry)?;
         self.update_node(idx, entries_len)?;
-        self.handle_entry_type(&mut visitor)?;
+        self.handle_entry_type(&mut file_entry)?;
         Ok(())
     }
 
-    fn handle_entry_type(&mut self, visitor: &mut walk::visit::Visitor) -> anyhow::Result<()> {
-        if visitor.is_symlink() {
-            self.handle_symlink(visitor)?;
+    fn handle_entry_type(&mut self, file_entry: &mut walk::visit::FileEntry) -> anyhow::Result<()> {
+        if file_entry.is_symlink() {
+            self.handle_symlink(file_entry)?;
             self.nod.pop();
             return Ok(());
-        } else if visitor.is_media_type() {
-            self.handle_media(visitor)?;
+        } else if file_entry.is_media_type() {
+            self.handle_media(file_entry)?;
             self.nod.pop();
             return Ok(());
-        } else if visitor.is_file() {
-            self.handle_file(visitor)?;
+        } else if file_entry.is_file() {
+            self.handle_file(file_entry)?;
             self.nod.pop();
             return Ok(());
-        } else if visitor.is_dir() {
-            self.handle_directory(visitor)?;
+        } else if file_entry.is_dir() {
+            self.handle_directory(file_entry)?;
             self.nod.pop();
             return Ok(());
         } else {
-            self.handle_special(visitor)?;
+            self.handle_special(file_entry)?;
             self.nod.pop();
             return Ok(());
         }
@@ -110,12 +110,12 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
 
     fn update_stats_and_print_info(
         &mut self,
-        visitor: &walk::visit::Visitor,
+        file_entry: &walk::visit::FileEntry,
     ) -> anyhow::Result<()> {
-        // if let Some(size) = visitor.size() {
-        self.dir_stats.add_size(visitor.size());
+        // if let Some(size) = file_entry.size() {
+        self.dir_stats.add_size(file_entry.size());
         // }
-        self.handle_info(visitor.metadata())?;
+        self.handle_info(file_entry.metadata())?;
         Ok(())
     }
 
@@ -125,17 +125,17 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         Ok(())
     }
 
-    fn handle_symlink(&mut self, visitor: &mut walk::visit::Visitor) -> anyhow::Result<()> {
+    fn handle_symlink(&mut self, file_entry: &mut walk::visit::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.symlink_add_one();
         self.rg.yellow(self.buf)?;
         self.buf
-            .print_symlink(visitor, &self.path_builder, self.rg.entries().symlink())?;
+            .print_symlink(file_entry, &self.path_builder, self.rg.entries().symlink())?;
         self.rg.reset(self.buf)?;
         self.buf.write_message(" @ ")?;
         self.rg.underlined_blue(self.buf)?;
 
         self.buf.write_message(
-            visitor
+            file_entry
                 .resolve_symlink()
                 .context("Failed to get target symlink")?
                 .to_str()
@@ -147,43 +147,46 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         Ok(())
     }
 
-    fn handle_media(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+    fn handle_media(&mut self, file_entry: &walk::visit::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.media_add_one();
         self.rg.purple(self.buf)?;
         self.buf
-            .print_file(visitor, &self.path_builder, self.rg.entries().file())?;
+            .print_file(file_entry, &self.path_builder, self.rg.entries().file())?;
         self.rg.reset(self.buf)?;
         self.buf.newline()?;
         Ok(())
     }
 
-    fn handle_file(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+    fn handle_file(&mut self, file_entry: &walk::visit::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.file_add_one();
         self.buf
-            .print_file(visitor, &self.path_builder, self.rg.entries().file())?;
+            .print_file(file_entry, &self.path_builder, self.rg.entries().file())?;
         self.buf.newline()?;
         Ok(())
     }
 
-    fn handle_directory(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+    fn handle_directory(&mut self, file_entry: &walk::visit::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.dir_add_one();
         self.rg.blue(self.buf)?;
         self.buf
-            .print_dir(visitor, &self.path_builder, self.rg.entries().dir())?;
+            .print_dir(file_entry, &self.path_builder, self.rg.entries().dir())?;
         self.rg.reset(self.buf)?;
         self.buf.newline()?;
 
         if self.level.can_descend_further() {
-            self.descend_into_directory(visitor)?;
+            self.descend_into_directory(file_entry)?;
         }
         Ok(())
     }
 
-    fn descend_into_directory(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+    fn descend_into_directory(
+        &mut self,
+        file_entry: &walk::visit::FileEntry,
+    ) -> anyhow::Result<()> {
         self.level.increment();
-        // if let Some(path) = visitor.absolute_path() {
+        // if let Some(path) = file_entry.absolute_path() {
         if self
-            .walk_dir(visitor.absolute_path().to_path_buf())
+            .walk_dir(file_entry.absolute_path().to_path_buf())
             .is_err()
         {
             self.dir_stats.err_dirs_add_one();
@@ -193,10 +196,10 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         Ok(())
     }
 
-    fn handle_special(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
+    fn handle_special(&mut self, file_entry: &walk::visit::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.special_add_one();
         self.rg.bold_red(self.buf)?;
-        self.buf.write_os_string(visitor.filename().clone())?;
+        self.buf.write_os_string(file_entry.filename().clone())?;
         self.rg.reset(self.buf)?;
         self.buf.newline()?;
         Ok(())
@@ -207,7 +210,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         use std::os::unix::fs::MetadataExt;
         tracing::info!("Print directory header");
 
-        let file_name = self.path_builder.filename();
+        let file_name = self.path_builder.file_name();
         let base_path = self.path_builder.base_path();
         let fmeta = self.path_builder.metadata()?;
 

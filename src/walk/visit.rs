@@ -1,19 +1,16 @@
 use std::ffi::{OsStr, OsString};
 use std::fs::{self, DirEntry, FileType, Metadata};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context, Result};
 use once_cell::sync::Lazy;
 use std::collections::HashSet;
 
-// NOTE: The list is still not exhaustive but covers most common and professional use cases
-/// Set of supported media file extensions (all lowercase)
-static MEDIA_EXTENSIONS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
-    vec![
+const MEDIA_EXTENSIONS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+    [
         // Images
         "jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "heic", "heif", "raw", "cr2", "nef",
         "arw", "dng", "raf", "rw2", "orw", "svg", "psd", "ai", "eps", "pdf", "xcf",
-        //
         // Videos
         "mp4", "avi", "mkv", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "3g2",
         "m2ts", "mts", "ts", "vob", "ogv", "rm", "rmvb", "asf", "divx", "f4v",
@@ -22,20 +19,18 @@ static MEDIA_EXTENSIONS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
         "mp3", "wav", "ogg", "flac", "aac", "m4a", "wma", "alac", "aif", "aiff", "ape", "au", "mka",
         "mid", "midi", "pcm", "dsf", "dff", "mpc", "opus", "ra", "tta", "voc", "wv", "m3u", "m3u8",
         "pls", "cue", //
-        //
         // 3D and VR
-        "fbx", "obj", "stl", "dae", "3ds", "glb", "gltf",
-        //
-        // Subtitles and Related
+        "fbx", "obj", "stl", "dae", "3ds", "glb", "gltf", //
+        // Subtitles
         "srt", "sub", "sbv", "smi", "ssa", "ass", "vtt",
     ]
     .into_iter()
     .collect()
 });
 
-/// Represents a file system entry with associated metadata
+/// Represents a file system entry with associated metadata.
 #[derive(Debug)]
-pub struct Visitor {
+pub struct FileEntry {
     absolute_path: PathBuf,
     filename: OsString,
     file_type: FileType,
@@ -44,15 +39,21 @@ pub struct Visitor {
     is_media: bool,
 }
 
-impl Visitor {
-    /// Creates a new Visitor instance from a DirEntry
-    pub fn new(dir_entry: DirEntry) -> Result<Self> {
-        let metadata = Self::get_metadata(&dir_entry)?;
-        let file_type = Self::get_file_type(&dir_entry)?;
+impl FileEntry {
+    /// Creates a new `FileEntry` instance from a `DirEntry`.
+    pub fn new(dir_entry: DirEntry) -> anyhow::Result<Self> {
+        let metadata = dir_entry
+            .metadata()
+            .context("Failed to get file metadata")?;
+        let file_type = dir_entry.file_type().context("Failed to get file type")?;
         let absolute_path = dir_entry.path();
-        let filename = Self::extract_filename(&absolute_path)?;
+        let filename = absolute_path
+            .file_name()
+            .map(OsString::from)
+            .ok_or_else(|| anyhow!("Cannot get filename for path '{:?}'", absolute_path))?;
+
         let size = metadata.len();
-        let is_media = Self::check_if_media(&absolute_path);
+        let is_media = Self::is_media_file(&absolute_path);
 
         Ok(Self {
             absolute_path,
@@ -64,12 +65,12 @@ impl Visitor {
         })
     }
 
-    /// Returns the relative path from the current directory
-    pub fn relative_path(&self, current_dir: &PathBuf) -> Option<PathBuf> {
+    /// Returns the relative path from the specified directory.
+    pub fn relative_path<P: AsRef<Path>>(&self, current_dir: P) -> Option<PathBuf> {
         self.absolute_path
             .strip_prefix(current_dir)
             .ok()
-            .map(|p| p.to_path_buf())
+            .map(PathBuf::from)
     }
 
     // File type checks
@@ -100,7 +101,7 @@ impl Visitor {
         &self.metadata
     }
 
-    /// Resolves the target of a symlink
+    /// Resolves the target of a symlink.
     pub fn resolve_symlink(&self) -> Result<PathBuf> {
         if !self.is_symlink() {
             return Err(anyhow!("Path '{:?}' is not a symlink", self.absolute_path));
@@ -113,27 +114,12 @@ impl Visitor {
         })
     }
 
-    // Private helper methods
-    fn get_metadata(dir_entry: &DirEntry) -> Result<Metadata> {
-        dir_entry.metadata().context("Failed to get file metadata")
-    }
-
-    fn get_file_type(dir_entry: &DirEntry) -> Result<FileType> {
-        dir_entry.file_type().context("Failed to get file type")
-    }
-
-    fn extract_filename(path: &PathBuf) -> Result<OsString> {
-        path.file_name()
-            .map(OsString::from)
-            .ok_or_else(|| anyhow!("Cannot get filename for path '{:?}'", path))
-    }
-
-    fn check_if_media(path: &PathBuf) -> bool {
+    // Private helper method.
+    fn is_media_file(path: &Path) -> bool {
         path.extension()
             .and_then(OsStr::to_str)
-            .map(str::to_lowercase)
-            .as_deref()
-            .map(|ext| MEDIA_EXTENSIONS.contains(ext))
+            .map(|s| s.to_lowercase())
+            .map(|ext| MEDIA_EXTENSIONS.contains(ext.as_str()))
             .unwrap_or(false)
     }
 }
@@ -152,12 +138,12 @@ mod tests {
         File::create(&test_file_path)?;
 
         let dir_entry = fs::read_dir(temp_dir.path())?.next().unwrap()?;
-        let visitor = Visitor::new(dir_entry)?;
+        let file_entry = FileEntry::new(dir_entry)?;
 
-        assert!(visitor.is_file());
-        assert!(!visitor.is_dir());
-        assert!(!visitor.is_symlink());
-        assert!(!visitor.is_media_type());
+        assert!(file_entry.is_file());
+        assert!(!file_entry.is_dir());
+        assert!(!file_entry.is_symlink());
+        assert!(!file_entry.is_media_type());
 
         Ok(())
     }
@@ -169,9 +155,9 @@ mod tests {
         File::create(&media_file_path)?;
 
         let dir_entry = fs::read_dir(temp_dir.path())?.next().unwrap()?;
-        let visitor = Visitor::new(dir_entry)?;
+        let file_entry = FileEntry::new(dir_entry)?;
 
-        assert!(visitor.is_media_type());
+        assert!(file_entry.is_media_type());
         Ok(())
     }
 
@@ -188,10 +174,10 @@ mod tests {
             .find(|e| e.as_ref().unwrap().path() == symlink_file)
             .unwrap()?;
 
-        let visitor = Visitor::new(dir_entry)?;
-        assert!(visitor.is_symlink());
+        let file_entry = FileEntry::new(dir_entry)?;
+        assert!(file_entry.is_symlink());
 
-        let resolved_path = visitor.resolve_symlink()?;
+        let resolved_path = file_entry.resolve_symlink()?;
         assert_eq!(resolved_path, target_file);
 
         Ok(())

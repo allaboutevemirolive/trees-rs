@@ -1,199 +1,200 @@
-use clap::Arg;
-use clap::ArgAction;
-use clap::Command;
+use clap::{value_parser, Arg, ArgAction, Command};
 
-pub mod options {
-    pub mod miscellaneous {
-        pub static VERSION: &str = "version";
-        pub static LEVEL: &str = "level-bounds";
+pub mod cli_options {
+    pub mod misc {
+        pub const VERSION: &str = "version";
+        pub const LEVEL: &str = "level";
     }
 
     pub mod path {
-        pub static ABSOLUTE: &str = "absolute-path";
-        pub static RELATIVE: &str = "relative-path";
+        pub const ABSOLUTE: &str = "absolute";
+        pub const RELATIVE: &str = "relative";
     }
 
     pub mod sort {
-        pub static ASCENDING: &str = "general-sort";
-        pub static REVERSE: &str = "reverse-sort";
-        pub static NOSORT: &str = "no-sort";
-        pub static FILEFIRST: &str = "sort-file-first";
+        pub const REVERSE: &str = "reverse";
+        pub const NO_SORT: &str = "no-sort";
+        pub const SORT: &str = "sort";
+        pub const FILES_FIRST: &str = "files-first";
     }
 
     pub mod color {
-        pub static COLOR: &str = "color-entries"; // TODO: Remove
-        pub static COLORLESS: &str = "no-color-entries";
+        pub const COLOR: &str = "color"; // TODO: Remove
+        pub const NO_COLOR: &str = "no-color";
     }
 
     pub mod read {
-        pub static ALL: &str = "read-all-entries";
-        pub static VISIBLE: &str = "read-visible-entries";
-        pub static FOLDER: &str = "read-folders";
+        pub const VISIBLE: &str = "visible";
+        pub const ALL: &str = "all";
+        pub const FOLDER: &str = "folder";
     }
 
     pub mod meta {
-        pub static META: &str = "show-all-default-metadata";
-        pub static PERMISSION: &str = "show-entry-permission";
-        pub static BTIME: &str = "show-entries-creation-time";
-        pub static MTIME: &str = "show-entries-modification-time";
-        pub static ATIME: &str = "show-entries-access-time";
-        pub static SIZE: &str = "show-entries-size";
+        pub const META: &str = "meta";
+        pub const PERMISSION: &str = "permission";
+        pub const BTIME: &str = "btime";
+        pub const MTIME: &str = "mtime";
+        pub const ATIME: &str = "atime";
+        pub const SIZE: &str = "size";
     }
 
     pub mod report {
-        pub static YIELD: &str = "show-exhaustive-report";
+        pub const YIELD: &str = "yield";
     }
 
     pub mod branch {
-        pub static NOBRANCH: &str = "discard-branch-stick-from-output";
+        pub const NO_BRANCH: &str = "no-branch";
     }
 }
 
 pub fn tree_app() -> Command {
+    use cli_options::*;
+
     Command::new("tree-rs")
         .infer_long_args(true)
         .args_override_self(true)
         .arg(
-            Arg::new(options::miscellaneous::VERSION)
-                .long("version")
+            Arg::new(misc::VERSION)
+                .long(misc::VERSION)
                 .short('V')
-                .help("Print current version of Tree-rs.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Print current version of Tree-rs."),
         )
         .arg(
-            Arg::new(options::path::ABSOLUTE)
-                .long("absolute")
-                .short('A')
-                .help("Print file/dir name along with it absolute path")
-                .action(ArgAction::SetTrue),
+            Arg::new(path::ABSOLUTE)
+                .long(path::ABSOLUTE)
+                .short('a')
+                .action(ArgAction::SetTrue)
+                .help("Print file/dir name along with its absolute path"),
         )
         .arg(
-            Arg::new(options::path::RELATIVE)
-                .long("relative")
+            Arg::new(path::RELATIVE)
+                .long(path::RELATIVE)
                 .short('f')
-                .help("Print file/dir name along with it relative path")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Print file/dir name along with its relative path"),
         )
         .arg(
-            Arg::new(options::sort::REVERSE)
-                .long("reverse")
+            Arg::new(sort::REVERSE)
+                .long(sort::REVERSE)
                 .short('r')
-                .help("Sort entires in ascending order.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Sort entries in reverse order."),
         )
         .arg(
-            Arg::new(options::sort::NOSORT)
-                .long("no-sort")
+            Arg::new(sort::NO_SORT)
+                .long(sort::NO_SORT)
                 .short('S')
-                .help("No entries sort.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Do not sort entries."),
         )
         .arg(
-            Arg::new(options::sort::ASCENDING)
-                .long("sort")
+            Arg::new(sort::SORT)
+                .long(sort::SORT)
                 .short('s')
-                .help("Sort entries.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Sort entries alphabetically."),
         )
         .arg(
-            Arg::new(options::sort::FILEFIRST)
-                .long("filesfirst")
+            Arg::new(sort::FILES_FIRST)
+                .long(sort::FILES_FIRST)
                 .short('F')
-                .help("Sort files first.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Sort files before directories."),
         )
         .arg(
-            Arg::new(options::color::COLOR)
-                .long("color")
+            Arg::new(color::COLOR)
+                .long(color::COLOR)
                 .short('c')
-                .help("Print entries with color.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Print entries with color."),
         )
         .arg(
-            Arg::new(options::color::COLORLESS)
-                .long("color-less")
+            Arg::new(color::NO_COLOR)
+                .long(color::NO_COLOR)
                 .short('C')
-                .help("Print entries without color.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Print entries without color."),
         )
         .arg(
-            Arg::new(options::read::VISIBLE)
-                .long("visible")
-                .help("Print visible entries only.")
-                .action(ArgAction::SetTrue),
+            Arg::new(read::VISIBLE)
+                .long(read::VISIBLE)
+                .action(ArgAction::SetTrue)
+                .help("Print only visible entries."),
         )
         .arg(
-            Arg::new(options::read::ALL)
-                .long("all")
-                .help("Print all entries.")
-                .action(ArgAction::SetTrue),
+            Arg::new(read::ALL)
+                .long(read::ALL)
+                .action(ArgAction::SetTrue)
+                .help("Print all entries."),
         )
         .arg(
-            Arg::new(options::read::FOLDER)
-                .long("folder")
-                .help("Print directoris only.")
-                .action(ArgAction::SetTrue),
+            Arg::new(read::FOLDER)
+                .long(read::FOLDER)
+                .aliases(&["folders", "directories"])
+                .action(ArgAction::SetTrue)
+                .help("Print directories only."),
         )
         .arg(
-            Arg::new(options::meta::META)
-                .long("meta")
+            Arg::new(meta::META)
+                .long(meta::META)
                 .short('m')
-                .help("Print all default entry's metadata.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Print all default metadata for entries."),
         )
         .arg(
-            Arg::new(options::meta::PERMISSION)
-                .long("permission")
+            Arg::new(meta::PERMISSION)
+                .long(meta::PERMISSION)
                 .short('p')
-                .help("Print entires attribute.")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Print entry permissions."),
         )
         .arg(
-            Arg::new(options::meta::BTIME)
-                .long("btime")
-                .help("Print the date that the entry was created.")
-                .action(ArgAction::SetTrue),
+            Arg::new(meta::BTIME)
+                .long(meta::BTIME)
+                .action(ArgAction::SetTrue)
+                .help("Print entry creation time."),
         )
         .arg(
-            Arg::new(options::meta::MTIME)
-                .long("mtime")
-                .help("Print the date that the entry was modified.")
-                .action(ArgAction::SetTrue),
+            Arg::new(meta::MTIME)
+                .long(meta::MTIME)
+                .action(ArgAction::SetTrue)
+                .help("Print entry modification time."),
         )
         .arg(
-            Arg::new(options::meta::ATIME)
-                .long("atime")
-                .help("Print the date that the entry was last time accessed.")
-                .action(ArgAction::SetTrue),
+            Arg::new(meta::ATIME)
+                .long(meta::ATIME)
+                .action(ArgAction::SetTrue)
+                .help("Print entry last access time."),
         )
         .arg(
-            Arg::new(options::meta::SIZE)
-                .long("size")
-                .help("Print entires's size.")
-                .action(ArgAction::SetTrue),
+            Arg::new(meta::SIZE)
+                .long(meta::SIZE)
+                .action(ArgAction::SetTrue)
+                .help("Print entry size."),
         )
         .arg(
-            Arg::new(options::miscellaneous::LEVEL)
-                .long("level")
+            Arg::new(misc::LEVEL)
+                .long(misc::LEVEL)
                 .short('L')
                 .num_args(1)
-                .help("Print tree until certain depth. Default depth: 5000")
-                .value_parser(clap::value_parser!(usize))
-                .action(clap::ArgAction::Set),
+                .value_parser(value_parser!(usize))
+                .action(ArgAction::Set)
+                .help("Print tree until certain depth. Default depth: 5000"),
         )
         .arg(
-            Arg::new(options::report::YIELD)
-                .long("yield")
+            Arg::new(report::YIELD)
+                .long(report::YIELD)
                 .short('y')
-                .help("Print exhaustive report")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Print an exhaustive report."),
         )
         .arg(
-            Arg::new(options::branch::NOBRANCH)
-                .long("nobranch")
+            Arg::new(branch::NO_BRANCH)
+                .long(branch::NO_BRANCH)
                 .short('B')
-                .help("Discard branch's stick from the output")
-                .action(ArgAction::SetTrue),
+                .action(ArgAction::SetTrue)
+                .help("Omit branch lines from the output."),
         )
 }
 
@@ -201,17 +202,14 @@ pub fn tree_app() -> Command {
 mod tests {
     use super::*;
 
-    // cargo test test_tree_args -- --nocapture
     #[test]
     fn test_tree_args() {
-        let cloned_args: Vec<String> = vec![
-            String::from("tree-rs"),
-            String::from("--version"),
-            String::from("--absolute"),
-        ];
+        let cloned_args = vec!["tree-rs", "--version", "--absolute"]
+            .into_iter()
+            .map(String::from);
 
         let matches = tree_app()
-            .try_get_matches_from(cloned_args.clone())
+            .try_get_matches_from(cloned_args)
             .unwrap_or_else(|e| e.exit());
 
         println!("{:?}", matches);
@@ -221,14 +219,12 @@ mod tests {
 
     #[test]
     fn test_tree_args_level() {
-        let cloned_args: Vec<String> = vec![
-            String::from("tree-rs"),
-            String::from("--level"),
-            String::from("8"),
-        ];
+        let cloned_args = vec!["tree-rs", "--level", "8"]
+            .into_iter()
+            .map(String::from);
 
         let matches = tree_app()
-            .try_get_matches_from(cloned_args.clone())
+            .try_get_matches_from(cloned_args)
             .unwrap_or_else(|e| e.exit());
 
         println!("{:?}", matches);

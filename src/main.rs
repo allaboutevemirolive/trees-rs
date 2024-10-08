@@ -52,15 +52,15 @@ fn initialize_args() -> anyhow::Result<cli::arg::TreeArgs> {
 fn initialize_tree_context<'tr, 'a>(
     buf: &'a mut render::buffer::Buffer<std::io::StdoutLock<'tr>>,
 ) -> anyhow::Result<walk::tr::TreeCtxt<'tr, 'a>> {
-    use anyhow::Context;
-    let tr = walk::tr::TreeCtxt::new(buf).context("Failed to create TreeCtxt")?;
+    // use anyhow::Context;
+    let tr = walk::tr::TreeCtxt::new(buf)?;
     Ok(tr)
 }
 
 /// Determines the base directory from the current working directory.
-fn determine_base_directory() -> anyhow::Result<config::root::BaseDirectory> {
+fn determine_base_directory() -> anyhow::Result<config::root::TraversalBase> {
     use anyhow::Context;
-    let base_dir = config::root::BaseDirectory::from_current_dir()
+    let base_dir = config::root::TraversalBase::new_from_current_dir()
         .context("Failed to determine base directory")?;
     Ok(base_dir)
 }
@@ -68,15 +68,15 @@ fn determine_base_directory() -> anyhow::Result<config::root::BaseDirectory> {
 /// Builds the tree head and prints it.
 fn build_and_print_tree_head<'tr, 'a>(
     tr: &mut walk::tr::TreeCtxt<'tr, 'a>,
-    base_dir: &mut config::root::BaseDirectory,
+    base_dir: &mut config::root::TraversalBase,
 ) -> anyhow::Result<()> {
     use anyhow::Context;
 
     tr.path_builder = base_dir
         .clone()
-        .into_builder()
+        .into_path_builder()
         .context("Failed to build base directory path")?;
-    tr.path_builder.append_root();
+    tr.path_builder.append_base_name();
     tr.handle_header()?;
 
     Ok(())
