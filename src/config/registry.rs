@@ -4,10 +4,11 @@ use super::{
 };
 use crate::{
     render::{
-        attr::{
-            atime::FnExtAccessTime, btime::FnExtBTime, mtime::FnExtModTime, pms::FnExtPermission,
-            size::FnExtSize,
-        },
+        // attr::{
+        //     atime::FnExtAccessTime, btime::FnExtBTime, mtime::FnExtModTime, pms::FnExtPermission,
+        //     size::FnExtSize,
+        // },
+        attributes::{FnExtAccessTime, FnExtBTime, FnExtModTime, FnExtPermission, FnExtSize},
         buffer::Buffer,
         color::FnColor,
         entree::{dirr::FnOutDir, filee::FnOutFile, headd::FnOutHead, symlinked::FnOutSymlink},

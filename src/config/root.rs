@@ -1,4 +1,4 @@
-use crate::walk::visit::FileEntry;
+use crate::walk::fent::FileEntry;
 
 use std::env;
 use std::ffi::OsString;

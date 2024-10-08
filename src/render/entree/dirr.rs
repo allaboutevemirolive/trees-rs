@@ -1,6 +1,6 @@
 use crate::config::root::TraversalPathBuilder;
 use crate::render::buffer::Buffer;
-use crate::walk::visit::FileEntry;
+use crate::walk::fent::FileEntry;
 
 use std::io;
 use std::io::Write;

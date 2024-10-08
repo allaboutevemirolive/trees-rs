@@ -80,7 +80,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     ) -> anyhow::Result<()> {
         tracing::info!("Get entry's information for entry: {:?}", entry);
 
-        let mut file_entry = walk::visit::FileEntry::new(entry)?;
+        let mut file_entry = walk::fent::FileEntry::new(entry)?;
         self.update_stats_and_print_info(&file_entry)?;
         self.update_node(idx, entries_len)?;
         self.handle_entry_type(&mut file_entry)?;
@@ -88,7 +88,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_entry_type(&mut self, file_entry: &mut walk::visit::FileEntry) -> anyhow::Result<()> {
+    fn handle_entry_type(&mut self, file_entry: &mut walk::fent::FileEntry) -> anyhow::Result<()> {
         if file_entry.is_symlink() {
             self.handle_symlink(file_entry)?;
             self.nod.pop();
@@ -115,12 +115,12 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     #[inline(always)]
     fn update_stats_and_print_info(
         &mut self,
-        file_entry: &walk::visit::FileEntry,
+        file_entry: &walk::fent::FileEntry,
     ) -> anyhow::Result<()> {
         // if let Some(size) = file_entry.size() {
         self.dir_stats.add_size(file_entry.size());
         // }
-        self.handle_info(file_entry.metadata())?;
+        self.handle_metadata(file_entry.metadata())?;
         Ok(())
     }
 
@@ -132,7 +132,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_symlink(&mut self, file_entry: &mut walk::visit::FileEntry) -> anyhow::Result<()> {
+    fn handle_symlink(&mut self, file_entry: &mut walk::fent::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.symlink_add_one();
         self.rg.yellow(self.buf)?;
         self.buf
@@ -155,7 +155,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_media(&mut self, file_entry: &walk::visit::FileEntry) -> anyhow::Result<()> {
+    fn handle_media(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.media_add_one();
         self.rg.purple(self.buf)?;
         self.buf
@@ -166,7 +166,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_file(&mut self, file_entry: &walk::visit::FileEntry) -> anyhow::Result<()> {
+    fn handle_file(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.file_add_one();
         self.buf
             .print_file(file_entry, &self.path_builder, self.rg.entries().file())?;
@@ -175,7 +175,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_directory(&mut self, file_entry: &walk::visit::FileEntry) -> anyhow::Result<()> {
+    fn handle_directory(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.dir_add_one();
         self.rg.blue(self.buf)?;
         self.buf
@@ -190,10 +190,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn descend_into_directory(
-        &mut self,
-        file_entry: &walk::visit::FileEntry,
-    ) -> anyhow::Result<()> {
+    fn descend_into_directory(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.level.increment();
         // if let Some(path) = file_entry.absolute_path() {
         if self
@@ -208,7 +205,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_special(&mut self, file_entry: &walk::visit::FileEntry) -> anyhow::Result<()> {
+    fn handle_special(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.special_add_one();
         self.rg.bold_red(self.buf)?;
         self.buf.write_os_string(file_entry.filename().clone())?;
@@ -220,15 +217,16 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     #[cfg(unix)]
     #[inline(always)]
     pub fn handle_header(&mut self) -> anyhow::Result<()> {
-        use std::os::unix::fs::MetadataExt;
         tracing::info!("Print directory header");
+
+        use std::os::unix::fs::MetadataExt;
 
         let file_name = self.path_builder.file_name();
         let base_path = self.path_builder.base_path();
         let fmeta = self.path_builder.metadata()?;
 
         self.dir_stats.add_size(fmeta.size());
-        self.handle_info(&fmeta)?;
+        self.handle_metadata(&fmeta)?;
         self.rg.blue(self.buf)?;
         self.buf
             .print_header(&fmeta, &base_path, &file_name, self.rg.entries().head())?;
@@ -238,7 +236,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    pub fn handle_info(&mut self, meta: &std::fs::Metadata) -> anyhow::Result<()> {
+    pub fn handle_metadata(&mut self, meta: &std::fs::Metadata) -> anyhow::Result<()> {
         tracing::info!("Print entry's information");
         self.buf
             .print_permission(meta, self.rg.metadata().permission())?;
