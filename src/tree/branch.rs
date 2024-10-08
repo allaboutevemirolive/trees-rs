@@ -54,6 +54,7 @@ pub trait PaintBranch {
 }
 
 impl PaintBranch for Branch {
+    #[inline(always)]
     fn print_branch_if<'a, T>(
         &self,
         value_is_one: bool,
@@ -70,6 +71,7 @@ impl PaintBranch for Branch {
 }
 
 impl Branch {
+    #[inline(always)]
     /// Determines which branch part to print based on the conditions.
     fn determine_branch_part(&self, value_is_one: bool, value_has_next: bool) -> &'static str {
         if value_has_next {

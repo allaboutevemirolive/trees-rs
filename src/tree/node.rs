@@ -41,11 +41,13 @@ impl Node {
         }
     }
 
+    #[inline(always)]
     /// Removes and returns the last element.
     pub fn pop(&mut self) -> Option<i32> {
         self.values.pop()
     }
 
+    #[inline(always)]
     /// Appends an element to the end.
     pub fn push(&mut self, num: i32) {
         self.values.push(num);
@@ -69,6 +71,7 @@ impl Node {
         self.values.get(current_index + 1)
     }
 
+    #[inline(always)]
     /// Pushes a value based on the current index and total entries.
     pub fn push_conditional(&mut self, current_index: usize, total_entries: usize) {
         let value = if current_index < total_entries - 1 {
@@ -79,6 +82,7 @@ impl Node {
         self.push(value);
     }
 
+    #[inline(always)]
     /// Converts the node into a branch representation.
     pub fn paint_as_branch<T>(&self, branch: &T, buffer: &mut Buffer<StdoutLock>) -> Result<()>
     where
