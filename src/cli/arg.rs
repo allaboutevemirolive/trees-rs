@@ -66,28 +66,24 @@ impl TreeArgs {
         matches: &clap::ArgMatches,
     ) -> anyhow::Result<()> {
         if matches.get_flag(options::meta::META) {
-            tr.rg.with_permission()?;
-            tr.rg.with_btime()?;
-            tr.rg.with_mtime()?;
-            tr.rg.with_atime()?;
-            tr.rg.with_size()?;
+            tr.rg.with_all_metadata();
         }
 
         // Individual meta settings
         if matches.get_flag(options::meta::PERMISSION) {
-            tr.rg.with_permission()?;
+            tr.rg.with_permission();
         }
         if matches.get_flag(options::meta::BTIME) {
-            tr.rg.with_btime()?;
+            tr.rg.with_birth_time();
         }
         if matches.get_flag(options::meta::MTIME) {
-            tr.rg.with_mtime()?;
+            tr.rg.with_modification_time();
         }
         if matches.get_flag(options::meta::ATIME) {
-            tr.rg.with_atime()?;
+            tr.rg.with_access_time();
         }
         if matches.get_flag(options::meta::SIZE) {
-            tr.rg.with_size()?;
+            tr.rg.with_size();
         }
 
         Ok(())
@@ -113,7 +109,7 @@ impl TreeArgs {
         matches: &clap::ArgMatches,
     ) -> anyhow::Result<()> {
         if matches.get_flag(options::path::RELATIVE) {
-            tr.rg.with_relative_path()?;
+            tr.rg.with_relative_paths();
         }
         // TODO: Implement absolute path handling
         Ok(())
@@ -142,7 +138,7 @@ impl TreeArgs {
         matches: &clap::ArgMatches,
     ) -> anyhow::Result<()> {
         if matches.get_flag(options::color::COLOR) {
-            tr.rg.with_entry()?;
+            tr.rg.with_color()?;
         }
         if matches.get_flag(options::branch::NOBRANCH) {
             tr.branch.no_branch();

@@ -129,7 +129,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         self.dir_stats.symlink_add_one();
         self.rg.yellow(self.buf)?;
         self.buf
-            .print_symlink(visitor, &self.path_builder, self.rg.symlink)?;
+            .print_symlink(visitor, &self.path_builder, self.rg.entries().symlink())?;
         self.rg.reset(self.buf)?;
         self.buf.write_message(" @ ")?;
         self.rg.underlined_blue(self.buf)?;
@@ -151,7 +151,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         self.dir_stats.media_add_one();
         self.rg.purple(self.buf)?;
         self.buf
-            .print_file(visitor, &self.path_builder, self.rg.file)?;
+            .print_file(visitor, &self.path_builder, self.rg.entries().file())?;
         self.rg.reset(self.buf)?;
         self.buf.newline()?;
         Ok(())
@@ -160,7 +160,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     fn handle_file(&mut self, visitor: &walk::visit::Visitor) -> anyhow::Result<()> {
         self.dir_stats.file_add_one();
         self.buf
-            .print_file(visitor, &self.path_builder, self.rg.file)?;
+            .print_file(visitor, &self.path_builder, self.rg.entries().file())?;
         self.buf.newline()?;
         Ok(())
     }
@@ -169,7 +169,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         self.dir_stats.dir_add_one();
         self.rg.blue(self.buf)?;
         self.buf
-            .print_dir(visitor, &self.path_builder, self.rg.dir)?;
+            .print_dir(visitor, &self.path_builder, self.rg.entries().dir())?;
         self.rg.reset(self.buf)?;
         self.buf.newline()?;
 
@@ -215,7 +215,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
         self.handle_info(&fmeta)?;
         self.rg.blue(self.buf)?;
         self.buf
-            .print_header(&fmeta, &base_path, &file_name, self.rg.head)?;
+            .print_header(&fmeta, &base_path, &file_name, self.rg.entries().head())?;
         self.rg.reset(self.buf)?;
         self.buf.newline()?;
         Ok(())
@@ -223,12 +223,15 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
 
     pub fn handle_info(&mut self, meta: &std::fs::Metadata) -> anyhow::Result<()> {
         tracing::info!("Print entry's information");
-        self.buf.print_permission(meta, self.rg.pms)?;
-        self.buf.print_btime(meta, self.rg.btime)?;
-        self.buf.print_mtime(meta, self.rg.mtime)?;
-        self.buf.print_atime(meta, self.rg.atime)?;
+        self.buf
+            .print_permission(meta, self.rg.metadata().permission())?;
+        self.buf
+            .print_btime(meta, self.rg.metadata().birth_time())?;
+        self.buf.print_mtime(meta, self.rg.metadata().mod_time())?;
+        self.buf
+            .print_atime(meta, self.rg.metadata().access_time())?;
         self.rg.green(self.buf)?;
-        self.buf.print_size(meta, self.rg.size)?;
+        self.buf.print_size(meta, self.rg.metadata().size())?;
         self.rg.reset(self.buf)?;
         Ok(())
     }
