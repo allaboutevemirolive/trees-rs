@@ -119,9 +119,7 @@ impl PathBuilder {
 
     /// Appends a relative path from a Visitor
     pub fn append_relative(&mut self, visitor: &Visitor) -> anyhow::Result<&mut Self> {
-        let relative_path = visitor
-            .get_relative_path(&self.base_dir.base_path())
-            .unwrap();
+        let relative_path = visitor.relative_path(&self.base_dir.base_path()).unwrap();
         self.path.push(relative_path);
         Ok(self)
     }
@@ -164,7 +162,9 @@ mod tests {
     #[test]
     fn test_base_directory_creation() {
         let temp_dir = TempDir::new().unwrap();
-        let base_dir = BaseDirectory::from_path(temp_dir.path()).unwrap();
+        let mut base_dir = BaseDirectory::from_path(temp_dir.path()).unwrap();
+        // NOTE: set base_dir to false because we didnt provide any path on the argument.
+        base_dir.set_path_source(false);
 
         assert_eq!(base_dir.base_path(), temp_dir.path());
         assert!(!base_dir.is_path_from_args());
