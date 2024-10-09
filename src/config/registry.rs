@@ -11,7 +11,7 @@ use crate::{
         attributes::{FnExtAccessTime, FnExtBTime, FnExtModTime, FnExtPermission, FnExtSize},
         buffer::Buffer,
         color::FnColor,
-        entree::{dirr::FnOutDir, filee::FnOutFile, headd::FnOutHead, symlinked::FnOutSymlink},
+        fsentry::{FnOutDir, FnOutFile, FnOutHead, FnOutSymlink},
     },
     report::stats::DirectoryStats,
 };

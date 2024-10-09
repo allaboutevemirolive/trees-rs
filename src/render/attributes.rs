@@ -6,7 +6,7 @@ use std::time::SystemTime;
 use super::buffer::Buffer;
 
 // Type definitions
-pub type MetadataFormatter<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
+type MetadataFormatter<W> = fn(&mut Buffer<W>, &Metadata) -> io::Result<()>;
 pub type FnExtSize<W> = MetadataFormatter<W>;
 pub type FnExtAccessTime<W> = MetadataFormatter<W>;
 pub type FnExtBTime<W> = MetadataFormatter<W>;
