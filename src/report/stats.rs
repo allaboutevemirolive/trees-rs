@@ -174,6 +174,10 @@ impl DirectoryStats {
             (format!("{}", size), "bytes".to_string())
         }
     }
+
+    pub fn hidden_files(&self) -> usize {
+        self.hidden_files
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -192,14 +192,12 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     #[inline(always)]
     fn descend_into_directory(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.level.increment();
-        // if let Some(path) = file_entry.absolute_path() {
         if self
             .walk_dir(file_entry.absolute_path().to_path_buf())
             .is_err()
         {
             self.dir_stats.err_dirs_add_one();
         }
-        // }
         self.level.decrement();
         Ok(())
     }

@@ -1,7 +1,8 @@
 use super::app::cli_options;
 use super::app::tree_app;
 
-use crate::config::root::TraversalBase;
+// use crate::config::root::PathOrigin;
+// use crate::config::root::TraversalBase;
 use crate::report::stats::ReportMode;
 use crate::walk::tr::TreeCtxt;
 

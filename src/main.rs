@@ -5,6 +5,7 @@ mod report;
 mod tree;
 mod walk;
 
+use config::root::TraversalPath;
 use ignore::gitignore::GitignoreBuilder;
 use report::stats::ReportMode;
 
@@ -58,9 +59,10 @@ fn initialize_tree_context<'tr, 'a>(
 }
 
 /// Determines the base directory from the current working directory.
-fn determine_base_directory() -> anyhow::Result<config::root::TraversalBase> {
+fn determine_base_directory() -> anyhow::Result<config::root::TraversalPathBuilder> {
     use anyhow::Context;
-    let base_dir = config::root::TraversalBase::new_from_current_dir()
+    let base_dir = TraversalPath::builder()
+        .from_current_dir()
         .context("Failed to determine base directory")?;
     Ok(base_dir)
 }
@@ -68,14 +70,14 @@ fn determine_base_directory() -> anyhow::Result<config::root::TraversalBase> {
 /// Builds the tree head and prints it.
 fn build_and_print_tree_head<'tr, 'a>(
     tr: &mut walk::tr::TreeCtxt<'tr, 'a>,
-    base_dir: &mut config::root::TraversalBase,
+    base_dir: &mut config::root::TraversalPathBuilder,
 ) -> anyhow::Result<()> {
     use anyhow::Context;
 
-    tr.path_builder = base_dir
-        .clone()
-        .into_path_builder()
-        .context("Failed to build base directory path")?;
+    tr.path_builder = base_dir;
+    // .clone()
+    // .into_path_builder()
+    // .context("Failed to build base directory path")?;
     tr.path_builder.append_base_name();
     tr.handle_header()?;
 

@@ -1,6 +1,9 @@
+use glob::Pattern;
+
 use crate::report::stats::DirectoryStats;
 use std::fs::{self, DirEntry};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 pub type FnReadDir = fn(PathBuf, &mut DirectoryStats) -> anyhow::Result<Vec<DirEntry>>;
 
@@ -33,6 +36,22 @@ pub fn read_all_entries(
 
 /// Read visible (non-hidden) directory entries
 pub fn read_visible_entries(
+    path: PathBuf,
+    dir_stats: &mut DirectoryStats,
+) -> anyhow::Result<Vec<DirEntry>> {
+    let entries = fs::read_dir(path)?
+        .filter_map(|entry_result| {
+            entry_result
+                .ok()
+                .filter(|entry| is_not_hidden(entry, dir_stats))
+        })
+        .collect();
+
+    Ok(entries)
+}
+
+/// Read visible (non-hidden) directory entries
+pub fn read_entries_with_ignore_glob(
     path: PathBuf,
     dir_stats: &mut DirectoryStats,
 ) -> anyhow::Result<Vec<DirEntry>> {
