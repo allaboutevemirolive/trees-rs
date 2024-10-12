@@ -3,7 +3,7 @@ use std::fs::Metadata;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
-use crate::config::root::TraversalPathBuilder;
+use crate::config::root::{TraversalPathBuilder, WithBasePath};
 use crate::render::buffer::Buffer;
 use crate::walk::fent::FileEntry;
 
@@ -12,13 +12,13 @@ pub trait PathWriter {
     fn write_relative_path<W: Write>(
         buffer: &mut Buffer<W>,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()>;
 
     fn write_name<W: Write>(
         buffer: &mut Buffer<W>,
         entry: &FileEntry,
-        _path_builder: &TraversalPathBuilder,
+        _path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()>;
 }
 
@@ -48,7 +48,7 @@ impl PathWriter for DirectoryWriter {
     fn write_relative_path<W: Write>(
         buffer: &mut Buffer<W>,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         write_entry_path(buffer, entry, path_builder)
     }
@@ -56,7 +56,7 @@ impl PathWriter for DirectoryWriter {
     fn write_name<W: Write>(
         buffer: &mut Buffer<W>,
         entry: &FileEntry,
-        _path_builder: &TraversalPathBuilder,
+        _path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         write_entry_name(buffer, entry)
     }
@@ -66,7 +66,7 @@ impl PathWriter for FileWriter {
     fn write_relative_path<W: Write>(
         buffer: &mut Buffer<W>,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         write_entry_path(buffer, entry, path_builder)
     }
@@ -74,7 +74,7 @@ impl PathWriter for FileWriter {
     fn write_name<W: Write>(
         buffer: &mut Buffer<W>,
         entry: &FileEntry,
-        _path_builder: &TraversalPathBuilder,
+        _path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         write_entry_name(buffer, entry)
     }
@@ -84,7 +84,7 @@ impl PathWriter for SymlinkWriter {
     fn write_relative_path<W: Write>(
         buffer: &mut Buffer<W>,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         write_entry_path(buffer, entry, path_builder)
     }
@@ -92,7 +92,7 @@ impl PathWriter for SymlinkWriter {
     fn write_name<W: Write>(
         buffer: &mut Buffer<W>,
         entry: &FileEntry,
-        _path_builder: &TraversalPathBuilder,
+        _path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         write_entry_name(buffer, entry)
     }
@@ -125,20 +125,37 @@ impl HeaderWriter for HeaderWriterImpl {
 }
 
 // Type aliases for callback functions
-pub type FnOutDir<W> = fn(&mut Buffer<W>, &FileEntry, &TraversalPathBuilder) -> io::Result<()>;
-pub type FnOutFile<W> = fn(&mut Buffer<W>, &FileEntry, &TraversalPathBuilder) -> io::Result<()>;
-pub type FnOutSymlink<W> = fn(&mut Buffer<W>, &FileEntry, &TraversalPathBuilder) -> io::Result<()>;
+pub type FnOutDir<W> =
+    fn(&mut Buffer<W>, &FileEntry, &TraversalPathBuilder<WithBasePath>) -> io::Result<()>;
+pub type FnOutFile<W> =
+    fn(&mut Buffer<W>, &FileEntry, &TraversalPathBuilder<WithBasePath>) -> io::Result<()>;
+pub type FnOutSymlink<W> =
+    fn(&mut Buffer<W>, &FileEntry, &TraversalPathBuilder<WithBasePath>) -> io::Result<()>;
 pub type FnOutHead<W> = fn(&mut Buffer<W>, &Metadata, &PathBuf, &OsString) -> io::Result<()>;
 
 // Helper functions
+// fn write_entry_path<W: Write>(
+//     buffer: &mut Buffer<W>,
+//     entry: &FileEntry,
+//     path_builder: &mut TraversalPathBuilder<WithBasePath>,
+// ) -> io::Result<()> {
+//     use crate::config::root::PathManipulation;
+//     let pb = path_builder;
+//     let relative_path = entry.relative_path(pb.base_path().unwrap()).unwrap();
+//     let extended_path = pb.extend_with_relative_path(relative_path.clone());
+//     buffer.write_os_string(extended_path.current_path().clone().into_os_string())
+// }
 fn write_entry_path<W: Write>(
     buffer: &mut Buffer<W>,
     entry: &FileEntry,
-    path_builder: &TraversalPathBuilder,
+    path_builder: &TraversalPathBuilder<WithBasePath>,
 ) -> io::Result<()> {
+    use crate::config::root::PathManipulation;
+    // Clone the path builder
     let mut pb = path_builder.clone();
-    let extended_path = pb.extend_with_relative_from_visitor(entry).unwrap();
-    buffer.write_os_string(extended_path.clone().into_os_string())
+    let relative_path = entry.relative_path(pb.base_path().unwrap()).unwrap();
+    let extended_path = pb.extend_with_relative_path(relative_path.clone()); // Now consumes the clone
+    buffer.write_os_string(extended_path.current_path().clone().into_os_string())
 }
 
 fn write_entry_name<W: Write>(buffer: &mut Buffer<W>, entry: &FileEntry) -> io::Result<()> {
@@ -151,7 +168,7 @@ impl<W: Write> Buffer<W> {
     pub fn print_dir(
         &mut self,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
         callback: FnOutDir<W>,
     ) -> io::Result<()> {
         callback(self, entry, path_builder)
@@ -160,7 +177,7 @@ impl<W: Write> Buffer<W> {
     pub fn write_dir_relative_path(
         &mut self,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         DirectoryWriter::write_relative_path(self, entry, path_builder)
     }
@@ -168,7 +185,7 @@ impl<W: Write> Buffer<W> {
     pub fn write_dir(
         &mut self,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         DirectoryWriter::write_name(self, entry, path_builder)
     }
@@ -177,7 +194,7 @@ impl<W: Write> Buffer<W> {
     pub fn print_file(
         &mut self,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
         callback: FnOutFile<W>,
     ) -> io::Result<()> {
         callback(self, entry, path_builder)
@@ -186,7 +203,7 @@ impl<W: Write> Buffer<W> {
     pub fn write_entry_relative_path(
         &mut self,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         FileWriter::write_relative_path(self, entry, path_builder)
     }
@@ -194,7 +211,7 @@ impl<W: Write> Buffer<W> {
     pub fn write_entry(
         &mut self,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         FileWriter::write_name(self, entry, path_builder)
     }
@@ -203,7 +220,7 @@ impl<W: Write> Buffer<W> {
     pub fn print_symlink(
         &mut self,
         entry: &mut FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
         callback: FnOutSymlink<W>,
     ) -> io::Result<()> {
         callback(self, entry, path_builder)
@@ -212,7 +229,7 @@ impl<W: Write> Buffer<W> {
     pub fn write_symlink_relative_path(
         &mut self,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         SymlinkWriter::write_relative_path(self, entry, path_builder)
     }
@@ -220,7 +237,7 @@ impl<W: Write> Buffer<W> {
     pub fn write_symlink(
         &mut self,
         entry: &FileEntry,
-        path_builder: &TraversalPathBuilder,
+        path_builder: &TraversalPathBuilder<WithBasePath>,
     ) -> io::Result<()> {
         SymlinkWriter::write_name(self, entry, path_builder)
     }

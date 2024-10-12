@@ -1,4 +1,5 @@
 use crate::config;
+use crate::config::root::WithBasePath;
 use crate::render;
 use crate::report;
 use crate::tree;
@@ -19,7 +20,7 @@ pub struct TreeCtxt<'tr, 'a> {
     pub nod: tree::node::Node,
     pub rg: config::registry::Registry<'tr>,
     pub dir_stats: report::stats::DirectoryStats,
-    pub path_builder: config::root::TraversalPathBuilder,
+    pub path_builder: config::root::TraversalPathBuilder<WithBasePath>,
 }
 
 impl<'tr, 'a> TreeCtxt<'tr, 'a> {
@@ -217,6 +218,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     pub fn handle_header(&mut self) -> anyhow::Result<()> {
         tracing::info!("Print directory header");
 
+        use crate::config::root::PathManipulation;
         use std::os::unix::fs::MetadataExt;
 
         let file_name = self.path_builder.file_name();

@@ -1,261 +1,3 @@
-// use crate::walk::fent::FileEntry;
-
-// use std::env;
-// use std::ffi::OsString;
-// use std::fs;
-// use std::io;
-// use std::marker::PhantomData;
-// use std::path::{Path, PathBuf};
-
-// /// A marker trait to indicate the origin of the path.
-// pub trait PathOrigin {}
-
-// /// Marker for paths originating from command-line arguments.
-// struct FromArgs;
-// impl PathOrigin for FromArgs {}
-
-// /// A trait for types representing paths originating from the current directory.
-// trait FromCurrentDirTrait {}
-
-// /// Marker for paths originating from the current directory.
-// struct FromCurrentDir;
-// impl PathOrigin for FromCurrentDir {}
-// impl FromCurrentDirTrait for FromCurrentDir {}
-
-// /// Represents a traversal starting point with a base directory and a file name.
-// #[derive(Debug, Clone)]
-// pub struct TraversalBase<O: PathOrigin> {
-//     base_path: PathBuf,
-//     file_name: OsString,
-//     _origin: PhantomData<O>,
-// }
-
-// impl<O: PathOrigin> TraversalBase<O> {
-//     /// Extracts the file name from a path, defaulting to "." if none exists.
-//     fn extract_file_name(path: &Path) -> OsString {
-//         path.file_name()
-//             .map(OsString::from)
-//             .unwrap_or_else(|| OsString::from("."))
-//     }
-
-//     /// Returns the file name.
-//     pub fn file_name(&self) -> OsString {
-//         self.file_name.clone()
-//     }
-
-//     /// Returns the base path.
-//     pub fn base_path(&self) -> PathBuf {
-//         self.base_path.clone()
-//     }
-
-//     /// Retrieves metadata for the base directory.
-//     pub fn metadata(&self) -> io::Result<fs::Metadata> {
-//         fs::metadata(&self.base_path)
-//     }
-
-//     /// Creates a `TraversalPathBuilder` from this `TraversalBase`.
-//     pub fn into_path_builder(self) -> anyhow::Result<TraversalPathBuilder<O>> {
-//         tracing::info!("Creating TraversalPathBuilder from TraversalBase");
-//         Ok(TraversalPathBuilder::new(self))
-//     }
-
-//     /// Creates a new `TraversalBase` from the current working directory.
-//     pub fn new_from_current_dir() -> anyhow::Result<Self>
-//     where
-//         O: FromCurrentDirTrait,
-//     {
-//         tracing::info!("Initializing TraversalBase from current directory");
-//         let base_path = env::current_dir()?;
-//         let file_name = Self::extract_file_name(&base_path);
-
-//         Ok(Self {
-//             base_path,
-//             file_name,
-//             _origin: PhantomData,
-//         })
-//     }
-// }
-
-// impl TraversalBase<FromArgs> {
-//     /// Creates a new `TraversalBase` from a given path.
-//     pub fn new_from_path<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
-//         let base_path = path.as_ref().to_path_buf();
-//         let file_name = Self::extract_file_name(&base_path);
-
-//         Ok(Self {
-//             base_path,
-//             file_name,
-//             _origin: PhantomData,
-//         })
-//     }
-// }
-
-// /// Provides an associated type for the builder state.
-// trait BuilderState {
-//     type State;
-// }
-
-// /// Marker for the initial state of the builder.
-// struct Initial;
-// impl BuilderState for Initial {
-//     type State = InitialState;
-// }
-
-// /// Marker for the state after the base name has been appended.
-// struct BaseNameAppended;
-// impl BuilderState for BaseNameAppended {
-//     type State = BaseNameAppendedState;
-// }
-
-// /// Builds paths for traversal relative to a `TraversalBase`.
-// #[derive(Debug, Clone)]
-// pub struct TraversalPathBuilder<O: PathOrigin, S: BuilderState = Initial> {
-//     path: PathBuf,
-//     base: TraversalBase<O>,
-//     _state: PhantomData<S>,
-// }
-
-// /// Represents the initial state of the builder.
-// #[derive(Debug, Clone)]
-// pub struct InitialState;
-
-// /// Represents the state after the base name has been appended.
-// #[derive(Debug, Clone)]
-// pub struct BaseNameAppendedState;
-
-// impl<O: PathOrigin> TraversalPathBuilder<O, Initial> {
-//     /// Creates a new `TraversalPathBuilder` with the given `TraversalBase`.
-//     pub fn new(base: TraversalBase<O>) -> Self {
-//         Self {
-//             path: PathBuf::with_capacity(5_000),
-//             base,
-//             _state: PhantomData,
-//         }
-//     }
-
-//     /// Creates a new `TraversalPathBuilder` from the current directory.
-//     pub fn new_from_current_dir() -> anyhow::Result<Self>
-//     where
-//         O: FromCurrentDirTrait,
-//     {
-//         Ok(Self::new(TraversalBase::<O>::new_from_current_dir()?))
-//     }
-
-//     /// Appends the base directory name to the path.
-//     pub fn append_base_name(mut self) -> TraversalPathBuilder<O, BaseNameAppended> {
-//         tracing::info!("Appending base directory name to path");
-//         self.path.push(self.base.file_name());
-//         TraversalPathBuilder {
-//             path: self.path,
-//             base: self.base,
-//             _state: PhantomData,
-//         }
-//     }
-// }
-
-// impl<O: PathOrigin> TraversalPathBuilder<O, BaseNameAppended> {
-//     /// Extends the path with a relative path derived from a `Visitor`.
-//     pub fn extend_with_relative_from_visitor(
-//         &mut self,
-//         file_entry: &FileEntry,
-//     ) -> anyhow::Result<&mut Self> {
-//         let relative_path = file_entry.relative_path(&self.base.base_path()).unwrap();
-//         self.path.push(relative_path);
-//         Ok(self)
-//     }
-// }
-
-// impl<O: PathOrigin, S: BuilderState> TraversalPathBuilder<O, S> {
-//     /// Returns the file name of the base directory.
-//     pub fn file_name(&self) -> OsString {
-//         self.base.file_name()
-//     }
-
-//     /// Returns the base path.
-//     pub fn base_path(&self) -> PathBuf {
-//         self.base.base_path()
-//     }
-
-//     /// Retrieves metadata for the base directory.
-//     pub fn metadata(&self) -> io::Result<fs::Metadata> {
-//         self.base.metadata()
-//     }
-
-//     /// Converts the built path to an `OsString`.
-//     pub fn into_os_string(self) -> OsString {
-//         self.path.into_os_string()
-//     }
-
-//     /// Returns a reference to the underlying `PathBuf`.
-//     pub fn as_path(&self) -> &Path {
-//         self.path.as_path()
-//     }
-// }
-
-// impl<O: PathOrigin + FromCurrentDirTrait> Default for TraversalPathBuilder<O, Initial> {
-//     fn default() -> Self {
-//         Self::new_from_current_dir().expect("Failed to create default TraversalPathBuilder")
-//     }
-// }
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_traversal_base_from_current_dir() {
-//         let base = TraversalBase::<FromCurrentDir>::new_from_current_dir().unwrap();
-//         assert!(base.base_path().is_absolute());
-//         assert_eq!(base.file_name(), OsString::from("."));
-//     }
-
-//     #[test]
-//     fn test_traversal_base_from_path() {
-//         let path = Path::new("/tmp/test");
-//         let base = TraversalBase::<FromArgs>::new_from_path(path).unwrap();
-//         assert_eq!(base.base_path(), path);
-//         assert_eq!(base.file_name(), OsString::from("test"));
-//     }
-
-//     #[test]
-//     fn test_traversal_path_builder_append_base_name() {
-//         let path = Path::new("/tmp/test");
-//         let base = TraversalBase::<FromArgs>::new_from_path(path).unwrap();
-//         let builder = TraversalPathBuilder::new(base).append_base_name();
-//         assert_eq!(builder.as_path(), Path::new("/tmp/test/test"));
-//     }
-
-//     // #[test]
-//     // fn test_traversal_path_builder_extend_with_relative_from_visitor() {
-//     //     let path = Path::new("/tmp/test");
-//     //     let base = TraversalBase::<FromArgs>::new_from_path(path).unwrap();
-//     //     let mut builder = TraversalPathBuilder::new(base).append_base_name();
-
-//     //     // Assuming your FileEntry::relative_path returns a PathBuf relative to the base path
-//     //     let file_entry = FileEntry::new(PathBuf::from("/tmp/test/subdir/file.txt"));
-//     //     builder
-//     //         .extend_with_relative_from_visitor(&file_entry)
-//     //         .unwrap();
-//     //     assert_eq!(
-//     //         builder.as_path(),
-//     //         Path::new("/tmp/test/test/subdir/file.txt")
-//     //     );
-//     // }
-
-//     #[test]
-//     fn test_traversal_path_builder_into_os_string() {
-//         let path = Path::new("/tmp/test");
-//         let base = TraversalBase::<FromArgs>::new_from_path(path).unwrap();
-//         let builder = TraversalPathBuilder::new(base).append_base_name();
-//         let os_string = builder.into_os_string();
-//         assert_eq!(os_string, OsString::from("/tmp/test/test"));
-//     }
-
-//     #[test]
-//     fn test_traversal_path_builder_new_from_current_dir() {
-//         let builder = TraversalPathBuilder::<FromCurrentDir>::new_from_current_dir().unwrap();
-//         assert!(builder.base_path().is_absolute());
-//     }
-// }
 use std::env;
 use std::ffi::OsString;
 use std::fs;
@@ -264,7 +6,9 @@ use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
 // Marker traits for builder state
+#[derive(Debug)]
 pub struct Uninitialized;
+#[derive(Debug, Clone)]
 pub struct WithBasePath;
 
 // Main trait for traversal functionality
@@ -285,6 +29,13 @@ pub trait TraversalBuilder {
 pub trait PathManipulation {
     fn append_base_name(self) -> Self;
     fn extend_with_relative_path<P: AsRef<Path>>(self, relative: P) -> Self;
+    fn base_path(&mut self) -> Option<PathBuf>;
+    fn set_from_args(&mut self, from_args: bool);
+    fn from_args(&self) -> bool;
+    fn set_file_name_to_current_dir(&mut self);
+    fn set_base_path(&mut self, base_path: Option<PathBuf>);
+    fn set_file_name(&mut self, file_name: Option<OsString>);
+    fn current_path(&self) -> &PathBuf;
 }
 
 // Main struct that implements Traversal
@@ -310,7 +61,7 @@ impl Traversal for TraversalPath {
 }
 
 // Builder struct with type state
-#[derive(Clone)] // Added Clone derivation
+#[derive(Debug, Clone)] // Added Clone derivation
 pub struct TraversalPathBuilder<State = Uninitialized> {
     base_path: Option<PathBuf>,
     file_name: Option<OsString>,
@@ -331,7 +82,7 @@ impl TraversalPathBuilder<Uninitialized> {
         }
     }
 
-    pub fn from_current_dir(self) -> io::Result<TraversalPathBuilder<WithBasePath>> {
+    pub fn from_current_dir(self) -> anyhow::Result<TraversalPathBuilder<WithBasePath>> {
         let base_path = env::current_dir()?;
         let file_name = Self::extract_file_name(&base_path);
 
@@ -382,6 +133,35 @@ impl PathManipulation for TraversalPathBuilder<WithBasePath> {
     fn extend_with_relative_path<P: AsRef<Path>>(mut self, relative: P) -> Self {
         self.current_path.push(relative);
         self
+    }
+
+    fn base_path(&mut self) -> Option<PathBuf> {
+        self.base_path.clone()
+    }
+
+    fn set_from_args(&mut self, from_args: bool) {
+        self.from_args = from_args;
+    }
+
+    fn from_args(&self) -> bool {
+        self.from_args
+    }
+
+    /// Sets the file name to represent the current directory (".").
+    fn set_file_name_to_current_dir(&mut self) {
+        self.file_name = Some(OsString::from("."));
+    }
+
+    fn set_base_path(&mut self, base_path: Option<PathBuf>) {
+        self.base_path = base_path;
+    }
+
+    fn set_file_name(&mut self, file_name: Option<OsString>) {
+        self.file_name = file_name;
+    }
+
+    fn current_path(&self) -> &PathBuf {
+        &self.current_path
     }
 }
 

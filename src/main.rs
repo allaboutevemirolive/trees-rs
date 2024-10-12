@@ -5,8 +5,7 @@ mod report;
 mod tree;
 mod walk;
 
-use config::root::TraversalPath;
-use ignore::gitignore::GitignoreBuilder;
+use config::root::{TraversalPath, WithBasePath};
 use report::stats::ReportMode;
 
 macro_rules! trace {
@@ -28,7 +27,7 @@ fn main() -> anyhow::Result<()> {
     let mut base_dir = determine_base_directory()?;
     let report_mode = args.match_app(&mut tr, &mut base_dir)?;
 
-    build_and_print_tree_head(&mut tr, &mut base_dir)?;
+    build_and_print_tree_head(&mut tr, base_dir)?;
 
     iterate_directories_and_print_report(&mut tr, report_mode)?;
 
@@ -59,7 +58,7 @@ fn initialize_tree_context<'tr, 'a>(
 }
 
 /// Determines the base directory from the current working directory.
-fn determine_base_directory() -> anyhow::Result<config::root::TraversalPathBuilder> {
+fn determine_base_directory() -> anyhow::Result<config::root::TraversalPathBuilder<WithBasePath>> {
     use anyhow::Context;
     let base_dir = TraversalPath::builder()
         .from_current_dir()
@@ -70,15 +69,17 @@ fn determine_base_directory() -> anyhow::Result<config::root::TraversalPathBuild
 /// Builds the tree head and prints it.
 fn build_and_print_tree_head<'tr, 'a>(
     tr: &mut walk::tr::TreeCtxt<'tr, 'a>,
-    base_dir: &mut config::root::TraversalPathBuilder,
+    base_dir: config::root::TraversalPathBuilder<WithBasePath>,
 ) -> anyhow::Result<()> {
-    use anyhow::Context;
+    use crate::config::root::PathManipulation;
 
-    tr.path_builder = base_dir;
+    // tr.path_builder = base_dir;
     // .clone()
     // .into_path_builder()
     // .context("Failed to build base directory path")?;
-    tr.path_builder.append_base_name();
+    tr.path_builder = base_dir.append_base_name();
+
+    // .append_base_name();
     tr.handle_header()?;
 
     Ok(())
@@ -90,13 +91,17 @@ fn iterate_directories_and_print_report<'tr, 'a>(
     report_mode: ReportMode,
 ) -> anyhow::Result<()> {
     tracing::info!("Ready to iterate directories");
+    use crate::config::root::PathManipulation;
 
-    let path_ignore = tr.path_builder.base_path();
+    let path_ = tr
+        .path_builder
+        .base_path()
+        .expect("Error getting base path");
 
-    let mut builder = GitignoreBuilder::new(path_ignore.clone().as_path());
-    builder.add(path_ignore.join(".gitignore"));
+    // let mut builder = GitignoreBuilder::new(path_ignore.clone().as_path());
+    // builder.add(path_ignore.join(".gitignore"));
 
-    tr.walk_dir(tr.path_builder.base_path())?;
+    tr.walk_dir(path_)?;
     tr.handle_report(report_mode)?;
 
     Ok(())

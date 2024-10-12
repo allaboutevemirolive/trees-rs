@@ -1,6 +1,8 @@
 use super::app::cli_options;
 use super::app::tree_app;
 
+use crate::config::root::TraversalPathBuilder;
+use crate::config::root::WithBasePath;
 // use crate::config::root::PathOrigin;
 // use crate::config::root::TraversalBase;
 use crate::report::stats::ReportMode;
@@ -25,7 +27,7 @@ impl TreeArgs {
     pub fn match_app(
         &mut self,
         tr: &mut TreeCtxt,
-        base_dir: &mut TraversalBase,
+        base_dir: &mut TraversalPathBuilder<WithBasePath>,
     ) -> anyhow::Result<ReportMode> {
         tracing::info!("Filter arguments and get report mode");
         self.handle_base_directory(base_dir);
@@ -41,7 +43,9 @@ impl TreeArgs {
         Ok(self.determine_report_mode(&matches))
     }
 
-    fn handle_base_directory(&mut self, base_dir: &mut TraversalBase) {
+    fn handle_base_directory(&mut self, base_dir: &mut TraversalPathBuilder<WithBasePath>) {
+        use crate::config::root::PathManipulation;
+
         let path_exist = self.extract_and_update_base_dir(base_dir);
         if !path_exist {
             base_dir.set_from_args(false);
@@ -158,13 +162,18 @@ impl TreeArgs {
         }
     }
 
-    fn extract_and_update_base_dir(&mut self, base_dir: &mut TraversalBase) -> bool {
+    fn extract_and_update_base_dir(
+        &mut self,
+        base_dir: &mut TraversalPathBuilder<WithBasePath>,
+    ) -> bool {
+        use crate::config::root::PathManipulation;
+
         let mut delete_index = None;
 
         for (index, arg) in self.args.iter().skip(1).enumerate() {
             if let Some(arg_path) = self.valid_path(arg) {
-                base_dir.set_base_path(arg_path.clone());
-                base_dir.set_file_name(arg_path.into_os_string());
+                base_dir.set_base_path(Some(arg_path.clone()));
+                base_dir.set_file_name(Some(arg_path.into_os_string()));
                 delete_index = Some(index + 1);
                 break;
             }
