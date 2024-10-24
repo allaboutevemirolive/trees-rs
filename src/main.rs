@@ -1,20 +1,25 @@
+use output::{FileContentRender, RenderStrategy, TreeRender};
+
 mod cli;
 mod config;
+mod output;
 mod render;
 mod report;
 mod tree;
 mod walk;
 
-use ignore::gitignore::GitignoreBuilder;
-use report::stats::ReportMode;
+// use extract::markdown::CodeBlock;
+// use ignore::gitignore::GitignoreBuilder;
+// use render::buffer::IntoBranch;
+// use report::stats::ReportMode;
 
-macro_rules! trace {
-    ($x:expr) => {
-        if std::env::var("ENABLE_TRACING").is_ok() {
-            dbg!($x);
-        }
-    };
-}
+// macro_rules! trace {
+//     ($x:expr) => {
+//         if std::env::var("ENABLE_TRACING").is_ok() {
+//             dbg!($x);
+//         }
+//     };
+// }
 
 fn main() -> anyhow::Result<()> {
     initialize_tracing();
@@ -22,14 +27,43 @@ fn main() -> anyhow::Result<()> {
     let mut buf = render::buffer::Buffer::new(std::io::stdout().lock())?;
     let mut tr = initialize_tree_context(&mut buf)?;
 
-    trace!(&tr);
+    // trace!(&tr);
 
     let mut base_dir = determine_base_directory()?;
     let report_mode = args.match_app(&mut tr, &mut base_dir)?;
 
+    // // Choose the strategy based on user input or CLI args
+    // let strategy: Box<dyn RenderStrategy> = if true {
+    //     Box::new(FileContentRender)
+    // } else {
+    //     Box::new(TreeRender)
+    // };
+
+    // strategy.process_file(, );
+
+    tr.buf.code_block()?;
+    tr.buf.newline()?;
+
     build_and_print_tree_head(&mut tr, &mut base_dir)?;
 
-    iterate_directories_and_print_report(&mut tr, report_mode)?;
+    // ---
+
+    tracing::info!("Ready to iterate directories");
+
+    // let path_ignore = tr.path_builder.base_path();
+    // let mut builder = GitignoreBuilder::new(path_ignore.clone().as_path());
+    // builder.add(path_ignore.join(".gitignore"));
+
+    tr.walk_dir(tr.path_builder.base_path())?;
+
+    tr.buf.code_block()?;
+    tr.buf.newline()?;
+
+    tr.handle_report(report_mode)?;
+
+    // ---
+
+    tr.buf.newline()?;
 
     Ok(())
 }
@@ -82,20 +116,20 @@ fn build_and_print_tree_head<'tr, 'a>(
     Ok(())
 }
 
-/// Iterates over directories and prints the final report.
-fn iterate_directories_and_print_report<'tr, 'a>(
-    tr: &mut walk::tr::TreeCtxt<'tr, 'a>,
-    report_mode: ReportMode,
-) -> anyhow::Result<()> {
-    tracing::info!("Ready to iterate directories");
+// / Iterates over directories and prints the final report.
+// fn iterate_directories_and_print_report<'tr, 'a>(
+//     tr: &mut walk::tr::TreeCtxt<'tr, 'a>,
+//     report_mode: ReportMode,
+// ) -> anyhow::Result<()> {
+//     tracing::info!("Ready to iterate directories");
 
-    let path_ignore = tr.path_builder.base_path();
+//     let path_ignore = tr.path_builder.base_path();
 
-    let mut builder = GitignoreBuilder::new(path_ignore.clone().as_path());
-    builder.add(path_ignore.join(".gitignore"));
+//     let mut builder = GitignoreBuilder::new(path_ignore.clone().as_path());
+//     builder.add(path_ignore.join(".gitignore"));
 
-    tr.walk_dir(tr.path_builder.base_path())?;
-    tr.handle_report(report_mode)?;
+//     tr.walk_dir(tr.path_builder.base_path())?;
+//     tr.handle_report(report_mode)?;
 
-    Ok(())
-}
+//     Ok(())
+// }

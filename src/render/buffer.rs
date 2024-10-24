@@ -43,6 +43,10 @@ impl<W: Write> Buffer<W> {
         self.write_bytes(" ".as_bytes())
     }
 
+    pub fn code_block(&mut self) -> io::Result<()> {
+        self.write_bytes("```".as_bytes())
+    }
+
     /// Helper method to write bytes to the buffer.
     fn write_bytes(&mut self, bytes: &[u8]) -> io::Result<()> {
         self.bufwr.write_all(bytes)

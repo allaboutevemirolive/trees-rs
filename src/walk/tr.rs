@@ -1,15 +1,18 @@
+use std::fs::File;
+use std::io::Read;
+
 use crate::config;
+// use crate::output::RenderStrategy;
 use crate::render;
 use crate::report;
 use crate::tree;
 use crate::walk;
 
-// Color trait which allows output to be colorize.
-// We use function pointer to generate colorize output
-// instead of enum for performance reason.
+// Color trait which allows output to be colorize. We use function pointer to
+// generate colorize output instead of enum for performance reason.
 use crate::config::registry::Color;
 
-use anyhow::Context;
+// use anyhow::Context;
 
 #[derive(Debug)]
 pub struct TreeCtxt<'tr, 'a> {
@@ -20,11 +23,13 @@ pub struct TreeCtxt<'tr, 'a> {
     pub rg: config::registry::Registry<'tr>,
     pub dir_stats: report::stats::DirectoryStats,
     pub path_builder: config::root::TraversalPathBuilder,
+    // pub strategy: Box<dyn RenderStrategy>,
 }
 
 impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     pub fn new(
         buf: &'a mut render::buffer::Buffer<std::io::StdoutLock<'tr>>,
+        // strategy: Box<dyn RenderStrategy>,
     ) -> anyhow::Result<Self> {
         tracing::info!("Initializing TreeCtxt");
 
@@ -43,6 +48,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
             rg,
             dir_stats,
             path_builder,
+            // strategy,
         })
     }
 
@@ -88,31 +94,6 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_entry_type(&mut self, file_entry: &mut walk::fent::FileEntry) -> anyhow::Result<()> {
-        if file_entry.is_symlink() {
-            self.handle_symlink(file_entry)?;
-            self.nod.pop();
-            return Ok(());
-        } else if file_entry.is_media_type() {
-            self.handle_media(file_entry)?;
-            self.nod.pop();
-            return Ok(());
-        } else if file_entry.is_file() {
-            self.handle_file(file_entry)?;
-            self.nod.pop();
-            return Ok(());
-        } else if file_entry.is_dir() {
-            self.handle_directory(file_entry)?;
-            self.nod.pop();
-            return Ok(());
-        } else {
-            self.handle_special(file_entry)?;
-            self.nod.pop();
-            return Ok(());
-        }
-    }
-
-    #[inline(always)]
     fn update_stats_and_print_info(
         &mut self,
         file_entry: &walk::fent::FileEntry,
@@ -132,7 +113,53 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_symlink(&mut self, file_entry: &mut walk::fent::FileEntry) -> anyhow::Result<()> {
+    fn descend_into_directory(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
+        self.level.increment();
+        // if let Some(path) = file_entry.absolute_path() {
+        if self
+            .walk_dir(file_entry.absolute_path().to_path_buf())
+            .is_err()
+        {
+            self.dir_stats.err_dirs_add_one();
+        }
+        // }
+        self.level.decrement();
+        Ok(())
+    }
+}
+
+impl<'tr, 'a> TreeCtxt<'tr, 'a> {
+    #[inline(always)]
+    fn handle_entry_type(&mut self, file_entry: &mut walk::fent::FileEntry) -> anyhow::Result<()> {
+        if file_entry.is_symlink() {
+            self.handle_symlink(file_entry)?;
+            self.nod.pop();
+            return Ok(());
+        } else if file_entry.is_media_type() {
+            self.handle_media(file_entry)?;
+            self.nod.pop();
+            return Ok(());
+        } else if file_entry.is_file() {
+            self.handle_file(file_entry)?;
+            // let strategy = &self.strategy;
+            // strategy.process_file(self.buf, file_entry)?;
+            self.nod.pop();
+            return Ok(());
+        } else if file_entry.is_dir() {
+            self.handle_directory(file_entry)?;
+            self.nod.pop();
+            return Ok(());
+        } else {
+            self.handle_special(file_entry)?;
+            self.nod.pop();
+            return Ok(());
+        }
+    }
+
+    #[inline(always)]
+    pub fn handle_symlink(&mut self, file_entry: &mut walk::fent::FileEntry) -> anyhow::Result<()> {
+        use anyhow::Context;
+
         self.dir_stats.symlink_add_one();
         self.rg.yellow(self.buf)?;
         self.buf
@@ -155,7 +182,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_media(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
+    pub fn handle_media(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.media_add_one();
         self.rg.purple(self.buf)?;
         self.buf
@@ -166,16 +193,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn handle_file(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
-        self.dir_stats.file_add_one();
-        self.buf
-            .print_file(file_entry, &self.path_builder, self.rg.entries().file())?;
-        self.buf.newline()?;
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn handle_directory(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
+    pub fn handle_directory(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.dir_add_one();
         self.rg.blue(self.buf)?;
         self.buf
@@ -190,22 +208,7 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
     }
 
     #[inline(always)]
-    fn descend_into_directory(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
-        self.level.increment();
-        // if let Some(path) = file_entry.absolute_path() {
-        if self
-            .walk_dir(file_entry.absolute_path().to_path_buf())
-            .is_err()
-        {
-            self.dir_stats.err_dirs_add_one();
-        }
-        // }
-        self.level.decrement();
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn handle_special(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
+    pub fn handle_special(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
         self.dir_stats.special_add_one();
         self.rg.bold_red(self.buf)?;
         self.buf.write_os_string(file_entry.filename().clone())?;
@@ -261,6 +264,52 @@ impl<'tr, 'a> TreeCtxt<'tr, 'a> {
             .populate_report(&mut report_summary, report_mode);
         let summary = report_summary.join(", ");
         self.buf.write_message(&summary)?;
+        self.buf.newline()?;
+        Ok(())
+    }
+}
+
+// Type aliases for callback functions
+pub type HeaderCallback<'tr, 'a> = fn(&mut TreeCtxt<'tr, 'a>) -> anyhow::Result<()>;
+pub type MetadataCallback<'tr, 'a> =
+    fn(&mut TreeCtxt<'tr, 'a>, &std::fs::Metadata) -> anyhow::Result<()>;
+pub type ReportCallback<'tr, 'a> =
+    fn(&mut TreeCtxt<'tr, 'a>, report::stats::ReportMode) -> anyhow::Result<()>;
+pub type SymlinkCallback<'tr, 'a> =
+    fn(&mut TreeCtxt<'tr, 'a>, &mut walk::fent::FileEntry) -> anyhow::Result<()>;
+
+type FileEntryCallback<'tr, 'a> =
+    fn(&mut TreeCtxt<'tr, 'a>, &walk::fent::FileEntry) -> anyhow::Result<()>;
+
+// Reusing the FileEntryCallback type alias for various handlers
+pub type MediaCallback<'tr, 'a> = FileEntryCallback<'tr, 'a>;
+pub type FileCallback<'tr, 'a> = FileEntryCallback<'tr, 'a>;
+pub type DirectoryCallback<'tr, 'a> = FileEntryCallback<'tr, 'a>;
+pub type SpecialCallback<'tr, 'a> = FileEntryCallback<'tr, 'a>;
+
+impl<'tr, 'a> TreeCtxt<'tr, 'a> {
+    #[inline(always)]
+    pub fn handle_file(&mut self, file_entry: &walk::fent::FileEntry) -> anyhow::Result<()> {
+        self.dir_stats.file_add_one();
+        self.buf
+            .print_file(file_entry, &self.path_builder, self.rg.entries().file())?;
+        self.buf.newline()?;
+        Ok(())
+    }
+
+    #[inline(always)]
+    pub fn handle_file_contains(
+        &mut self,
+        file_entry: &walk::fent::FileEntry,
+    ) -> anyhow::Result<()> {
+        self.dir_stats.file_add_one();
+        // self.buf.print_file(file_entry, &self.path_builder, self.rg.entries().file())?;
+        let mut file = File::open(file_entry.absolute_path())?;
+        let mut content = String::new();
+        file.read_to_string(&mut content)?;
+
+        self.buf.write_message(&content)?;
+
         self.buf.newline()?;
         Ok(())
     }

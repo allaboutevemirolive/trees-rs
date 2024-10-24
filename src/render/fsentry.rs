@@ -145,7 +145,6 @@ fn write_entry_name<W: Write>(buffer: &mut Buffer<W>, entry: &FileEntry) -> io::
     buffer.bufwr.write_all(entry.filename().as_encoded_bytes())
 }
 
-// Buffer implementation
 impl<W: Write> Buffer<W> {
     // Directory methods
     pub fn print_dir(
@@ -172,7 +171,9 @@ impl<W: Write> Buffer<W> {
     ) -> io::Result<()> {
         DirectoryWriter::write_name(self, entry, path_builder)
     }
+}
 
+impl<W: Write> Buffer<W> {
     // File methods
     pub fn print_file(
         &mut self,
@@ -198,7 +199,9 @@ impl<W: Write> Buffer<W> {
     ) -> io::Result<()> {
         FileWriter::write_name(self, entry, path_builder)
     }
+}
 
+impl<W: Write> Buffer<W> {
     // Symlink methods
     pub fn print_symlink(
         &mut self,
@@ -224,7 +227,9 @@ impl<W: Write> Buffer<W> {
     ) -> io::Result<()> {
         SymlinkWriter::write_name(self, entry, path_builder)
     }
+}
 
+impl<W: Write> Buffer<W> {
     // Header methods
     pub fn print_header(
         &mut self,

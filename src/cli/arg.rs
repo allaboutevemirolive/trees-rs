@@ -67,6 +67,9 @@ impl TreeArgs {
     ) -> anyhow::Result<()> {
         if matches.get_flag(cli_options::meta::META) {
             tr.rg.with_all_metadata();
+        } else {
+            // Safe to set this by default as we will iterate user preferences.
+            tr.rg.without_metadata();
         }
 
         // Individual meta settings
@@ -100,6 +103,10 @@ impl TreeArgs {
         if matches.get_flag(cli_options::sort::FILES_FIRST) {
             tr.rg.with_sort_by_file_first()?;
         }
+        if matches.get_flag(cli_options::sort::SORT) {
+            tr.rg.with_sort_entries()?;
+        }
+
         Ok(())
     }
 

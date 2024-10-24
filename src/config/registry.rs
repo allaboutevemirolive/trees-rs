@@ -4,16 +4,16 @@ use super::{
 };
 use crate::{
     render::{
-        // attr::{
-        //     atime::FnExtAccessTime, btime::FnExtBTime, mtime::FnExtModTime, pms::FnExtPermission,
-        //     size::FnExtSize,
-        // },
         attributes::{FnExtAccessTime, FnExtBTime, FnExtModTime, FnExtPermission, FnExtSize},
         buffer::Buffer,
         color::FnColor,
         fsentry::{FnOutDir, FnOutFile, FnOutHead, FnOutSymlink},
     },
     report::stats::DirectoryStats,
+    walk::tr::{
+        DirectoryCallback, FileCallback, HeaderCallback, MediaCallback, MetadataCallback,
+        ReportCallback, SpecialCallback, SymlinkCallback, TreeCtxt,
+    },
 };
 use std::{
     fs::DirEntry,
@@ -56,6 +56,34 @@ pub struct MetadataFunctions<'a> {
     mod_time: FnExtModTime<StdoutLock<'a>>,
     access_time: FnExtAccessTime<StdoutLock<'a>>,
     size: FnExtSize<StdoutLock<'a>>,
+}
+
+pub struct TreeHandler<'tr, 'a> {
+    header_callback: HeaderCallback<'tr, 'a>,
+    metadata_callback: MetadataCallback<'tr, 'a>,
+    report_callback: ReportCallback<'tr, 'a>,
+    symlink_callback: SymlinkCallback<'tr, 'a>,
+    media_callback: MediaCallback<'tr, 'a>,
+    file_callback: FileCallback<'tr, 'a>,
+    directory_callback: DirectoryCallback<'tr, 'a>,
+    special_callback: SpecialCallback<'tr, 'a>,
+}
+
+impl<'tr, 'a> TreeHandler<'tr, 'a> {}
+
+impl<'tr, 'a> Default for TreeHandler<'tr, 'a> {
+    fn default() -> Self {
+        Self {
+            header_callback: TreeCtxt::handle_header,
+            metadata_callback: TreeCtxt::handle_metadata,
+            report_callback: TreeCtxt::handle_report,
+            symlink_callback: TreeCtxt::handle_symlink,
+            media_callback: TreeCtxt::handle_media,
+            file_callback: TreeCtxt::handle_file,
+            directory_callback: TreeCtxt::handle_directory,
+            special_callback: TreeCtxt::handle_special,
+        }
+    }
 }
 
 pub trait Color<'a> {
@@ -102,7 +130,7 @@ impl<'a> Registry<'a> {
     pub fn new() -> anyhow::Result<Self> {
         Ok(Self {
             read: read_visible_entries,
-            sort: sort_by_name,
+            sort: sort_by_file_first,
             colors: ColorFunctions::default(),
             entries: EntryFunctions::default(),
             metadata: MetadataFunctions::default(),
